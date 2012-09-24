@@ -1,0 +1,39 @@
+
+// blender material: DressFabric
+material DressFabric 
+{
+    receive_shadows on
+    technique
+    {
+        pass DressFabric
+        {
+            ambient 0.8500000238418579 0.8500000238418579 0.8500000238418579 1.0
+            diffuse 0.6800000292062762 0.6800000292062762 0.6800000292062762 1.0
+            specular 0.03921600058674812 0.03921600058674812 0.03921600058674812 1.0 0.5
+            emissive 0.0 0.0 0.0 1.0
+            alpha_to_coverage off
+            colour_write on
+            cull_hardware clockwise
+            depth_check on
+            depth_func less_equal
+            depth_write on
+            illumination_stage 
+            light_clip_planes off
+            light_scissor off
+            lighting on
+            normalise_normals off
+            polygon_mode solid
+            scene_blend one zero
+            scene_blend_op add
+            shading gouraud
+            transparent_sorting on
+            texture_unit 
+            {
+                texture dress.jpg
+                tex_address_mode wrap
+                scale 1.0 1.0
+                colour_op modulate
+            }
+        }
+    }
+}
