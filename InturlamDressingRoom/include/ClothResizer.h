@@ -10,4 +10,4 @@ public:
 };
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID, IplImage* uImage, IplImage* dImage);
-void addDepthToBuffer(xn::DepthMetaData dmd,xn::SceneMetaData smd);
+void optimizeDepthMap(xn::DepthMetaData dmd,xn::SceneMetaData smd);

@@ -2,7 +2,11 @@
 #include "..\include\ClothResizer.h"
 
 
-IplImage* optimizationBuffer[30];
+int gaussian_m=3,
+	gaussian_n=3,
+	gaussian_e=0.95;
+
+
 
 
 ClothResizer::ClothResizer(void)
@@ -60,22 +64,20 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 			}		
 		}
 	}
-
-
-
 }
 
 
 
-void addDepthToBuffer(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+void optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
-
-	IplImage* dImage=cvCreateImage(cvSize(640,480),IPL_DEPTH_16U,1);
-	IplImage* uImage=cvCreateImage(cvSize(640,480),IPL_DEPTH_1U,1);
-	bool tStatus=convertMetaDataToIpl( dpg,ug,userID,  uImage, dImage);
-
-
-
+	CvSize dSize=cvSize(640,480);
+	IplImage* dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
+	IplImage* uImage=cvCreateImage(dSize,IPL_DEPTH_1U,1);
+	bool tStatus=convertMetaDataToIpl( dpg,ug,userID,  uImage, dImage);	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
+	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
+	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth
+	cvSet(dImage,depthMean,uImage);										 
+	cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
 }
 
 
