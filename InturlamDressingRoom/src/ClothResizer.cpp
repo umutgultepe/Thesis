@@ -156,3 +156,9 @@ void processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	cvReleaseImage(&dImage);
 	cvReleaseImage(&uImage);
 }
+
+
+void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+{
+
+}
