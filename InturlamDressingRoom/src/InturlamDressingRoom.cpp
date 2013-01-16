@@ -674,6 +674,9 @@ void InturlamDressingRoom::createScene(void)
 	//femaleNode->setVisible(false);
 	rootColliderNode->setVisible(false);
 
+
+	
+
 }
 bool justCalibrated=true;
 
