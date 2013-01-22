@@ -190,13 +190,13 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_HEAD, head);
 	dpg->ConvertRealWorldToProjective(1,&head.position,&projHead);
 
-	int tempX,tempY,leftX,rightX;
-	unsigned char* iPtr=(unsigned char*)(uImage->imageData+(int)projHead.X + (int)projHead.Y*uImage->widthStep);
-	leftX=projHead.X-(iPtr-tempPtr)+1;
+	int tempX=head.position.X;
+	int tempY=head.position.Y;
+	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line horizontally until it reaches the borders of the head.
+	int leftX=++tempX;
 	tempX=head.position.X;
 	while(cvGetReal2D(uImage,++tempX,tempY)>0);
-	
-	rightX=--tempX;
+	int rightX=--tempX;
 
 	XnPoint3D headPoints[2];
 	headPoints[0].X=leftX;
