@@ -3,6 +3,11 @@
 #include "HandTracker.h"
 #include "SkeletalMesh.h"
 static float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+static float estimatedShoulderWidth=0;
+static float estimatedTorsoHeight=0;
+
+float* radiiBuffer[29];
+float* bodySizeBuffer[29];
 enum 
 {
 	TORSO_HEIGHT=0,
@@ -33,8 +38,11 @@ enum
 
 
 
-static float estimatedShoulderWidth=0;
-static float estimatedTorsoHeight=0;
+
+
+static int processedFrameCount=0;
+
+
 
 static float bodyMeasurements[]={0,0,0,0,0,0,0,0,0};
 static float sleevelessProportions[]={3, 4.7 , 0.67, 1.18 , 2.36 , 4.73 };
@@ -43,3 +51,4 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 void optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
+void estimateParameters();

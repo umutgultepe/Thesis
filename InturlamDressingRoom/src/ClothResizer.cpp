@@ -71,7 +71,6 @@ void optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID use
 	cvDilate(uImage,uImage,0,2);
 }
 
-
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
 	
@@ -143,21 +142,6 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 		sphereRadii[i]=radius;
 	}
 }
-
-
-void processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
-{
-	dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
-	uImage=cvCreateImage(dSize,IPL_DEPTH_1U,1);
-
-	optimizeDepthMap(dpg,ug,userID);
-	getSphereSizes(dpg,ug,userID);
-
-	//Do not forget to release Images to prevent memory leak
-	cvReleaseImage(&dImage);
-	cvReleaseImage(&uImage);
-}
-
 
 void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
@@ -292,3 +276,52 @@ void estimateParameters()
 	estimatedTorsoHeight=estimatedTorsoHeight/6;
 
 }
+
+void processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+{
+	dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
+	uImage=cvCreateImage(dSize,IPL_DEPTH_1U,1);
+
+	optimizeDepthMap(dpg,ug,userID);
+	getSphereSizes(dpg,ug,userID);
+
+	measureBody(dpg,ug,userID);
+	estimateParameters();
+
+	//Do not forget to release Images to prevent memory leak
+	cvReleaseImage(&dImage);
+	cvReleaseImage(&uImage);
+}
+
+bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //Data Collection for temporal Temporal Optimization
+{
+	processFrame(dpg,ug,userID);
+	if (processedFrameCount==29)
+	{
+		for (int i=0;i<29;i++) //last frame data is already in the actual registers
+		{
+			for (int j=0;i<16;i++)
+				sphereRadii[j]+=radiiBuffer[i][j];
+			estimatedShoulderWidth+=bodySizeBuffer[i][0];
+			estimatedTorsoHeight+=bodySizeBuffer[i][1];
+			delete[] radiiBuffer[i];
+			delete[] bodySizeBuffer[i];
+		}
+		for (int j=0;i<16;i++)
+				sphereRadii[j]/=16;
+		estimatedShoulderWidth/=16;
+		estimatedTorsoHeight/=16;
+		return true;
+	}
+	else
+	{
+		radiiBuffer[processedFrameCount]=new float[16];
+		memcpy(radiiBuffer[processedFrameCount],sphereRadii,16*sizeof(float));
+		bodySizeBuffer[processedFrameCount]=new float[2];
+		bodySizeBuffer[processedFrameCount][0]=estimatedShoulderWidth;
+		bodySizeBuffer[processedFrameCount][1]=estimatedTorsoHeight;
+		processedFrameCount++;
+		return false;
+	}
+}
+	
