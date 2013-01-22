@@ -784,7 +784,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	{
 		if (simulating)
 		{
-
 			lowerCloth->updateWithPhysics(gScene,timeStep);
 			timeStep=0;
 		}
@@ -792,7 +791,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
 			{
-				if (addFrame(mKinect->m_DepthGenerator,mKinect->m_UserGenerator,mKinect->activeUser))
+				if (addFrame(&mKinect->m_DepthGenerator,&mKinect->m_UserGenerator,mKinect->activeUser))
 				{
 					upperCloth->setUserID(mKinect->activeUser);
 					Ogre::Vector3 targetPos=upperCloth->updateMesh();

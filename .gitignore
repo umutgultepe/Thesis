@@ -23,6 +23,7 @@ Thumbs.db
 InturlamDressingRoom/Debug*/
 *.lib
 *.sbr
+*.csv
 obj/
 InturlamDressingRoom/Release*/
 _ReSharper*/

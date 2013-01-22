@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "..\include\ClothResizer.h"
 
-
+float* radiiBuffer[29];
+float* bodySizeBuffer[29];
 int gaussian_m=3,
 	gaussian_n=3,
 	gaussian_e=0.95;
@@ -58,10 +59,11 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 	return true;
 }
 
-void optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
 	
-	bool tStatus=convertMetaDataToIpl( dpg,ug,userID,  uImage, dImage);	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
+	if (!convertMetaDataToIpl( dpg,ug,userID))	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
+		return false;
 	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
 	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth
 	cvSet(dImage,depthMean,uImage);										 
@@ -69,6 +71,7 @@ void optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID use
 	cvNot(uImage,uImage);	
 	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
 	cvDilate(uImage,uImage,0,2);
+	return true;
 }
 
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
@@ -147,7 +150,7 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
 	//Head Width Measurement
 	xn::SkeletonCapability pUserSkel = ug->GetSkeletonCap();	
-	XnSkeletonJointPosition head,neck,lShoulder,rShoulder,lFoot,rFoot,lHip,rHip,lElbow,rElbow,lHand,rHand,lShoulder,rShoulder,torso ;
+	XnSkeletonJointPosition head,neck,lShoulder,rShoulder,lFoot,rFoot,lHip,rHip,lElbow,rElbow,lHand,rHand,torso ;
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_HEAD, head);
 	int tempX=head.position.X;
 	int tempY=head.position.Y;
@@ -180,8 +183,8 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	XnPoint3D feet[2]={lFoot.position,rFoot.position};
 	dpg->ConvertProjectiveToRealWorld(2,feet,feet);
 	float lowPointY=(feet[0].Y+feet[1].Y)/2;
-	int tempX=head.position.X;
-	int tempY=head.position.Y;
+	tempX=head.position.X;
+	tempY=head.position.Y;
 	while(cvGetReal2D(uImage,tempX,++tempY)>0);	//Extend the line verticallu until it reaches the top of the head.
 	XnPoint3D topPoint;
 	topPoint.X=tempX;
@@ -277,12 +280,13 @@ void estimateParameters()
 
 }
 
-void processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
 	dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
 	uImage=cvCreateImage(dSize,IPL_DEPTH_1U,1);
 
-	optimizeDepthMap(dpg,ug,userID);
+	if (!optimizeDepthMap(dpg,ug,userID))
+		return false;
 	getSphereSizes(dpg,ug,userID);
 
 	measureBody(dpg,ug,userID);
@@ -291,26 +295,78 @@ void processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	//Do not forget to release Images to prevent memory leak
 	cvReleaseImage(&dImage);
 	cvReleaseImage(&uImage);
+	return true;
 }
+
+void outputDataToCSV()
+{
+	std::ofstream*myfile=new std::ofstream("measurements.csv");
+
+	
+	if (myfile->is_open())
+	{
+			*myfile<<"Spheres,";
+			for (int i=0;i<16;i++)
+				*myfile<< Ogre::StringConverter::toString(i+1) +",";
+			*myfile<<"\n";
+			for (int j=0;j<29;j++)
+			{
+				*myfile<< Ogre::StringConverter::toString(j+1) +",";
+				for (int i=0;i<16;i++)
+					*myfile<< Ogre::StringConverter::toString(radiiBuffer[j][i]) +",";
+				*myfile<<"\n";
+			}
+			*myfile<<"\n";
+			*myfile<< "Average,";
+			for (int i=0;i<16;i++)
+					*myfile<< Ogre::StringConverter::toString(sphereRadii[i]) +",";
+			*myfile<<"\n";
+			*myfile<<"Body Sizes, Shoulder Width, Torso Height\n";
+			for (int j=0;j<29;j++)
+			{
+				*myfile<< Ogre::StringConverter::toString(j+1) +",";
+				for (int i=0;i<2;i++)
+					*myfile<< Ogre::StringConverter::toString(bodySizeBuffer[j][i]) +",";
+				*myfile<<"\n";
+			}
+			*myfile<<"\n";
+			*myfile<< "Average,";
+			*myfile<< Ogre::StringConverter::toString(estimatedShoulderWidth)+",";
+			*myfile<< Ogre::StringConverter::toString(estimatedTorsoHeight)+",";
+			*myfile<<"\n";
+			myfile->close();
+	}
+
+
+}
+
+
 
 bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //Data Collection for temporal Temporal Optimization
 {
-	processFrame(dpg,ug,userID);
+	if (!processFrame(dpg,ug,userID))
+		return false;
 	if (processedFrameCount==29)
 	{
 		for (int i=0;i<29;i++) //last frame data is already in the actual registers
 		{
-			for (int j=0;i<16;i++)
+			for (int j=0;j<16;j++)
 				sphereRadii[j]+=radiiBuffer[i][j];
 			estimatedShoulderWidth+=bodySizeBuffer[i][0];
 			estimatedTorsoHeight+=bodySizeBuffer[i][1];
 			delete[] radiiBuffer[i];
 			delete[] bodySizeBuffer[i];
 		}
-		for (int j=0;i<16;i++)
-				sphereRadii[j]/=16;
+		for (int i=0;i<16;i++)
+				sphereRadii[i]/=16;
 		estimatedShoulderWidth/=16;
 		estimatedTorsoHeight/=16;
+		outputDataToCSV();
+		for (int i=0;i<29;i++) //free the buffers
+		{
+			delete[] radiiBuffer[i];
+			delete[] bodySizeBuffer[i];
+		}
 		return true;
 	}
 	else
@@ -325,3 +381,5 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 	}
 }
 	
+
+
