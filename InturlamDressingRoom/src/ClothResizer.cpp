@@ -100,7 +100,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 			{
 				if( !(bool)cvGetReal2D(uImage,x_init-step,y_init) )
 				{
-					endOfJoint.X-=step;
+					endOfJoint.X-=(step-1);
 					dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 					radius=abs(realPosition.position.X-endOfJoint.X);
 					break;
@@ -110,7 +110,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 			{
 				if( !(bool)cvGetReal2D(uImage,x_init+step,y_init) )
 				{
-					endOfJoint.X+=step;
+					endOfJoint.X+=(step-1);
 					dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 					radius=abs(realPosition.position.X-endOfJoint.X);
 					break;
@@ -122,7 +122,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 				{
 					if( !(bool)cvGetReal2D(uImage,x_init,y_init-step) )
 					{
-						endOfJoint.Y-=step;
+						endOfJoint.Y-=(step-1);
 						dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 						radius=abs(realPosition.position.Y-endOfJoint.Y);
 						break;
@@ -132,7 +132,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 				{
 					if( !(bool)cvGetReal2D(uImage,x_init,y_init+step) )
 					{
-						endOfJoint.Y+=step;
+						endOfJoint.Y+=(step-1);
 						dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 						radius=abs(realPosition.position.Y-endOfJoint.Y);
 						break;
@@ -258,8 +258,27 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 
 	//Hip Width Measurement
 
+	XnPoint3D lEnd,rEnd;
+	tempX=lHip.position.X;
+	tempY=lHip.position.Y;
+	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
+	lEnd.X=++tempX;
+	lEnd.Y=tempY;
 
+	tempX=rHip.position.X;
+	tempY=rHip.position.Y;
+	while(cvGetReal2D(uImage,++tempX,tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
+	rEnd.X=--tempX;
+	rEnd.Y=tempY;
+	XnPoint3D hipEnds[2]={lEnd,rEnd};
+	dpg->ConvertProjectiveToRealWorld(2,hipEnds,hipEnds);
+	bodyMeasurements[HIP_WIDTH]=abs(hipEnds[0].X-hipEnds[1].X);
 
+	//Torso Height Measurement
+
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_TORSO, torso);
+	dpg->ConvertProjectiveToRealWorld(1,&torso.position,&torso.position);
+	bodyMeasurements[TORSO_HEIGHT]=abs(torso.position.Y-lowPointY);
 
 
 }
