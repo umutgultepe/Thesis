@@ -55,6 +55,7 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 			}		
 		}
 	}
+	return true;
 }
 
 void optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
@@ -160,5 +161,105 @@ void processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 
 void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
+	//Head Width Measurement
+	xn::SkeletonCapability pUserSkel = ug->GetSkeletonCap();	
+	XnSkeletonJointPosition head,neck,lShoulder,rShoulder,lFoot,rFoot,lHip,rHip,lElbow,rElbow,lHand,rHand,lShoulder,rShoulder,torso ;
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_HEAD, head);
+	int tempX=head.position.X;
+	int tempY=head.position.Y;
+
+	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line horizontally until it reaches the borders of the head.
+	int leftX=++tempX;
+	tempX=head.position.X;
+	while(cvGetReal2D(uImage,++tempX,tempY)>0);
+	int rightX=--tempX;
+
+	XnPoint3D headPoints[2];
+	headPoints[0].X=leftX;
+	headPoints[0].Y=tempY;
+	headPoints[1].X=rightX;
+	headPoints[1].Y=tempY;
+	dpg->ConvertProjectiveToRealWorld(2,headPoints,headPoints);
+	bodyMeasurements[HEAD_WIDTH]=abs(headPoints[0].X-headPoints[1].X);
+
+	//Head Height Measurement
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_NECK, neck);
+	XnPoint3D headNeckReal[2]={head.position,neck.position};	
+	dpg->ConvertProjectiveToRealWorld(2,headNeckReal,headNeckReal);
+	bodyMeasurements[HEAD_HEIGHT]=abs(headNeckReal[0].Y-headNeckReal[1].Y);
+
+
+	//Body Height Measurement
+	
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_FOOT, lFoot);
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_FOOT, rFoot);	
+	XnPoint3D feet[2]={lFoot.position,rFoot.position};
+	dpg->ConvertProjectiveToRealWorld(2,feet,feet);
+	float lowPointY=(feet[0].Y+feet[1].Y)/2;
+	int tempX=head.position.X;
+	int tempY=head.position.Y;
+	while(cvGetReal2D(uImage,tempX,++tempY)>0);	//Extend the line verticallu until it reaches the top of the head.
+	XnPoint3D topPoint;
+	topPoint.X=tempX;
+	topPoint.Y=--tempY;
+	dpg->ConvertProjectiveToRealWorld(1,&topPoint,&topPoint);
+	bodyMeasurements[BODY_HEIGHT]=abs(topPoint.Y-lowPointY);
+
+	//Hip Height Measurement
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_HIP, lHip);
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_HIP, rHip);	
+	XnPoint3D hips[2]={lHip.position,rHip.position};
+	dpg->ConvertProjectiveToRealWorld(2,hips,hips);
+	bodyMeasurements[HIP_HEIGHT]=(abs(hips[0].Y-feet[0].Y)+abs(hips[1].Y-feet[1].Y))/2;
+
+	//Elbow-Fingertip Measurement
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_ELBOW, lElbow);
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_ELBOW, rElbow);
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_HAND, lHand);
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_HAND, rHand);
+
+	XnPoint3D lArmBottom,lArmTop,rArmBottom,rArmTop;
+	tempX=lElbow.position.X;
+	tempY=lElbow.position.Y;
+	while(cvGetReal2D(uImage,tempX,--tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
+	lArmBottom.X=tempX;
+	lArmBottom.Y=++tempY;
+	tempX=lHand.position.X;
+	tempY=lHand.position.Y;
+	while(cvGetReal2D(uImage,tempX,++tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
+	lArmTop.X=tempX;
+	lArmTop.Y=--tempY;
+	tempX=rElbow.position.X;
+	tempY=rElbow.position.Y;
+	while(cvGetReal2D(uImage,tempX,--tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
+	rArmBottom.X=tempX;
+	rArmBottom.Y=++tempY;
+	tempX=rHand.position.X;
+	tempY=rHand.position.Y;
+	while(cvGetReal2D(uImage,tempX,++tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
+	rArmTop.X=tempX;
+	rArmTop.Y=--tempY;
+
+	XnPoint3D armPoints[4]={lArmBottom,lArmTop,rArmBottom,rArmTop};
+	dpg->ConvertProjectiveToRealWorld(4,armPoints,armPoints);
+	bodyMeasurements[ELBOW_FINGERTIP]=(abs(armPoints[1].Y-armPoints[0].Y)+abs(armPoints[3].Y-armPoints[2].Y))/2;
+
+	//Wrist to Fingertip Measurement
+	XnPoint3D hands[2]={lHand.position,rHand.position};
+	dpg->ConvertProjectiveToRealWorld(2,hands,hands);
+	bodyMeasurements[WRIST_FINGERTIP]=(abs(armPoints[1].Y-hands[0].Y)+abs(armPoints[3].Y-hands[1].Y))/2;
+
+	//SHoulder Width Measurement
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_SHOULDER, lShoulder);
+	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_SHOULDER, rShoulder);
+	XnPoint3D shoulders[2]={lShoulder.position,rShoulder.position};
+	dpg->ConvertProjectiveToRealWorld(2,shoulders,shoulders);
+	bodyMeasurements[SHOULDER_WIDTH]=abs(shoulders[0].X-shoulders[1].X);
+
+	//Hip Width Measurement
+
+
+
+
 
 }
