@@ -792,14 +792,17 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
 			{
-				upperCloth->setUserID(mKinect->activeUser);
-				Ogre::Vector3 targetPos=upperCloth->updateMesh();
-				femaleBody->setUserID(mKinect->activeUser);
-				femaleBody->updateMesh();
-				updateVisualHuman();
-				lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
-				lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
-				updateCloth();
+				if (addFrame(mKinect->m_DepthGenerator,mKinect->m_UserGenerator,mKinect->activeUser))
+				{
+					upperCloth->setUserID(mKinect->activeUser);
+					Ogre::Vector3 targetPos=upperCloth->updateMesh();
+					femaleBody->setUserID(mKinect->activeUser);
+					femaleBody->updateMesh();
+					updateVisualHuman();
+					lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
+					lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+					updateCloth();
+				}
 			}
 			else
 			{
