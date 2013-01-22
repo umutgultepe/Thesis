@@ -21,6 +21,8 @@ http://code.google.com/p/ogreappwizards/
 using namespace Ogre;
 
 int numberOfCapsules=0;
+
+OgreBites::ParamsPanel* help;
 PxClothCollisionData col_data;
 physx::PxClothCollisionSphere* box_collider;
 std::vector<float> radii;
@@ -674,9 +676,12 @@ void InturlamDressingRoom::createScene(void)
 	//femaleNode->setVisible(false);
 	rootColliderNode->setVisible(false);
 
-
-	
-
+	StringVector items;
+	items.push_back("i");
+	items.push_back("j");
+	mTrayMgr->hideLogo();
+	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
+    help->hide();
 }
 bool justCalibrated=true;
 
@@ -849,6 +854,19 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 			cloth->setInertiaScale(scale-0.1);
 		//curScale-=0.01;
 		//clothNode->setScale(curScale,curScale,curScale);
+	}
+	else if (arg.key==OIS::KC_J)
+	{
+		if (help->getTrayLocation() == OgreBites::TL_NONE)
+        {
+            mTrayMgr->moveWidgetToTray(help, OgreBites::TL_TOPRIGHT, 0);
+            help->show();
+        }
+        else
+        {
+            mTrayMgr->removeWidgetFromTray(help);
+            help->hide();
+        }
 	}
 	else if (arg.key==OIS::KC_TAB)
 	{

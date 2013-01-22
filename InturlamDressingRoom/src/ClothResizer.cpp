@@ -7,11 +7,12 @@ int gaussian_m=3,
 	gaussian_n=3,
 	gaussian_e=0.95;
 
+IplImage *uImage,*dImage,*showImage;
 
-IplImage* dImage;
-IplImage* uImage;
-CvSize dSize=cvSize(640,480);
+short minD=65536,maxD=0;
 
+CvSize dSize=cvSize(m_Width,m_Height);
+extern OgreBites::ParamsPanel* help;
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
@@ -26,51 +27,67 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 	
 	const XnDepthPixel* pDepth = dmd.Data();
 	const XnLabel* pUsersLBLs = smd.Data();
-
-	for (size_t j = 0; j < m_Height; j++)
+	size_t j,i;
+	try 
 	{
-		for(size_t i = 0; i < m_Width; i++)
+	for ( j= 0; j < m_Height; j++)
+	{
+		char* uPtr=(char*)(uImage->imageData+j*uImage->widthStep);
+		unsigned short* dPtr=(unsigned short*)(dImage->imageData+j*dImage->widthStep);
+		for(i = 0; i < m_Width; i++)
 		{		
 			uint fixed_i = i;// fix i if we are mirrored
 			if (!m_front)
 				fixed_i = m_Width - i;				
-			unsigned int color = 0;// determine color
-			if (userID != 0)// if we have a candidate, filter out the rest
-			{
-				if  (userID == pUsersLBLs[j*m_Width + fixed_i])
-				{
-					cvSet2D(uImage,fixed_i,j,cvScalar(1));
-					XnPoint3D projPoint;
-					projPoint.X=fixed_i;
-					projPoint.Y=j;
-					projPoint.Z=0;
-					XnPoint3D realPoint;
-					dpg->ConvertProjectiveToRealWorld(1,&projPoint,&realPoint);
-					cvSet2D(dImage,fixed_i,j,cvScalar(realPoint.Z));			
-				}
-				else
-				{
-					cvSet2D(uImage,fixed_i,j,cvScalar(0));
-					cvSet2D(dImage,fixed_i,j,cvScalar(0));	
-				}
+			if (userID == pUsersLBLs[j*m_Width + fixed_i])// if we have a candidate, filter out the rest
+			{	
+				uPtr[fixed_i]=255;
+				dPtr[fixed_i]=pDepth[j*m_Width + fixed_i];
+
+				if	(dPtr[fixed_i]< minD)
+					minD=dPtr[fixed_i];
+				if	(dPtr[fixed_i]> maxD)
+					maxD=dPtr[fixed_i];
+
 			}		
 		}
+	}
+	}
+	catch (cv::Exception e)
+	{
+			ErrorDialog dlg;
+			dlg.display(e.err + "\ni:" +  Ogre::StringConverter::toString(i) +  "\nj:" +  Ogre::StringConverter::toString(j));
+			exit(0);
 	}
 	return true;
 }
 
-bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+void showDepthImage()
 {
-	
+	cvConvertImage(dImage,showImage);
+	cvShowImage("Image", showImage);
+	cvWaitKey();
+	cvDestroyAllWindows();
+}
+
+bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
+{	
+
 	if (!convertMetaDataToIpl( dpg,ug,userID))	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
 		return false;
+
+
 	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
 	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth
-	cvSet(dImage,depthMean,uImage);										 
+	showDepthImage();
+	//cvSet(dImage,depthMean,uImage);										 
+	//showDepthImage();
 	cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
+	showDepthImage();
 	cvNot(uImage,uImage);	
 	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
 	cvDilate(uImage,uImage,0,2);
+
 	return true;
 }
 
@@ -282,8 +299,15 @@ void estimateParameters()
 
 bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
-	dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
-	uImage=cvCreateImage(dSize,IPL_DEPTH_1U,1);
+	if (!dImage)
+	{
+		dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
+		uImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+		showImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+	}
+	cvSetZero(dImage);
+	cvSetZero(uImage);
+
 
 	if (!optimizeDepthMap(dpg,ug,userID))
 		return false;
@@ -292,9 +316,6 @@ bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	measureBody(dpg,ug,userID);
 	estimateParameters();
 
-	//Do not forget to release Images to prevent memory leak
-	cvReleaseImage(&dImage);
-	cvReleaseImage(&uImage);
 	return true;
 }
 
@@ -336,11 +357,7 @@ void outputDataToCSV()
 			*myfile<<"\n";
 			myfile->close();
 	}
-
-
 }
-
-
 
 bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //Data Collection for temporal Temporal Optimization
 {
@@ -367,6 +384,11 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 			delete[] radiiBuffer[i];
 			delete[] bodySizeBuffer[i];
 		}
+		//Do not forget to release Images to prevent memory leak
+		cvReleaseImage(&dImage);
+		cvReleaseImage(&uImage);
+		cvReleaseImage(&dImage);
+
 		return true;
 	}
 	else

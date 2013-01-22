@@ -1,0 +1,30 @@
+material userBack
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture regionGuide.jpg
+			}
+		}
+	}
+}
+
+
+material userMat
+{
+	technique
+	{
+		pass
+		{
+			scene_blend alpha_blend
+			texture_unit
+			{
+				texture userOverview.png
+			}
+		}
+	}
+}
+
