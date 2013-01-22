@@ -294,7 +294,7 @@ bool BaseApplication::keyPressed( const OIS::KeyEvent &arg )
     {
         mTrayMgr->toggleAdvancedFrameStats();
     }
-    else if (arg.key == OIS::KC_G)   // toggle visibility of even rarer debugging details
+    else if (arg.key == OIS::KC_G)   // toggle visibility of even rarer  debugging details
     {
         if (mDetailsPanel->getTrayLocation() == OgreBites::TL_NONE)
         {

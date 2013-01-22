@@ -44,10 +44,10 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 				uPtr[fixed_i]=255;
 				dPtr[fixed_i]=pDepth[j*m_Width + fixed_i];
 
-				if	(dPtr[fixed_i]< minD)
-					minD=dPtr[fixed_i];
-				if	(dPtr[fixed_i]> maxD)
-					maxD=dPtr[fixed_i];
+				//if	(dPtr[fixed_i]< minD)
+				//	minD=dPtr[fixed_i];
+				//if	(dPtr[fixed_i]> maxD)
+				//	maxD=dPtr[fixed_i];
 
 			}		
 		}
@@ -79,24 +79,27 @@ bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID use
 
 	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
 	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth
-	showDepthImage();
 	//cvSet(dImage,depthMean,uImage);										 
-	//showDepthImage();
 	cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
-	showDepthImage();
+
 	cvNot(uImage,uImage);	
 	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
 	cvDilate(uImage,uImage,0,2);
-
 	return true;
+}
+Ogre::String windowName="Image";
+void mouseEvent(int evt, int x, int y, int flags, void* param){
+	HWND hw= (HWND)cvGetWindowHandle(windowName.c_str());
+	windowName="x: "+ StringConverter::toString(x) + " , y: " + StringConverter::toString(y) ;
+	SetWindowText(hw,(LPCTSTR)windowName.c_str());
+
 }
 
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
-	
+	xn::SkeletonCapability pUserSkel = ug->GetSkeletonCap();	
 	for (int i=0;i<16;i++)
 	{
-		xn::SkeletonCapability pUserSkel = ug->GetSkeletonCap();	
 		XnSkeletonJoint sJoint=jointIDs[i];
 		for (int j=0;j<i;j++)				//If joint is processed before, do not repeat it
 		{
@@ -112,14 +115,22 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 		int y_init=projPosition.Y;
 		int step=0;
 		int radius=0;
+		//cvShowImage(windowName.c_str(),uImage);
+		//cvSetMouseCallback(windowName.c_str(), mouseEvent, 0);
+		//cvWaitKey();
+
 		XnPoint3D endOfJoint=projPosition;
 		while( step<640)					//Slowly enlarge the joint sphere until it reaches the end of a bone in one direction.
 		{
+			unsigned char* iPtr=(unsigned char*)uImage->imageData+y_init*uImage->widthStep+x_init;
 			if (x_init-step>-1)
 			{
-				if( !(bool)cvGetReal2D(uImage,x_init-step,y_init) )
+
+				unsigned char tValue=*(iPtr-step);
+				if( !(bool)tValue )
 				{
 					endOfJoint.X-=(step-1);
+					endOfJoint.Z=cvGetReal2D(dImage,endOfJoint.X,endOfJoint.Y);
 					dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 					radius=abs(realPosition.position.X-endOfJoint.X);
 					break;
@@ -127,9 +138,11 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 			}
 			if (x_init+step<640)
 			{
-				if( !(bool)cvGetReal2D(uImage,x_init+step,y_init) )
+				unsigned char tValue=*(iPtr+step);
+				if(!(bool)tValue )
 				{
 					endOfJoint.X+=(step-1);
+					endOfJoint.Z=cvGetReal2D(dImage,endOfJoint.X,endOfJoint.Y);
 					dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 					radius=abs(realPosition.position.X-endOfJoint.X);
 					break;
@@ -139,9 +152,11 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 			{
 				if (y_init-step>-1)
 				{
-					if( !(bool)cvGetReal2D(uImage,x_init,y_init-step) )
+					unsigned char tValue=*(iPtr-step*uImage->widthStep);
+					if( !(bool)tValue )
 					{
 						endOfJoint.Y-=(step-1);
+						endOfJoint.Z=cvGetReal2D(dImage,endOfJoint.X,endOfJoint.Y);
 						dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 						radius=abs(realPosition.position.Y-endOfJoint.Y);
 						break;
@@ -149,15 +164,18 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 				}
 				if (y_init+step<480)
 				{
-					if( !(bool)cvGetReal2D(uImage,x_init,y_init+step) )
+					unsigned char tValue=*(iPtr+step*uImage->widthStep);
+					if( !(bool)tValue )
 					{
 						endOfJoint.Y+=(step-1);
+						endOfJoint.Z=cvGetReal2D(dImage,endOfJoint.X,endOfJoint.Y);
 						dpg->ConvertProjectiveToRealWorld(1,&endOfJoint,&endOfJoint);
 						radius=abs(realPosition.position.Y-endOfJoint.Y);
 						break;
 					}
 				}
 			}
+			step++;
 		}
 		sphereRadii[i]=radius;
 	}
@@ -168,15 +186,17 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	//Head Width Measurement
 	xn::SkeletonCapability pUserSkel = ug->GetSkeletonCap();	
 	XnSkeletonJointPosition head,neck,lShoulder,rShoulder,lFoot,rFoot,lHip,rHip,lElbow,rElbow,lHand,rHand,torso ;
+	XnPoint3D projHead;
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_HEAD, head);
-	int tempX=head.position.X;
-	int tempY=head.position.Y;
+	dpg->ConvertRealWorldToProjective(1,&head.position,&projHead);
 
-	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line horizontally until it reaches the borders of the head.
-	int leftX=++tempX;
+	int tempX,tempY,leftX,rightX;
+	unsigned char* iPtr=(unsigned char*)(uImage->imageData+(int)projHead.X + (int)projHead.Y*uImage->widthStep);
+	leftX=projHead.X-(iPtr-tempPtr)+1;
 	tempX=head.position.X;
 	while(cvGetReal2D(uImage,++tempX,tempY)>0);
-	int rightX=--tempX;
+	
+	rightX=--tempX;
 
 	XnPoint3D headPoints[2];
 	headPoints[0].X=leftX;
