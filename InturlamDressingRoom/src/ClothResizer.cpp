@@ -245,7 +245,7 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	XnPoint3D feet[2]={lFoot.position,rFoot.position};
 	float lowPointY=(feet[0].Y+feet[1].Y)/2;
 	XnPoint3D topPoint;
-	iPtr=headPtr;
+	iPtr=headPtr-=uImage->widthStep;	//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	topPoint.X=projHeadX;
 	topPoint.Y=projHeadY;
 	int topStep=0;
@@ -263,7 +263,6 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_HIP, lHip);
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_HIP, rHip);	
 	XnPoint3D hips[2]={lHip.position,rHip.position};
-	dpg->ConvertProjectiveToRealWorld(2,hips,hips);
 	bodyMeasurements[HIP_HEIGHT]=(abs(hips[0].Y-feet[0].Y)+abs(hips[1].Y-feet[1].Y))/2;
 
 	//Elbow-Fingertip Measurement
@@ -271,37 +270,68 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_ELBOW, rElbow);
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_HAND, lHand);
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_HAND, rHand);
+	XnPoint3D lArmBottom,lArmTop,rArmBottom,rArmTop,
+		lElbowReal=lElbow.position,
+		lHandReal=lHand.position,
+		rElbowReal=rElbow.position,
+		rHandReal=rHand.position;
 
-	XnPoint3D lArmBottom,lArmTop,rArmBottom,rArmTop;
-	int tempX=lElbow.position.X;
-	int tempY=lElbow.position.Y;
-	while(cvGetReal2D(uImage,tempX,--tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
-	lArmBottom.X=tempX;
-	lArmBottom.Y=++tempY;
-	tempX=lHand.position.X;
-	tempY=lHand.position.Y;
-	while(cvGetReal2D(uImage,tempX,++tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
-	lArmTop.X=tempX;
-	lArmTop.Y=--tempY;
-	tempX=rElbow.position.X;
-	tempY=rElbow.position.Y;
-	while(cvGetReal2D(uImage,tempX,--tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
-	rArmBottom.X=tempX;
-	rArmBottom.Y=++tempY;
-	tempX=rHand.position.X;
-	tempY=rHand.position.Y;
-	while(cvGetReal2D(uImage,tempX,++tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
-	rArmTop.X=tempX;
-	rArmTop.Y=--tempY;
 
-	XnPoint3D armPoints[4]={lArmBottom,lArmTop,rArmBottom,rArmTop};
-	dpg->ConvertProjectiveToRealWorld(4,armPoints,armPoints);
-	bodyMeasurements[ELBOW_FINGERTIP]=(abs(armPoints[1].Y-armPoints[0].Y)+abs(armPoints[3].Y-armPoints[2].Y))/2;
+	XnPoint3D armPoints[4]={lElbowReal,lHandReal,rElbowReal,rHandReal};
+	dpg->ConvertRealWorldToProjective(4,armPoints,armPoints);
+
+	
+	lArmTop.X=armPoints[1].X;
+	lArmTop.Y=armPoints[1].Y;
+	unsigned char* lHandPtr=(unsigned char*) uImage->imageData+(int)(lArmTop.Y-1)*uImage->widthStep+(int)lArmTop.X;//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	while(*lHandPtr>0  && (lArmTop.Y>0))
+	{
+		lHandPtr-=uImage->widthStep;
+		lArmTop.Y--;	
+	}	//Extend the line vertically until it reaches the borders of the arm.
+
+	lArmBottom.X=armPoints[0].X;
+	lArmBottom.Y=armPoints[0].Y;
+	unsigned char* lElbowPtr=(unsigned char*) uImage->imageData+(int)(lArmBottom.Y+1)*uImage->widthStep+(int)lArmBottom.X;//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	while(*lElbowPtr>0  && (lArmBottom.Y<639))
+	{
+		lElbowPtr+=uImage->widthStep;
+		lArmBottom.Y++;	
+	}	//Extend the line vertically until it reaches the borders of the arm.
+
+	rArmTop.X=armPoints[3].X;
+	rArmTop.Y=armPoints[3].Y;
+	unsigned char* rHandPtr=(unsigned char*) uImage->imageData+(int)(rArmTop.Y-1)*uImage->widthStep+(int)rArmTop.X;//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	while(*rHandPtr>0  && (rArmTop.Y>0))
+	{
+		rHandPtr-=uImage->widthStep;
+		rArmTop.Y--;	
+	}	//Extend the line vertically until it reaches the borders of the arm.
+
+
+	rArmBottom.X=armPoints[2].X;
+	rArmBottom.Y=armPoints[2].Y;
+	unsigned char* rElbowPtr=(unsigned char*) uImage->imageData+(int)(rArmBottom.Y+1)*uImage->widthStep+(int)rArmBottom.X;//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	while(*rElbowPtr>0  && (rArmBottom.Y<639))
+	{
+		rElbowPtr+=uImage->widthStep;
+		rArmBottom.Y++;	
+	}	//Extend the line vertically until it reaches the borders of the arm.
+
+	unsigned short* depthPtr=(unsigned short*) (dImage->imageData);
+
+
+	XnPoint3D armEndsReal[4]={lArmBottom,lArmTop,rArmBottom,rArmTop};
+	for (int i=0;i<4;i++)
+		armEndsReal[i].Z=*(depthPtr+(int)armEndsReal[i].Y*dImage->widthStep/2+(int)armEndsReal[i].X);
+
+	dpg->ConvertProjectiveToRealWorld(4,armEndsReal,armEndsReal);
+	bodyMeasurements[ELBOW_FINGERTIP]=(abs(armEndsReal[1].Y-armEndsReal[0].Y)+abs(armEndsReal[3].Y-armEndsReal[2].Y))/2;
 
 	//Wrist to Fingertip Measurement
 	XnPoint3D hands[2]={lHand.position,rHand.position};
 	dpg->ConvertProjectiveToRealWorld(2,hands,hands);
-	bodyMeasurements[WRIST_FINGERTIP]=(abs(armPoints[1].Y-hands[0].Y)+abs(armPoints[3].Y-hands[1].Y))/2;
+	bodyMeasurements[WRIST_FINGERTIP]=(abs(armEndsReal[1].Y-hands[0].Y)+abs(armEndsReal[3].Y-hands[1].Y))/2;
 
 	//SHoulder Width Measurement
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_SHOULDER, lShoulder);
@@ -313,8 +343,8 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	//Hip Width Measurement
 
 	XnPoint3D lEnd,rEnd;
-	tempX=lHip.position.X;
-	tempY=lHip.position.Y;
+	int tempX=lHip.position.X;
+	int tempY=lHip.position.Y;
 	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
 	lEnd.X=++tempX;
 	lEnd.Y=tempY;
