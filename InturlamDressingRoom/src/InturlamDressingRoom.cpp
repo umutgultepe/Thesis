@@ -677,7 +677,7 @@ void InturlamDressingRoom::createScene(void)
 	rootColliderNode->setVisible(false);
 
 	StringVector items;
-	items.push_back("i");
+	items.push_back("Passed Time");
 	items.push_back("j");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
@@ -779,6 +779,7 @@ void InturlamDressingRoom::updateVisualHuman()
 }
 
 PxReal timeStep=0;
+float initialDelay=0;
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	if (simulating)
@@ -796,16 +797,24 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
 			{
-				if (addFrame(&mKinect->m_DepthGenerator,&mKinect->m_UserGenerator,mKinect->activeUser))
+				if (initialDelay>0.2)
 				{
-					upperCloth->setUserID(mKinect->activeUser);
-					Ogre::Vector3 targetPos=upperCloth->updateMesh();
-					femaleBody->setUserID(mKinect->activeUser);
-					femaleBody->updateMesh();
-					updateVisualHuman();
-					lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
-					lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
-					updateCloth();
+					if (addFrame(&mKinect->m_DepthGenerator,&mKinect->m_UserGenerator,mKinect->activeUser))
+					{
+						upperCloth->setUserID(mKinect->activeUser);
+						Ogre::Vector3 targetPos=upperCloth->updateMesh();
+						femaleBody->setUserID(mKinect->activeUser);
+						femaleBody->updateMesh();
+						updateVisualHuman();
+						lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
+						lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+						updateCloth();
+					}
+				}
+				else
+				{
+					initialDelay+=evt.timeSinceLastFrame;		
+					help->setParamValue("Passed Time",StringConverter::toString(initialDelay));
 				}
 			}
 			else
