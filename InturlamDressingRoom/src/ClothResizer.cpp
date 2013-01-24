@@ -213,13 +213,13 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	int rightX=projHeadX;
 	int leftStep=0;
 	int rightStep=0;
-	while(*(--iPtr)>0 && (headPtr-iPtr)<=projHeadX)
+	while(*(--iPtr)>0 && 0<leftX)
 	{
 		leftX--;	//Extend the line horizontally until it reaches the borders of the head.
 		leftStep++;
 	}
 	iPtr=headPtr;
-	while(*(++iPtr)>0 && (iPtr-headPtr)<=(639-projHeadX))
+	while(*(++iPtr)>0 && rightX<639)
 	{
 		rightX++;
 		rightStep++;
@@ -329,31 +329,51 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	bodyMeasurements[ELBOW_FINGERTIP]=(abs(armEndsReal[1].Y-armEndsReal[0].Y)+abs(armEndsReal[3].Y-armEndsReal[2].Y))/2;
 
 	//Wrist to Fingertip Measurement
-	XnPoint3D hands[2]={lHand.position,rHand.position};
-	dpg->ConvertProjectiveToRealWorld(2,hands,hands);
-	bodyMeasurements[WRIST_FINGERTIP]=(abs(armEndsReal[1].Y-hands[0].Y)+abs(armEndsReal[3].Y-hands[1].Y))/2;
+	bodyMeasurements[WRIST_FINGERTIP]=(abs(armEndsReal[1].Y-lHandReal.Y)+abs(armEndsReal[3].Y-rHandReal.Y))/2;
 
 	//SHoulder Width Measurement
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_LEFT_SHOULDER, lShoulder);
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_RIGHT_SHOULDER, rShoulder);
 	XnPoint3D shoulders[2]={lShoulder.position,rShoulder.position};
-	dpg->ConvertProjectiveToRealWorld(2,shoulders,shoulders);
 	bodyMeasurements[SHOULDER_WIDTH]=abs(shoulders[0].X-shoulders[1].X);
 
 	//Hip Width Measurement
 
 	XnPoint3D lEnd,rEnd;
-	int tempX=lHip.position.X;
-	int tempY=lHip.position.Y;
-	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
-	lEnd.X=++tempX;
-	lEnd.Y=tempY;
+	XnPoint3D projHips[2]={lHip.position,rHip.position};
+	dpg->ConvertRealWorldToProjective(2,projHips,projHips);
 
-	tempX=rHip.position.X;
-	tempY=rHip.position.Y;
-	while(cvGetReal2D(uImage,++tempX,tempY)>0);	//Extend the line vertically until it reaches the borders of the arm.
-	rEnd.X=--tempX;
-	rEnd.Y=tempY;
+
+	unsigned char* lEndPtr=(unsigned char*) uImage->imageData+(int)projHips[0].Y*uImage->widthStep+(int)projHips[0].X;
+	leftX=projHips[0].X;
+	leftStep=0;
+	while(*(--lEndPtr)>0 && leftX>0)
+	{
+		leftX--;	//Extend the line horizontally until it reaches the borders of the head.
+		leftStep++;
+	}
+	lEnd.X=leftX;
+	lEnd.Y=projHips[0].Y;
+	unsigned short* lEndDepth=(unsigned short*) (dImage->imageData+(int)lEnd.Y*dImage->widthStep+(int)lEnd.X*2);
+	lEnd.Z=*lEndDepth;
+
+
+	
+
+	unsigned char* rEndPtr=(unsigned char*) uImage->imageData+(int)projHips[1].Y*uImage->widthStep+(int)projHips[1].X;
+	rightX=projHips[1].X;
+	rightStep=0;
+	while(*(++rEndPtr)>0 && rightX<639)
+	{
+		rightX++;	//Extend the line horizontally until it reaches the borders of the head.
+		rightStep++;
+	}
+	rEnd.X=rightX;
+	rEnd.Y=projHips[1].Y;
+	unsigned short* rEndDepth=(unsigned short*) (dImage->imageData+(int)rEnd.Y*dImage->widthStep+(int)rEnd.X*2);
+	rEnd.Z=*rEndDepth;
+
+		
 	XnPoint3D hipEnds[2]={lEnd,rEnd};
 	dpg->ConvertProjectiveToRealWorld(2,hipEnds,hipEnds);
 	bodyMeasurements[HIP_WIDTH]=abs(hipEnds[0].X-hipEnds[1].X);
@@ -361,7 +381,6 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	//Torso Height Measurement
 
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_TORSO, torso);
-	dpg->ConvertProjectiveToRealWorld(1,&torso.position,&torso.position);
 	bodyMeasurements[TORSO_HEIGHT]=abs(torso.position.Y-lowPointY);
 
 
