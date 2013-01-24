@@ -190,28 +190,30 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_HEAD, head);
 	dpg->ConvertRealWorldToProjective(1,&head.position,&projHead);
 
-	int tempX=head.position.X;
-	int tempY=head.position.Y;
-	while(cvGetReal2D(uImage,--tempX,tempY)>0);	//Extend the line horizontally until it reaches the borders of the head.
-	int leftX=++tempX;
-	tempX=head.position.X;
-	while(cvGetReal2D(uImage,++tempX,tempY)>0);
-	int rightX=--tempX;
-
+	int tempX=projHead.X;
+	int tempY=projHead.Y;
+	unsigned char* headPtr=(unsigned char*) uImage->imageData+tempY*uImage->widthStep+tempX;
+	unsigned char* iPtr=headPtr;
+	int leftX=tempX;
+	while(*--iPtr>0 && (headPtr-iPtr)<=tempX)
+		leftX--;	//Extend the line horizontally until it reaches the borders of the head.
+	int rightX=tempX;
+	iPtr=headPtr;
+	while(*++iPtr>0 && (iPtr-headPtr)<=(639-tempX))
+		rightX++;
 	XnPoint3D headPoints[2];
 	headPoints[0].X=leftX;
 	headPoints[0].Y=tempY;
+	headPoints[0].Z=cvGetReal2D(dImage,leftX,tempY);
 	headPoints[1].X=rightX;
 	headPoints[1].Y=tempY;
+	headPoints[2].Z=cvGetReal2D(dImage,rightX,tempY);
 	dpg->ConvertProjectiveToRealWorld(2,headPoints,headPoints);
 	bodyMeasurements[HEAD_WIDTH]=abs(headPoints[0].X-headPoints[1].X);
 
 	//Head Height Measurement
 	pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_NECK, neck);
-	XnPoint3D headNeckReal[2]={head.position,neck.position};	
-	dpg->ConvertProjectiveToRealWorld(2,headNeckReal,headNeckReal);
-	bodyMeasurements[HEAD_HEIGHT]=abs(headNeckReal[0].Y-headNeckReal[1].Y);
-
+	bodyMeasurements[HEAD_HEIGHT]=abs(head.position.Y-neck.position.Y);
 
 	//Body Height Measurement
 	
