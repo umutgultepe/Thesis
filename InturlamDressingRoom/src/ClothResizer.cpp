@@ -425,34 +425,35 @@ void outputDataToCSV()
 	
 	if (myfile->is_open())
 	{
-			*myfile<<"Spheres,";
+			*myfile<<"sep=\t\n";
+			*myfile<<"Spheres\t";
 			for (int i=0;i<16;i++)
-				*myfile<< Ogre::StringConverter::toString(i+1) +",";
+				*myfile<< Ogre::StringConverter::toString(i+1) +"\t";
 			*myfile<<"\n";
 			for (int j=0;j<29;j++)
 			{
-				*myfile<< Ogre::StringConverter::toString(j+1) +",";
+				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
 				for (int i=0;i<16;i++)
-					*myfile<< Ogre::StringConverter::toString(radiiBuffer[j][i]) +",";
+					*myfile<< Ogre::StringConverter::toString(radiiBuffer[j][i]) +"\t";
 				*myfile<<"\n";
 			}
 			*myfile<<"\n";
-			*myfile<< "Average,";
+			*myfile<< "Average\t";
 			for (int i=0;i<16;i++)
-					*myfile<< Ogre::StringConverter::toString(sphereRadii[i]) +",";
+					*myfile<< Ogre::StringConverter::toString(sphereRadii[i]) +"\t";
 			*myfile<<"\n";
-			*myfile<<"Body Sizes, Shoulder Width, Torso Height\n";
+			*myfile<<"Body Sizes\t Shoulder Width\t Torso Height\n";
 			for (int j=0;j<29;j++)
 			{
-				*myfile<< Ogre::StringConverter::toString(j+1) +",";
+				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
 				for (int i=0;i<2;i++)
-					*myfile<< Ogre::StringConverter::toString(bodySizeBuffer[j][i]) +",";
+					*myfile<< Ogre::StringConverter::toString(bodySizeBuffer[j][i]) +"\t";
 				*myfile<<"\n";
 			}
 			*myfile<<"\n";
-			*myfile<< "Average,";
-			*myfile<< Ogre::StringConverter::toString(estimatedShoulderWidth)+",";
-			*myfile<< Ogre::StringConverter::toString(estimatedTorsoHeight)+",";
+			*myfile<< "Average\t";
+			*myfile<< Ogre::StringConverter::toString(estimatedShoulderWidth)+"\t";
+			*myfile<< Ogre::StringConverter::toString(estimatedTorsoHeight)+"\t";
 			*myfile<<"\n";
 			myfile->close();
 	}
@@ -470,13 +471,11 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 				sphereRadii[j]+=radiiBuffer[i][j];
 			estimatedShoulderWidth+=bodySizeBuffer[i][0];
 			estimatedTorsoHeight+=bodySizeBuffer[i][1];
-			delete[] radiiBuffer[i];
-			delete[] bodySizeBuffer[i];
 		}
 		for (int i=0;i<16;i++)
-				sphereRadii[i]/=16;
-		estimatedShoulderWidth/=16;
-		estimatedTorsoHeight/=16;
+				sphereRadii[i]/=30;
+		estimatedShoulderWidth/=30;
+		estimatedTorsoHeight/=30;
 		outputDataToCSV();
 		for (int i=0;i<29;i++) //free the buffers
 		{
