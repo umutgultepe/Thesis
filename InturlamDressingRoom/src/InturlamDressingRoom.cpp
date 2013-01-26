@@ -19,6 +19,15 @@ http://code.google.com/p/ogreappwizards/
 #include "InturlamDressingRoom.h"
 #define Y_OFFSET 50
 #define SCALING_FACTOR 5
+#define MODEL_TORSO_HEIGHT 1180 //mm
+#define MODEL_SHOULDER_WIDTH 450 //mm
+float userWidthScale=1;
+float userHeightScale=1;
+extern float sphereRadii[];
+extern float estimatedShoulderWidth;
+extern float estimatedTorsoHeight;
+extern float estimatedBodyHeight;
+
 using namespace Ogre;
 
 int numberOfCapsules=0;
@@ -617,6 +626,8 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	clothRotation=none;
 	guyMoves=standing;
 }
+
+
 
 
 

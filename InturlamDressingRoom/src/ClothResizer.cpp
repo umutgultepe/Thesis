@@ -7,6 +7,11 @@ int gaussian_m=3,
 	gaussian_n=3,
 	gaussian_e=0.95;
 
+float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+float estimatedShoulderWidth=0;
+float estimatedTorsoHeight=0;
+float estimatedBodyHeight=0;
+
 IplImage *uImage,*dImage,*showImage;
 
 short minD=65536,maxD=0;

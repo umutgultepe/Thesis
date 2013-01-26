@@ -2,10 +2,7 @@
 #include "StdAfx.h"
 #include "HandTracker.h"
 #include "SkeletalMesh.h"
-static float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-static float estimatedShoulderWidth=0;
-static float estimatedTorsoHeight=0;
-static float estimatedBodyHeight=0;
+
 
 
 enum 
