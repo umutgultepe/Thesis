@@ -481,6 +481,8 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 		}
 		for (int i=0;i<16;i++)
 				sphereRadii[i]/=30;
+		for (int i=0;i<4;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
+				sphereRadii[i]/=2;
 		estimatedShoulderWidth/=30;
 		estimatedTorsoHeight/=30;
 		estimatedBodyHeight/=30;
@@ -490,6 +492,9 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 			delete[] radiiBuffer[i];
 			delete[] bodySizeBuffer[i];
 		}
+
+
+
 		//Do not forget to release Images to prevent memory leak
 		cvReleaseImage(&dImage);
 		cvReleaseImage(&uImage);

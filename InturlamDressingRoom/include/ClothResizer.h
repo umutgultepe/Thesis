@@ -30,7 +30,7 @@ enum
 
 static int processedFrameCount=0;
 static float bodyMeasurements[]={0,0,0,0,0,0,0,0,0};
-static float sleevelessProportions[]={3, 4.9 , 0.63, 1.22 , 3.0 , 15 };
+static float sleevelessProportions[]={3.1, 5.3 , 0.63, 1.26 , 3.3 , 16.9 };
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
