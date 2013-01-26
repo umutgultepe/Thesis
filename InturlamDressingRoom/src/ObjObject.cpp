@@ -657,7 +657,7 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 				SubMesh *subMesh = object->getSubMesh(curGroup->name+"_face_"+StringConverter::toString(i));
 				VertexData* vertexData =  subMesh->vertexData;
 				HardwareVertexBufferSharedPtr vBuf= vertexData->vertexBufferBinding->getBindings().at(0);
-				float* pVertex = static_cast<float*>(vBuf->lock(HardwareBuffer::HBL_DISCARD));
+				float* pVertex = static_cast<float*>(vBuf->lock(HardwareBuffer::HBL_NORMAL));
 				for(int k = curFaceGroup->firstIndice; k <=curFaceGroup->lastIndice; k++ ) {
 
 					for (int l=0;l<3;l++)
@@ -680,6 +680,7 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 							*pVertex++=0;
 						}
 						pVertex+=2;
+						//pVertex+=5;
 					}
 				}
 				vBuf->unlock();

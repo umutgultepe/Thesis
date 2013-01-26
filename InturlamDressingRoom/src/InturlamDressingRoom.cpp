@@ -829,7 +829,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 				}
 				else if (initialDelay>6)
 				{
-					
 					if (addFrame(&mKinect->m_DepthGenerator,&mKinect->m_UserGenerator,mKinect->activeUser))
 					{
 						calibrated=true;
