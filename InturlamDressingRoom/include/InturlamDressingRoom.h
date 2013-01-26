@@ -74,6 +74,7 @@ protected:
 	void createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNode* parentNode,int level=0);
 	void updateJoints(Ogre::Bone* bone,int level=0);
 	void updateVisualHuman();  
+	void createSimulation();
 	void setupHumanCollider();
 	void updateCollisionSpheres();
 	void updateVisualHumanOrientation();
@@ -90,7 +91,7 @@ protected:
 	SkeletalMesh* upperCloth;
 	
 	bool usingGPU;
-
+	bool simulationCreated;
 	ObjObject* lowerCloth;
 	PxFoundation* gFoundation;
 	PxProfileZoneManager* gManager;

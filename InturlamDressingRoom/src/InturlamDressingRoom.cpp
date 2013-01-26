@@ -42,6 +42,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 {
 	simulating=false;
 	firstStep=true;
+	simulationCreated=false;
 	gDefaultFilterShader=PxDefaultSimulationFilterShader;
 	gPhysicsSDK=0;
 	usingGPU=true;
@@ -627,36 +628,8 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	guyMoves=standing;
 }
 
-
-
-
-
-//-------------------------------------------------------------------------------------
-void InturlamDressingRoom::createScene(void)
+void InturlamDressingRoom::createSimulation()
 {
-
-	//Kinect And Stuff
-	SetupDepthMaterial();
-	mKinect=new KinectController(false);
-	mKinect->createRTT(mRoot,mTrayMgr);
-	Ogre::OverlayElement* mDepthPanel = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel","DepthPanel");
-	mDepthPanel->setMaterialName("DepthTextureMaterial");
-	mDepthPanel->setMetricsMode(Ogre::GMM_RELATIVE);
-	mDepthPanel->setWidth(0.25);
-	mDepthPanel->setHeight(0.25*480/640);
-	mDepthPanel->setHorizontalAlignment(GHA_RIGHT);
-	mDepthPanel->setVerticalAlignment(GVA_BOTTOM);
-	mDepthPanel->setLeft(-mDepthPanel->getWidth());
-	mDepthPanel->setTop(-mDepthPanel->getHeight());
-	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
-	mDepthPanel->show();
-
-	buildAxes();
-
-	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
-
-	Ogre::Light* l = mSceneMgr->createLight("MainLight");
-	l->setPosition(0,30,0);
 	clothHandle=mSceneMgr->getRootSceneNode()->createChildSceneNode();
 	clothNode=clothHandle->createChildSceneNode("ClothNode");
 	femaleNode=clothHandle->createChildSceneNode("FemaleHandle");
@@ -690,7 +663,36 @@ void InturlamDressingRoom::createScene(void)
 	//clothNode->setVisible(false);
 	//femaleNode->setVisible(false);
 	rootColliderNode->setVisible(false);
+	simulationCreated=true;
+}
 
+
+//-------------------------------------------------------------------------------------
+void InturlamDressingRoom::createScene(void)
+{
+
+	//Kinect And Stuff
+	SetupDepthMaterial();
+	mKinect=new KinectController(false);
+	mKinect->createRTT(mRoot,mTrayMgr);
+	Ogre::OverlayElement* mDepthPanel = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel","DepthPanel");
+	mDepthPanel->setMaterialName("DepthTextureMaterial");
+	mDepthPanel->setMetricsMode(Ogre::GMM_RELATIVE);
+	mDepthPanel->setWidth(0.25);
+	mDepthPanel->setHeight(0.25*480/640);
+	mDepthPanel->setHorizontalAlignment(GHA_RIGHT);
+	mDepthPanel->setVerticalAlignment(GVA_BOTTOM);
+	mDepthPanel->setLeft(-mDepthPanel->getWidth());
+	mDepthPanel->setTop(-mDepthPanel->getHeight());
+	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
+	mDepthPanel->show();
+
+	buildAxes();
+
+	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
+
+	Ogre::Light* l = mSceneMgr->createLight("MainLight");
+	l->setPosition(0,30,0);
 	StringVector items;
 	items.push_back("Passed Frames");
 	items.push_back("Calibration Time");
@@ -816,13 +818,13 @@ long long cal_end;
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	
-	if (simulating)
+	if (simulating && simulationCreated)
 	{
 		timeStep+=evt.timeSinceLastFrame;
 	}
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
-		if (simulating)
+		if (simulating && simulationCreated)
 		{
 			lowerCloth->updateWithPhysics(gScene,timeStep);
 			timeStep=0;
@@ -831,7 +833,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
 			{
-				if (calibrated)
+				if (calibrated && simulationCreated)
 				{
 					upperCloth->setUserID(mKinect->activeUser);
 					Ogre::Vector3 targetPos=upperCloth->updateMesh();
@@ -852,7 +854,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 						help->setParamValue("Calibration Time",StringConverter::toString(totalCalibrationTime));
 						help->setParamValue("Body Height",StringConverter::toString(estimatedBodyHeight));
 						help->setParamValue("Shoulder Width",StringConverter::toString(estimatedShoulderWidth));
-
+						createSimulation();
 					}
 				}
 				else
@@ -862,14 +864,14 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 					if (initialDelay>6) cal_start=milliseconds_now();
 				}
 			}
-			else
+			else if (simulationCreated)
 			{
 				femaleBody->resetBonesToInitialState();
 				upperCloth->resetBonesToInitialState();
 				updateVisualHuman();
 			}
 		}
-		else
+		else if (simulationCreated)
 		{
 			femaleBody->resetBonesToInitialState();
 			upperCloth->resetBonesToInitialState();
