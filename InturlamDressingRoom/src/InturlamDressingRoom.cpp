@@ -548,7 +548,8 @@ void InturlamDressingRoom::setupHumanCollider()
 			box_collider[i].pos.x=localPosition.x;
 			box_collider[i].pos.y=localPosition.y;
 			box_collider[i].pos.z=localPosition.z;
-			box_collider[i].radius=6.5;
+			//box_collider[i].radius=6.5;
+			box_collider[i].radius=2.1;
 		}
 	}
 
@@ -677,8 +678,8 @@ void InturlamDressingRoom::createScene(void)
 	rootColliderNode->setVisible(false);
 
 	StringVector items;
-	items.push_back("Passed Time");
-	items.push_back("j");
+	items.push_back("Passed Frames");
+	items.push_back("Calibration Time");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
     help->hide();
@@ -778,10 +779,28 @@ void InturlamDressingRoom::updateVisualHuman()
 
 }
 
+long long milliseconds_now() {
+    static LARGE_INTEGER s_frequency;
+    static BOOL s_use_qpc = QueryPerformanceFrequency(&s_frequency);
+    if (s_use_qpc) {
+        LARGE_INTEGER now;
+        QueryPerformanceCounter(&now);
+        return (1000LL * now.QuadPart) / s_frequency.QuadPart;
+    } else {
+        return GetTickCount();
+    }
+}
+
+
 PxReal timeStep=0;
-float initialDelay=0;
+int initialDelay=0;
+float totalCalibrationTime=0;
+bool calibrated=false;
+long long cal_start;
+long long cal_end;
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
+	
 	if (simulating)
 	{
 		timeStep+=evt.timeSinceLastFrame;
@@ -797,24 +816,33 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
 			{
-				if (initialDelay>0.2)
+				if (calibrated)
 				{
+					upperCloth->setUserID(mKinect->activeUser);
+					Ogre::Vector3 targetPos=upperCloth->updateMesh();
+					femaleBody->setUserID(mKinect->activeUser);
+					femaleBody->updateMesh();
+					updateVisualHuman();
+					lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
+					lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+					updateCloth();
+				}
+				else if (initialDelay>6)
+				{
+					
 					if (addFrame(&mKinect->m_DepthGenerator,&mKinect->m_UserGenerator,mKinect->activeUser))
 					{
-						upperCloth->setUserID(mKinect->activeUser);
-						Ogre::Vector3 targetPos=upperCloth->updateMesh();
-						femaleBody->setUserID(mKinect->activeUser);
-						femaleBody->updateMesh();
-						updateVisualHuman();
-						lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
-						lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
-						updateCloth();
+						calibrated=true;
+						cal_end=milliseconds_now();
+						totalCalibrationTime+=((float)cal_end-(float)cal_start)/1000;	
+						help->setParamValue("Calibration Time",StringConverter::toString(totalCalibrationTime));
 					}
 				}
 				else
 				{
-					initialDelay+=evt.timeSinceLastFrame;		
-					help->setParamValue("Passed Time",StringConverter::toString(initialDelay));
+					initialDelay+=1;	
+					help->setParamValue("Passed Frames",StringConverter::toString(initialDelay));
+					if (initialDelay>6) cal_start=milliseconds_now();
 				}
 			}
 			else

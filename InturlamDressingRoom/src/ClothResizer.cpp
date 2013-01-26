@@ -428,7 +428,7 @@ void outputDataToCSV()
 			*myfile<<"sep=\t\n";
 			*myfile<<"Spheres\t";
 			for (int i=0;i<16;i++)
-				*myfile<< Ogre::StringConverter::toString(i+1) +"\t";
+				*myfile<< jointStrings[i] +"\t";
 			*myfile<<"\n";
 			for (int j=0;j<29;j++)
 			{
@@ -461,9 +461,9 @@ void outputDataToCSV()
 
 bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //Data Collection for temporal Temporal Optimization
 {
-	if (!processFrame(dpg,ug,userID))
-		return false;
-	if (processedFrameCount==29)
+	if (processedFrameCount>29)
+		return true;
+	else if (processedFrameCount==29)
 	{
 		for (int i=0;i<29;i++) //last frame data is already in the actual registers
 		{
@@ -486,17 +486,20 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 		cvReleaseImage(&dImage);
 		cvReleaseImage(&uImage);
 		cvReleaseImage(&dImage);
-
+		processedFrameCount++;
 		return true;
 	}
 	else
 	{
-		radiiBuffer[processedFrameCount]=new float[16];
-		memcpy(radiiBuffer[processedFrameCount],sphereRadii,16*sizeof(float));
-		bodySizeBuffer[processedFrameCount]=new float[2];
-		bodySizeBuffer[processedFrameCount][0]=estimatedShoulderWidth;
-		bodySizeBuffer[processedFrameCount][1]=estimatedTorsoHeight;
-		processedFrameCount++;
+		if (processFrame(dpg,ug,userID))
+		{	
+			radiiBuffer[processedFrameCount]=new float[16];
+			memcpy(radiiBuffer[processedFrameCount],sphereRadii,16*sizeof(float));
+			bodySizeBuffer[processedFrameCount]=new float[2];
+			bodySizeBuffer[processedFrameCount][0]=estimatedShoulderWidth;
+			bodySizeBuffer[processedFrameCount][1]=estimatedTorsoHeight;
+			processedFrameCount++;
+		}
 		return false;
 	}
 }

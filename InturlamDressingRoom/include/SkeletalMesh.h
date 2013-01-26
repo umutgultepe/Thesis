@@ -42,6 +42,25 @@ static Ogre::String boneStrings[] =
 	"Foot.L",
 	"Foot.R",
 	"unknown"};
+
+static Ogre::String jointStrings[] = 
+	{"Torso",
+	"Torso",
+	"Torso",
+	"Torso",
+	"Shoulder.L",
+	"Shoulder.R",
+	"Elbow.L",
+	"Elbow.R",
+	"Hip.L",
+	"Hip.R",
+	"Knee.L",
+	"Knee.R",//AFter this bone, the others are not used in skeleton animation
+	"Hand.L",
+	"Hand.R",
+	"Foot.L",
+	"Foot.R",
+	"unknown"};
 static XnSkeletonJoint jointIDs[] = 
 {XN_SKEL_TORSO,
 XN_SKEL_WAIST,
