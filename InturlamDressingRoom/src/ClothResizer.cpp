@@ -393,7 +393,7 @@ void estimateParameters()
 	estimatedTorsoHeight=bodyMeasurements[TORSO_HEIGHT]+bodyMeasurements[HEAD_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_HEAD_HEIGHT]+bodyMeasurements[HIP_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_HIP_HEIGHT]+
 		+bodyMeasurements[ELBOW_FINGERTIP]*sleevelessProportions[TORSO_HEIGHT_TO_ELBOW_FINGERTIP]+bodyMeasurements[WRIST_FINGERTIP]*sleevelessProportions[TORSO_HEIGHT_TO_WRIST_FINGERTIP]+bodyMeasurements[BODY_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_BODY_HEIGHT];
 	estimatedTorsoHeight=estimatedTorsoHeight/6;
-
+	estimatedBodyHeight=estimatedTorsoHeight/sleevelessProportions[TORSO_HEIGHT_TO_BODY_HEIGHT];
 }
 
 bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
@@ -420,7 +420,7 @@ bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 
 void outputDataToCSV()
 {
-	std::ofstream*myfile=new std::ofstream("measurements.csv");
+	std::ofstream*myfile=new std::ofstream("..\\measurements.csv");
 
 	
 	if (myfile->is_open())
@@ -442,11 +442,11 @@ void outputDataToCSV()
 			for (int i=0;i<16;i++)
 					*myfile<< Ogre::StringConverter::toString(sphereRadii[i]) +"\t";
 			*myfile<<"\n";
-			*myfile<<"Body Sizes\t Shoulder Width\t Torso Height\n";
+			*myfile<<"Body Sizes\t Shoulder Width\t Torso Height\t Body Height\n";
 			for (int j=0;j<29;j++)
 			{
 				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
-				for (int i=0;i<2;i++)
+				for (int i=0;i<3;i++)
 					*myfile<< Ogre::StringConverter::toString(bodySizeBuffer[j][i]) +"\t";
 				*myfile<<"\n";
 			}
@@ -454,6 +454,7 @@ void outputDataToCSV()
 			*myfile<< "Average\t";
 			*myfile<< Ogre::StringConverter::toString(estimatedShoulderWidth)+"\t";
 			*myfile<< Ogre::StringConverter::toString(estimatedTorsoHeight)+"\t";
+			*myfile<< Ogre::StringConverter::toString(estimatedBodyHeight)+"\t";
 			*myfile<<"\n";
 			myfile->close();
 	}
@@ -471,11 +472,13 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 				sphereRadii[j]+=radiiBuffer[i][j];
 			estimatedShoulderWidth+=bodySizeBuffer[i][0];
 			estimatedTorsoHeight+=bodySizeBuffer[i][1];
+			estimatedBodyHeight+=bodySizeBuffer[i][2];
 		}
 		for (int i=0;i<16;i++)
 				sphereRadii[i]/=30;
 		estimatedShoulderWidth/=30;
 		estimatedTorsoHeight/=30;
+		estimatedBodyHeight/=30;
 		outputDataToCSV();
 		for (int i=0;i<29;i++) //free the buffers
 		{
@@ -495,9 +498,10 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 		{	
 			radiiBuffer[processedFrameCount]=new float[16];
 			memcpy(radiiBuffer[processedFrameCount],sphereRadii,16*sizeof(float));
-			bodySizeBuffer[processedFrameCount]=new float[2];
+			bodySizeBuffer[processedFrameCount]=new float[3];
 			bodySizeBuffer[processedFrameCount][0]=estimatedShoulderWidth;
 			bodySizeBuffer[processedFrameCount][1]=estimatedTorsoHeight;
+			bodySizeBuffer[processedFrameCount][2]=estimatedBodyHeight;
 			processedFrameCount++;
 		}
 		return false;

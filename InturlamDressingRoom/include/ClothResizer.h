@@ -5,6 +5,7 @@
 static float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 static float estimatedShoulderWidth=0;
 static float estimatedTorsoHeight=0;
+static float estimatedBodyHeight=0;
 
 
 enum 
@@ -30,21 +31,9 @@ enum
 	TORSO_HEIGHT_TO_WRIST_FINGERTIP=5,
 };
 
-
-
-
-
-
-
-
-
-
 static int processedFrameCount=0;
-
-
-
 static float bodyMeasurements[]={0,0,0,0,0,0,0,0,0};
-static float sleevelessProportions[]={3, 4.7 , 0.67, 1.18 , 2.36 , 4.73 };
+static float sleevelessProportions[]={3, 4.9 , 0.63, 1.22 , 3.0 , 15 };
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);

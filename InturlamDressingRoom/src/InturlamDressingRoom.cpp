@@ -680,6 +680,8 @@ void InturlamDressingRoom::createScene(void)
 	StringVector items;
 	items.push_back("Passed Frames");
 	items.push_back("Calibration Time");
+	items.push_back("Body Height");
+	items.push_back("Shoulder Width");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
     help->hide();
@@ -791,7 +793,6 @@ long long milliseconds_now() {
     }
 }
 
-
 PxReal timeStep=0;
 int initialDelay=0;
 float totalCalibrationTime=0;
@@ -835,6 +836,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 						cal_end=milliseconds_now();
 						totalCalibrationTime+=((float)cal_end-(float)cal_start)/1000;	
 						help->setParamValue("Calibration Time",StringConverter::toString(totalCalibrationTime));
+						help->setParamValue("Body Height",StringConverter::toString(estimatedBodyHeight));
+						help->setParamValue("Shoulder Width",StringConverter::toString(estimatedShoulderWidth));
+
 					}
 				}
 				else
