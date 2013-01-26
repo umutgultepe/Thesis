@@ -23,6 +23,7 @@ http://code.google.com/p/ogreappwizards/
 #define MODEL_SHOULDER_WIDTH 450 //mm
 float userWidthScale=1;
 float userHeightScale=1;
+float userDepthScale=1;
 extern float sphereRadii[];
 extern float estimatedShoulderWidth;
 extern float estimatedTorsoHeight;
@@ -559,8 +560,8 @@ void InturlamDressingRoom::setupHumanCollider()
 			box_collider[i].pos.x=localPosition.x;
 			box_collider[i].pos.y=localPosition.y;
 			box_collider[i].pos.z=localPosition.z;
-			//box_collider[i].radius=6.5;
-			box_collider[i].radius=2.1;
+			//box_collider[i].radius=2.1;
+			box_collider[i].radius=sphereRadii[i]/40;
 		}
 	}
 
@@ -630,6 +631,11 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 
 void InturlamDressingRoom::createSimulation()
 {
+	userHeightScale=SCALING_FACTOR*estimatedTorsoHeight/MODEL_TORSO_HEIGHT;
+	userWidthScale=SCALING_FACTOR*estimatedShoulderWidth/MODEL_SHOULDER_WIDTH;
+	userDepthScale=(userHeightScale+userWidthScale)/2;
+
+
 	clothHandle=mSceneMgr->getRootSceneNode()->createChildSceneNode();
 	clothNode=clothHandle->createChildSceneNode("ClothNode");
 	femaleNode=clothHandle->createChildSceneNode("FemaleHandle");
@@ -657,8 +663,8 @@ void InturlamDressingRoom::createSimulation()
 	//setupHumanCollider();
 	createCloth(initializePhysics());
 
-	femaleNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	clothNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
+	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
+	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
 	//femaleNode->setVisible(false);
