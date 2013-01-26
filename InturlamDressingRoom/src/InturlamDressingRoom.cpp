@@ -18,6 +18,7 @@ http://code.google.com/p/ogreappwizards/
 #include "StdAfx.h"
 #include "InturlamDressingRoom.h"
 #define Y_OFFSET 50
+#define SCALING_FACTOR 5
 using namespace Ogre;
 
 int numberOfCapsules=0;
@@ -535,7 +536,7 @@ void InturlamDressingRoom::setupHumanCollider()
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+"Node";
 		Ogre::SceneNode* gNode=mSceneMgr->getSceneNode(nodeName);
-		Vector3 localPosition=gNode->_getDerivedPosition()*Vector3(10,10,10)+Vector3(0,Y_OFFSET,0);
+		Vector3 localPosition=gNode->_getDerivedPosition()*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,Y_OFFSET,0);
 		if (boneStrings[i]=="Root")
 		{
 			box_collider[i].pos.x=localPosition.x;
@@ -617,6 +618,8 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	guyMoves=standing;
 }
 
+
+
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
@@ -658,7 +661,7 @@ void InturlamDressingRoom::createScene(void)
 	//lowerCloth=new ObjObject("../debug/SundressReduced/lowerAssigned.obj");
 	//lowerCloth=new ObjObject("../debug/SundressReduced/Sundress_reduced4x.obj");
 
-	lowerCloth->Scale(10);
+	lowerCloth->Scale(SCALING_FACTOR);
 	float vec3[3]={0,Y_OFFSET,0};
 	lowerCloth->translate(vec3);
 
@@ -670,9 +673,9 @@ void InturlamDressingRoom::createScene(void)
 	//setupHumanCollider();
 	createCloth(initializePhysics());
 
-	femaleNode->scale(10,10,10);
-	clothNode->scale(10,10,10);
-	rootColliderNode->scale(10,10,10);
+	femaleNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
+	clothNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
+	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
 	//femaleNode->setVisible(false);
 	rootColliderNode->setVisible(false);
@@ -824,7 +827,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 					femaleBody->setUserID(mKinect->activeUser);
 					femaleBody->updateMesh();
 					updateVisualHuman();
-					lowerClothHandle->setPosition(targetPos*Vector3(10,10,10)+Vector3(0,-Y_OFFSET,0));
+					lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
 					lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
 					updateCloth();
 				}
