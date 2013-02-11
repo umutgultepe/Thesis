@@ -494,8 +494,12 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 		}
 		for (int i=0;i<16;i++)
 				sphereRadii[i]/=30;
+		for (int i=10;i<12;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
+				sphereRadii[i]*=1.4;
+		for (int i=8;i<10;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
+				sphereRadii[i]*=1.2;
 		for (int i=0;i<4;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
-				sphereRadii[i]/=2;
+				sphereRadii[i]*=0.75;
 		estimatedShoulderWidth/=30;
 		estimatedTorsoHeight/=30;
 		estimatedBodyHeight/=30;

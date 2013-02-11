@@ -51,9 +51,12 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
 {
-	gScene->release();
-	delete [] box_collider;
-	gPhysicsSDK->release();
+	
+	if (box_collider)
+		delete [] box_collider;
+	if (gPhysicsSDK)
+		gPhysicsSDK->release();
+		gScene->release();
 
 }
 void SetupDepthMaterial()
@@ -693,7 +696,7 @@ void InturlamDressingRoom::createScene(void)
 	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
 
-	buildAxes();
+	//buildAxes();
 
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
 
