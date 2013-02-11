@@ -3,8 +3,8 @@
 
 float* radiiBuffer[29];
 float* bodySizeBuffer[29];
-int gaussian_m=3,
-	gaussian_n=3,
+int gaussian_m=5,
+	gaussian_n=5,
 	gaussian_e=0.95;
 
 float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -67,10 +67,17 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 	return true;
 }
 
-void showDepthImage()
+void viewImage(IplImage* img)
 {
-	cvConvertImage(dImage,showImage);
-	cvShowImage("Image", showImage);
+	if (img->depth == IPL_DEPTH_16U)
+	{
+		cvConvertImage(img,showImage);
+		cvShowImage("Image", showImage);
+	}
+	else
+	{
+		cvShowImage("Image",img);
+	}
 	cvWaitKey();
 	cvDestroyAllWindows();
 }
@@ -80,16 +87,22 @@ bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID use
 
 	if (!convertMetaDataToIpl( dpg,ug,userID))	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
 		return false;
-
-
-	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
-	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth
-	cvSet(dImage,depthMean,uImage);										 
-	//cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
-
-	cvNot(uImage,uImage);	
 	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
 	cvDilate(uImage,uImage,0,2);
+	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
+	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth									 
+	//viewImage(dImage);
+	cvSet(dImage,depthMean,uImage);										 
+	IplImage* tempImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+	cvConvertScale(dImage,tempImage,1.0/256);
+	cvSmooth(tempImage,tempImage,CV_GAUSSIAN,7);//Perform Gaussian Smoothing, depth map is optimized.
+	cvConvert(tempImage,dImage);
+	cvScale(dImage,dImage,256);
+	cvSet(dImage,cvScalar(0),uImage);	
+	//viewImage(dImage);
+	//cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
+	cvNot(uImage,uImage);
+	cvReleaseImage(&tempImage);
 	return true;
 }
 Ogre::String windowName="Image";
