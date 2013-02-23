@@ -21,6 +21,8 @@ http://code.google.com/p/ogreappwizards/
 #define SCALING_FACTOR 5
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
+#define USE_KINECT 1
+#define USE_USER_SCALING 1
 float userWidthScale=1;
 float userHeightScale=1;
 float userDepthScale=1;
@@ -634,10 +636,15 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 
 void InturlamDressingRoom::createSimulation()
 {
+	#if USE_USER_SCALING
 	userHeightScale=SCALING_FACTOR*estimatedTorsoHeight/MODEL_TORSO_HEIGHT;
 	userWidthScale=SCALING_FACTOR*estimatedShoulderWidth/MODEL_SHOULDER_WIDTH;
 	userDepthScale=(userHeightScale+userWidthScale)/2;
-
+	#else
+	userHeightScale=SCALING_FACTOR;
+	userWidthScale=SCALING_FACTOR;
+	userDepthScale=SCALING_FACTOR;
+	#endif
 
 	clothHandle=mSceneMgr->getRootSceneNode()->createChildSceneNode();
 	clothNode=clothHandle->createChildSceneNode("ClothNode");
@@ -686,8 +693,7 @@ void InturlamDressingRoom::createSimulation()
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
-
-	//Kinect And Stuff
+	#if USE_KINECT//Kinect And Stuff
 	SetupDepthMaterial();
 	mKinect=new KinectController(false);
 	mKinect->createRTT(mRoot,mTrayMgr);
@@ -702,11 +708,11 @@ void InturlamDressingRoom::createScene(void)
 	mDepthPanel->setTop(-mDepthPanel->getHeight());
 	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
-
+	#else
+	createSimulation();
+	#endif
 	buildAxes();
-
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
-
 	Ogre::Light* l = mSceneMgr->createLight("MainLight");
 	l->setPosition(0,30,0);
 	StringVector items;
@@ -833,11 +839,9 @@ long long cal_start;
 long long cal_end;
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
-	
+	#if USE_KINECT
 	if (simulating && simulationCreated)
-	{
 		timeStep+=evt.timeSinceLastFrame;
-	}
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
 		if (simulating && simulationCreated)
@@ -894,6 +898,10 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			updateVisualHuman();
 		}
 	}
+	#else
+	timeStep=evt.timeSinceLastFrame;
+	lowerCloth->updateWithPhysics(gScene,timeStep);
+	#endif
 	return BaseApplication::frameRenderingQueued(evt);
 }
 
