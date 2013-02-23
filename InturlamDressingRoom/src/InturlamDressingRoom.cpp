@@ -646,18 +646,25 @@ void InturlamDressingRoom::createSimulation()
 
 	upperCloth=new SkeletalMesh(mKinect);
 	femaleBody=new SkeletalMesh(mKinect);
-	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Top.mesh");
+
+	//Sundress
 	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Cloth_Shape.003.mesh");
 	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
-
 	lowerCloth=new ObjObject("../../media/wavefront/lowerDressv2.obj");
-	//lowerCloth=new ObjObject("../debug/SundressReduced/lowerAssigned.obj");
-	//lowerCloth=new ObjObject("../debug/SundressReduced/Sundress_reduced4x.obj");
+
+	//Kimono
+	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","kimono.mesh");
+	//femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+	//lowerCloth=new ObjObject("../../media/wavefront/lowerKimono.obj");
+
+	//Tunic-Vest
+	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
+	//femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+	//lowerCloth=new ObjObject("../../media/wavefront/lowerTunic.obj");
 
 	lowerCloth->Scale(SCALING_FACTOR);
 	float vec3[3]={0,Y_OFFSET,0};
 	lowerCloth->translate(vec3);
-
 	lowerCloth->loadIntoOgre(mSceneMgr, "lowerClothMesh");
 	Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity("LowerCloth","lowerClothMesh");
 	lowerClothHandle->attachObject(lowerClothEntity);
@@ -696,7 +703,7 @@ void InturlamDressingRoom::createScene(void)
 	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
 
-	//buildAxes();
+	buildAxes();
 
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
 
