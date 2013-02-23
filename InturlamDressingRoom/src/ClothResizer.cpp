@@ -6,8 +6,30 @@ float* bodySizeBuffer[29];
 int gaussian_m=5,
 	gaussian_n=5,
 	gaussian_e=0.95;
-
+#if USE_USER_SCALING
 float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+#else
+float sphereRadii[] = 
+	{3,//BONE_STOMACH
+	3,//BONE_WAIST
+	3,//BONE_ROOT
+	3,//BONE_CHEST
+	3,//BONE_LEFT_HUMERUS
+	1,//BONE_LEFT_ULNA
+	3,//BONE_RIGHT_HUMERUS
+	1,//BONE_RIGHT_ULNA
+	2.5,//BONE_LEFT_THIGH
+	2.5,//BONE_RIGHT_THIGH
+	2,//BONE_LEFT_CALF
+	2,//BONE_RIGHT_CALF
+	1,//BONE_LEFT_HAND
+	1,//BONE_RIGHT_HAND
+	1,//BONE_LEFT_FOOT
+	1//BONE_RIGHT_FOOT
+};
+	
+
+#endif
 float estimatedShoulderWidth=0;
 float estimatedTorsoHeight=0;
 float estimatedBodyHeight=0;

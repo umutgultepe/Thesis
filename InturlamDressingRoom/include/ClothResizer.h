@@ -3,8 +3,10 @@
 #include "HandTracker.h"
 #include "SkeletalMesh.h"
 
-
-
+#ifndef USE_KINECT
+#define USE_KINECT 0
+#define USE_USER_SCALING 0
+#endif
 enum 
 {
 	TORSO_HEIGHT=0,

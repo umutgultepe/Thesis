@@ -21,8 +21,7 @@ http://code.google.com/p/ogreappwizards/
 #define SCALING_FACTOR 5
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
-#define USE_KINECT 0
-#define USE_USER_SCALING 0
+
 float userWidthScale=1;
 float userHeightScale=1;
 float userDepthScale=1;
@@ -568,7 +567,11 @@ void InturlamDressingRoom::setupHumanCollider()
 			box_collider[i].pos.y=localPosition.y;
 			box_collider[i].pos.z=localPosition.z;
 			//box_collider[i].radius=2.1;
-			box_collider[i].radius=sphereRadii[i]/40;
+#if USE_USER_SCALING
+			box_collider[i].radius=sphereRadii[i] /40;
+#else
+			box_collider[i].radius=sphereRadii[i];
+#endif
 		}
 	}
 
@@ -901,8 +904,11 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}
 	}
 	#else
-	timeStep=evt.timeSinceLastFrame;
-	lowerCloth->updateWithPhysics(gScene,timeStep);
+	if (simulating)
+	{
+		timeStep=evt.timeSinceLastFrame;
+		lowerCloth->updateWithPhysics(gScene,timeStep);
+	}
 	#endif
 	return BaseApplication::frameRenderingQueued(evt);
 }
