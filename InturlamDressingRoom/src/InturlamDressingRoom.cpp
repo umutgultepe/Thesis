@@ -42,7 +42,7 @@ std::vector<Ogre::SceneNode*> ListedNodes;
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::InturlamDressingRoom(void)
 {
-	simulating=false;
+	simulating=true;
 	firstStep=true;
 	simulationCreated=false;
 	gDefaultFilterShader=PxDefaultSimulationFilterShader;
@@ -346,6 +346,16 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 	return cNode;
 }
 
+int getBoneIndex(Ogre::String boneName)
+{
+	for (int i=0;i<16;i++)
+	{
+		if (boneStrings[i]==boneName)
+			return i;
+	}
+	return -1;
+}
+
 const physx::PxU32 pairInd[]={	0,1,
 	0,3,
 	3,4,
@@ -401,7 +411,9 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 			Ogre::Vector3 childLocalPosition=childBone->getPosition();
 			Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
 			Ogre::SceneNode* boneNode=parentNode->createChildSceneNode(limbName + " Node");
-			Ogre::SceneNode* childJointNode=createLimb(limbName,childBone->getName()+"Node",0.2,childLocalPosition,0.1,boneNode,childBone->getInheritOrientation(),bone->getOrientation());
+			float startRadius=sphereRadii[getBoneIndex(bone->getName())]/SCALING_FACTOR;
+			float endRadius = sphereRadii[getBoneIndex(childBone->getName())]/SCALING_FACTOR;
+			Ogre::SceneNode* childJointNode=createLimb(limbName,childBone->getName()+"Node",startRadius,childLocalPosition,endRadius,boneNode,childBone->getInheritOrientation(),bone->getOrientation());
 			createSphereAndCapsule(childBone,childJointNode,level+1);
 		}
 		parentNode->setInheritOrientation(bone->getInheritOrientation());
@@ -682,15 +694,14 @@ void InturlamDressingRoom::createSimulation()
 	lowerClothHandle->attachObject(lowerClothEntity);
 
 	createVisualHuman();
-	//setupHumanCollider();
 	createCloth(initializePhysics());
 
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
-	//femaleNode->setVisible(false);
-	rootColliderNode->setVisible(false);
+	femaleNode->setVisible(false);
+	//rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
