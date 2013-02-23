@@ -21,8 +21,8 @@ http://code.google.com/p/ogreappwizards/
 #define SCALING_FACTOR 5
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
-#define USE_KINECT 1
-#define USE_USER_SCALING 1
+#define USE_KINECT 0
+#define USE_USER_SCALING 0
 float userWidthScale=1;
 float userHeightScale=1;
 float userDepthScale=1;
@@ -56,9 +56,11 @@ InturlamDressingRoom::~InturlamDressingRoom(void)
 	
 	if (box_collider)
 		delete [] box_collider;
+	if (gScene)
+		gScene->release();
 	if (gPhysicsSDK)
 		gPhysicsSDK->release();
-		gScene->release();
+
 
 }
 void SetupDepthMaterial()
