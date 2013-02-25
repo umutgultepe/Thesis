@@ -41,6 +41,10 @@ static Ogre::String boneStrings[] =
 	"Hand.R",
 	"Foot.L",
 	"Foot.R",
+	"LegExtensionDown.L",
+	"LegExtensionDown.R",
+	"LegExtensionUp.L",
+	"LegExtensionUp.R",
 	"unknown"};
 
 static Ogre::String jointStrings[] = 

@@ -348,12 +348,12 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 
 int getBoneIndex(Ogre::String boneName)
 {
-	for (int i=0;i<16;i++)
+	for (int i=0;i<20;i++)
 	{
 		if (boneStrings[i]==boneName)
 			return i;
 	}
-	return -1;
+	return 20;
 }
 
 const physx::PxU32 pairInd[]={	0,1,
@@ -371,7 +371,9 @@ const physx::PxU32 pairInd[]={	0,1,
 	8,10,
 	10,14,
 	0,4,
-	0,5};
+	0,5,
+	16,18,
+	17,19};
 
 float radius_modifier=1;
 
@@ -549,21 +551,21 @@ const physx::PxU32 pairIndHang[]={1,3,
 	10,11,
 	11,12,
 	13,14,
-	14,15,
-	16,17};
+	14,16,
+	15,17};
 
 void InturlamDressingRoom::setupHumanCollider()
 {
 	//PxClothCollisionData* cd= new PxClothCollisionData;
 	col_data.setToDefault();
 
-	box_collider=new physx::PxClothCollisionSphere[16];
+	box_collider=new physx::PxClothCollisionSphere[20];
 
-
-	for (int i=0;i<16;i++)
+	Ogre::String NodeAppend="Node";
+	for (int i=0;i<20;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
-		Ogre::String nodeName=boneStrings[i]+"Node";
+		Ogre::String nodeName=boneStrings[i]+NodeAppend;
 		Ogre::SceneNode* gNode=mSceneMgr->getSceneNode(nodeName);
 		Vector3 localPosition=gNode->_getDerivedPosition()*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,Y_OFFSET,0);
 		if (boneStrings[i]=="Root")
@@ -582,15 +584,15 @@ void InturlamDressingRoom::setupHumanCollider()
 #if USE_USER_SCALING
 			box_collider[i].radius=sphereRadii[i] /40;
 #else
-			box_collider[i].radius=sphereRadii[i];
+			box_collider[i].radius=sphereRadii[i]*2;
 #endif
 		}
 	}
 
 
 	col_data.spheres=box_collider;
-	col_data.numSpheres=16;
-	col_data.numPairs=16;
+	col_data.numSpheres=20;
+	col_data.numPairs=18;
 	col_data.pairIndexBuffer=pairInd;
 
 }
@@ -700,8 +702,8 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
-	femaleNode->setVisible(false);
-	//rootColliderNode->setVisible(false);
+	//femaleNode->setVisible(false);
+	rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
@@ -724,9 +726,11 @@ void InturlamDressingRoom::createScene(void)
 	mDepthPanel->setTop(-mDepthPanel->getHeight());
 	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
-	#else
+	#endif
+	#if USE_USER_SCALING == 0
 	createSimulation();
 	#endif
+
 	buildAxes();
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
 	Ogre::Light* l = mSceneMgr->createLight("MainLight");
@@ -748,7 +752,7 @@ void InturlamDressingRoom::updateCollisionSpheres()
 
 	//clothHandle->setScale(Ogre::Vector3(1));
 
-	for (int i=0;i<16;i++)
+	for (int i=0;i<20;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+"Node";
@@ -869,6 +873,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
 			{
+				#if USE_USER_SCALING
 				if (calibrated && simulationCreated)
 				{
 					upperCloth->setUserID(mKinect->activeUser);
@@ -899,6 +904,16 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 					help->setParamValue("Passed Frames",StringConverter::toString(initialDelay));
 					if (initialDelay>6) cal_start=milliseconds_now();
 				}
+				#else
+				upperCloth->setUserID(mKinect->activeUser);
+				Ogre::Vector3 targetPos=upperCloth->updateMesh();
+				femaleBody->setUserID(mKinect->activeUser);
+				femaleBody->updateMesh();
+				updateVisualHuman();
+				lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
+				lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+				updateCloth();
+				#endif
 			}
 			else if (simulationCreated)
 			{
