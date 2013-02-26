@@ -381,7 +381,9 @@ const physx::PxU32 pairInd[]={
 	20,22,
 	17,19,
 	19,21,
-	21,23};
+	21,23,
+	10,22,//Knee-to-Hip-Extend
+	11,23};
 
 float radius_modifier=1;
 
@@ -389,29 +391,6 @@ float radius_modifier=1;
 
 void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNode* parentNode,int level)
 {
-	//if (bone->numChildren()>0 && level<11)
-	//{
-	//	Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
-	//	while(childIterator.hasMoreElements())
-	//	{
-	//		Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
-	//		Ogre::Vector3 childLocalPosition=childBone->getPosition();
-	//		Ogre::Vector3 childPosition=bone->convertLocalToWorldPosition(childLocalPosition);
-	//		Ogre::Vector3 worldOffset=childPosition-bonePosition;
-	//		Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
-	//		Ogre::SceneNode* boneNode=parentNode->createChildSceneNode(limbName + " node");
-	//		Ogre::SceneNode* childJointNode=createLimb(limbName,childBone->getName()+"node",0.2,worldOffset,0.1,boneNode,childBone->getInheritOrientation(),childBone->getOrientation());
-	//		createSphereAndCapsule(childBone,childJointNode,childPosition,level+1);
-	//	}
-	//	parentNode->setInheritOrientation(bone->getInheritOrientation());
-	////	parentNode->setOrientation(bone->getOrientation());
-	//}
-	//else
-	//{	  
-	//	 Entity* endPart=mSceneMgr->createEntity(bone->getName()+"Sphere","sphere_r0.3");
-	//	  parentNode->attachObject(endPart);
-	//}
-
 	if (bone->numChildren()>0 && level<7)
 	{
 		Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
@@ -433,8 +412,6 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 		Entity* endPart=mSceneMgr->createEntity(bone->getName()+"Sphere","sphere_r0.12");
 		parentNode->attachObject(endPart);
 	}
-
-
 }
 
 void InturlamDressingRoom::createVisualHuman()
@@ -444,8 +421,6 @@ void InturlamDressingRoom::createVisualHuman()
 	Ogre::Bone* RootBone=femaleBody->getSkeleton()->getBone("Root");
 	rootColliderNode=clothHandle->createChildSceneNode("RootNode");
 	createSphereAndCapsule(RootBone,rootColliderNode);
-
-
 }
 
 PxSceneDesc InturlamDressingRoom::initializePhysics()
@@ -600,7 +575,7 @@ void InturlamDressingRoom::setupHumanCollider()
 
 	col_data.spheres=box_collider;
 	col_data.numSpheres=COLLISION_SPHERE_COUNT;
-	col_data.numPairs=22;
+	col_data.numPairs=24;
 	col_data.pairIndexBuffer=pairInd;
 
 }
@@ -710,8 +685,8 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
-	femaleNode->setVisible(false);
-	//rootColliderNode->setVisible(false);
+	//femaleNode->setVisible(false);
+	rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
