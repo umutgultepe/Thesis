@@ -82,6 +82,7 @@ protected:
 	KinectController* mKinect;
 	PxSceneDesc initializePhysics();
 	 void createCloth(PxSceneDesc sceneDesc);
+	 void updateAcceleration(PxVec3 add);
 	 void processMoves();
 	 void updateCloth();
 	 moveDirection clothDirection;

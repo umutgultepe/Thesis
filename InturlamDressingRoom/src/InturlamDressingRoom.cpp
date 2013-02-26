@@ -21,10 +21,13 @@ http://code.google.com/p/ogreappwizards/
 #define SCALING_FACTOR 5
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
+#define COLLISION_SPHERE_COUNT 24
+
 
 float userWidthScale=1;
 float userHeightScale=1;
 float userDepthScale=1;
+
 extern float sphereRadii[];
 extern float estimatedShoulderWidth;
 extern float estimatedTorsoHeight;
@@ -348,15 +351,16 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 
 int getBoneIndex(Ogre::String boneName)
 {
-	for (int i=0;i<20;i++)
+	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
 		if (boneStrings[i]==boneName)
 			return i;
 	}
-	return 20;
+	return COLLISION_SPHERE_COUNT;
 }
 
-const physx::PxU32 pairInd[]={	0,1,
+const physx::PxU32 pairInd[]={	
+	0,1,
 	0,3,
 	3,4,
 	4,6,
@@ -373,7 +377,11 @@ const physx::PxU32 pairInd[]={	0,1,
 	0,4,
 	0,5,
 	16,18,
-	17,19};
+	18,20,
+	20,22,
+	17,19,
+	19,21,
+	21,23};
 
 float radius_modifier=1;
 
@@ -422,7 +430,7 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 	}
 	else
 	{	  
-		Entity* endPart=mSceneMgr->createEntity(bone->getName()+"Sphere","sphere_r0.3");
+		Entity* endPart=mSceneMgr->createEntity(bone->getName()+"Sphere","sphere_r0.12");
 		parentNode->attachObject(endPart);
 	}
 
@@ -432,7 +440,7 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 void InturlamDressingRoom::createVisualHuman()
 {
 	int mirror=1;
-	createSphere(0.3);
+	createSphere(0.12);
 	Ogre::Bone* RootBone=femaleBody->getSkeleton()->getBone("Root");
 	rootColliderNode=clothHandle->createChildSceneNode("RootNode");
 	createSphereAndCapsule(RootBone,rootColliderNode);
@@ -559,10 +567,10 @@ void InturlamDressingRoom::setupHumanCollider()
 	//PxClothCollisionData* cd= new PxClothCollisionData;
 	col_data.setToDefault();
 
-	box_collider=new physx::PxClothCollisionSphere[20];
+	box_collider=new physx::PxClothCollisionSphere[COLLISION_SPHERE_COUNT];
 
 	Ogre::String NodeAppend="Node";
-	for (int i=0;i<20;i++)
+	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+NodeAppend;
@@ -584,15 +592,15 @@ void InturlamDressingRoom::setupHumanCollider()
 #if USE_USER_SCALING
 			box_collider[i].radius=sphereRadii[i] /40;
 #else
-			box_collider[i].radius=sphereRadii[i]*2;
+			box_collider[i].radius=sphereRadii[i];
 #endif
 		}
 	}
 
 
 	col_data.spheres=box_collider;
-	col_data.numSpheres=20;
-	col_data.numPairs=18;
+	col_data.numSpheres=COLLISION_SPHERE_COUNT;
+	col_data.numPairs=22;
 	col_data.pairIndexBuffer=pairInd;
 
 }
@@ -702,8 +710,8 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
-	//femaleNode->setVisible(false);
-	rootColliderNode->setVisible(false);
+	femaleNode->setVisible(false);
+	//rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
@@ -752,7 +760,7 @@ void InturlamDressingRoom::updateCollisionSpheres()
 
 	//clothHandle->setScale(Ogre::Vector3(1));
 
-	for (int i=0;i<20;i++)
+	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+"Node";
@@ -939,6 +947,16 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	return BaseApplication::frameRenderingQueued(evt);
 }
 
+
+PxVec3 acceleration=PxVec3(0);
+void InturlamDressingRoom::updateAcceleration(PxVec3 add)
+{
+	acceleration+=add;
+	cloth->setExternalAcceleration(acceleration);
+}
+
+
+
 bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 {
 	if (arg.key==OIS::KC_SPACE)
@@ -993,59 +1011,34 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,0,1);
 		clothDirection=moveDirection::forward;
-		//		 cloth->setExternalAcceleration(PxVec3(0,0,1));
+		updateAcceleration(PxVec3(0,0,1));
 
 	}
-	else if (arg.key==OIS::KC_NUMPAD5)
+	else if (arg.key==OIS::KC_NUMPAD2)
 	{
 		clothDirection=moveDirection::backward;
-		//cloth->setExternalAcceleration(PxVec3(0,0,-1));
+		updateAcceleration(PxVec3(0,0,-1));
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,0,-1);
 	}
 	else if (arg.key==OIS::KC_NUMPAD6)
 	{
 		clothDirection=moveDirection::right;
-		//cloth->setExternalAcceleration(PxVec3(1,0,0));
+		updateAcceleration(PxVec3(1,0,0));
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,1,0);
 	}
 	else if (arg.key==OIS::KC_NUMPAD4)
 	{
 		clothDirection=moveDirection::left;
-		//cloth->setExternalAcceleration(PxVec3(-1,0,0));
+		updateAcceleration(PxVec3(-1,0,0));
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,-1,0);
 	}
-	else if (arg.key==OIS::KC_NUMPAD9)
+	else if (arg.key==OIS::KC_NUMPAD5)
 	{
 
-		clothRotation=clockwise;
-
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(1,0,0);
-	}
-	else if (arg.key==OIS::KC_NUMPAD7)
-	{
-		clothRotation=counterclockwise;
-
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(-1,0,0);
-	}
-	else if (arg.key==OIS::KC_NUMPAD3)
-	{
-
-		guyMoves=gforward;
-
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(1,0,0);
-	}
-	else if (arg.key==OIS::KC_NUMPAD1)
-	{
-		guyMoves=gbackward;
-
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(-1,0,0);
+		updateAcceleration(-acceleration);
 	}
 
 

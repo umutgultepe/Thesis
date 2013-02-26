@@ -8,7 +8,7 @@ int gaussian_m=5,
 	gaussian_e=0.95;
 #if USE_USER_SCALING
 float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0//Additional
-						,0,0,0,0};
+						,0,0,0,0,0,0};
 #else
 float sphereRadii[] = 
 	{1.3525,//BONE_STOMACH
@@ -27,10 +27,14 @@ float sphereRadii[] =
 	0.42,//BONE_RIGHT_HAND
 	0.6,//BONE_LEFT_FOOT
 	0.6,//BONE_RIGHT_FOOT
-	0.67,//BONE_LE1.L
-	0.67,//BONE_LE1.R
-	0.6575,//BONE_LE2.L
-	0.6575,//BONE_LE2.R
+	1.825,//BONE_LE1.L
+	1.825,//BONE_LE1.R
+	2.1275,//BONE_LE2.L
+	2.1275,//BONE_LE2.R
+	2.3525,//BONE_LEH.L
+	2.3525,//BONE_LEH.R
+	2.2675,//BONE_LEH2.L
+	2.2675,//BONE_LEH2.R
 	0.01
 };
 	
