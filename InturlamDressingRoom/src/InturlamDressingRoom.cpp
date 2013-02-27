@@ -50,7 +50,9 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	simulationCreated=false;
 	gDefaultFilterShader=PxDefaultSimulationFilterShader;
 	gPhysicsSDK=0;
+	gScene=0;
 	usingGPU=true;
+	lowerCloth=0;
 }
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
@@ -656,33 +658,37 @@ void InturlamDressingRoom::createSimulation()
 	upperCloth=new SkeletalMesh(mKinect);
 	femaleBody=new SkeletalMesh(mKinect);
 
-	//Sundress
-	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Cloth_Shape.003.mesh");
 	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
-	lowerCloth=new ObjObject("../../media/wavefront/lowerDressv2.obj");
 
+	//Sundress
+	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Cloth_Shape.003.mesh");
+	//lowerCloth=new ObjObject("../../media/wavefront/lowerDressv2.obj");
+
+	//Jeans and Suit
+	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","BlueJeans.mesh");
+	Ogre::MaterialPtr jeans=Ogre::MaterialManager::getSingleton().getByName("Jeans");
+	jeans->setCullingMode(Ogre::CullingMode::CULL_NONE);
 	//Kimono
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","kimono.mesh");
-	//femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerKimono.obj");
 
 	//Tunic-Vest
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
-	//femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerTunic.obj");
 
-	lowerCloth->Scale(SCALING_FACTOR);
-	float vec3[3]={0,Y_OFFSET,0};
-	lowerCloth->translate(vec3);
-	lowerCloth->loadIntoOgre(mSceneMgr, "lowerClothMesh");
-	Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity("LowerCloth","lowerClothMesh");
-	lowerClothHandle->attachObject(lowerClothEntity);
-
 	createVisualHuman();
-	createCloth(initializePhysics());
-
-	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
+	if (lowerCloth)
+	{
+		lowerCloth->Scale(SCALING_FACTOR);
+		float vec3[3]={0,Y_OFFSET,0};
+		lowerCloth->translate(vec3);
+		lowerCloth->loadIntoOgre(mSceneMgr, "lowerClothMesh");
+		Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity("LowerCloth","lowerClothMesh");
+		lowerClothHandle->attachObject(lowerClothEntity);
+		createCloth(initializePhysics());
+	}
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
+	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
 	//clothNode->setVisible(false);
 	//femaleNode->setVisible(false);
@@ -847,7 +853,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		timeStep+=evt.timeSinceLastFrame;
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
-		if (simulating && simulationCreated)
+		if (simulating && simulationCreated && lowerCloth)
 		{
 			lowerCloth->updateWithPhysics(gScene,timeStep);
 			timeStep=0;
@@ -893,9 +899,12 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 				femaleBody->setUserID(mKinect->activeUser);
 				femaleBody->updateMesh();
 				updateVisualHuman();
-				lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
-				lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
-				updateCloth();
+				if (lowerCloth)
+				{
+					lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
+					lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+					updateCloth();
+				}
 				#endif
 			}
 			else if (simulationCreated)
@@ -913,7 +922,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}
 	}
 	#else
-	if (simulating)
+	if (simulating && lowerCloth)
 	{
 		timeStep=evt.timeSinceLastFrame;
 		lowerCloth->updateWithPhysics(gScene,timeStep);
