@@ -665,9 +665,13 @@ void InturlamDressingRoom::createSimulation()
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerDressv2.obj");
 
 	//Jeans and Suit
-	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","BlueJeans.mesh");
-	Ogre::MaterialPtr jeans=Ogre::MaterialManager::getSingleton().getByName("Jeans");
-	jeans->setCullingMode(Ogre::CullingMode::CULL_NONE);
+	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","BlueJeans.mesh");
+	//Ogre::MaterialPtr jeans=Ogre::MaterialManager::getSingleton().getByName("Jeans");
+	//jeans->setCullingMode(Ogre::CullingMode::CULL_NONE);
+
+	//Flight Suit
+	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","FlightSuit.mesh");
+
 	//Kimono
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","kimono.mesh");
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerKimono.obj");
