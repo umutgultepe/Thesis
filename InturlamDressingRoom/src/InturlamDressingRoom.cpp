@@ -616,7 +616,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		bendCfg.stiffness = 1;
 		bendCfg.stretchStiffness = 0.50;
 		bendCfg.stretchLimit=0.60;
-		cloth->setSolverFrequency(60);
+		cloth->setSolverFrequency(30);
 
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
@@ -665,12 +665,12 @@ void InturlamDressingRoom::createSimulation()
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerDressv2.obj");
 
 	//Jeans and Suit
-	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","BlueJeans.mesh");
-	Ogre::MaterialPtr jeans=Ogre::MaterialManager::getSingleton().getByName("Jeans");
-	jeans->setCullingMode(Ogre::CullingMode::CULL_NONE);
+	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","BlueJeans.mesh");
+	//Ogre::MaterialPtr jeans=Ogre::MaterialManager::getSingleton().getByName("Jeans");
+	//jeans->setCullingMode(Ogre::CullingMode::CULL_NONE);
 
 	//Flight Suit
-	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","FlightSuit.mesh");
+	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","FlightSuit.mesh");
 
 	//Kimono
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","kimono.mesh");
@@ -857,11 +857,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		timeStep+=evt.timeSinceLastFrame;
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
-		if (simulating && simulationCreated && lowerCloth)
-		{
-			lowerCloth->updateWithPhysics(gScene,timeStep);
-			timeStep=0;
-		}
 		if (mKinect->isUserActive())
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
@@ -923,6 +918,11 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			femaleBody->resetBonesToInitialState();
 			upperCloth->resetBonesToInitialState();
 			updateVisualHuman();
+		}
+		if (simulating && simulationCreated && lowerCloth)
+		{
+			lowerCloth->updateWithPhysics(gScene,timeStep);
+			timeStep=0;
 		}
 	}
 	#else
@@ -1028,8 +1028,6 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 
 		updateAcceleration(-acceleration);
 	}
-
-
 	return BaseApplication::keyPressed(arg);
 }
 
