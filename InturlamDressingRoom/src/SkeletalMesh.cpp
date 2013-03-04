@@ -80,6 +80,11 @@ void SkeletalMesh::resetBonesToInitialState()
 		
 }
 
+void SkeletalMesh::setVisible(bool visibleOrNot)
+{
+	Mesh->setVisible(visibleOrNot);
+}
+
 Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::SceneNode* parentNode,Ogre::String entityName,Ogre::String meshName)
 {
 	Mesh=g_SceneManager->createEntity(entityName,meshName);

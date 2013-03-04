@@ -49,6 +49,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	firstStep=true;
 	simulationCreated=false;
 	gDefaultFilterShader=PxDefaultSimulationFilterShader;
+	currentClothIndex=INITIAL_CLOTH_INDEX;
 	gPhysicsSDK=0;
 	gScene=0;
 	usingGPU=true;
@@ -427,99 +428,107 @@ void InturlamDressingRoom::createVisualHuman()
 
 PxSceneDesc InturlamDressingRoom::initializePhysics()
 {
-
-	gFoundation=PxCreateFoundation(PX_PHYSICS_VERSION, gDefaultAllocatorCallback, gDefaultErrorCallback);
-	if (!gFoundation)
-	{
-		MessageBox( NULL,"PxCreateFoundation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-		exit(0);
-	}
-
-
-	gManager=&PxProfileZoneManager::createProfileZoneManager(gFoundation);
-	if (!gManager)
-	{
-		MessageBox( NULL,"Profile Zone Manager Creation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-		exit(0);
-	}
-
-	pxtask::CudaContextManagerDesc cudaContextManagerDesc;
-	pxtask::CudaContextManager* mCudaContextManager = pxtask::createCudaContextManager(*gFoundation,cudaContextManagerDesc,gManager);
-
-	if( mCudaContextManager )
-	{
-		if( !mCudaContextManager->contextIsValid() )
-		{
-			mCudaContextManager->release();
-			mCudaContextManager = NULL;
-		}
-	}
-
-	gPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*gFoundation,PxTolerancesScale(),true,gManager);
-
-	if(gPhysicsSDK == NULL)	
-	{
-		MessageBox( NULL,"Error creating PhysX3 device!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-		exit(0);
-	}
-
-	if(!PxInitExtensions(*gPhysicsSDK))
-		cerr<< "PxInitExtensions failed!" <<endl;
-
-
-	PxSceneDesc	sceneDesc(gPhysicsSDK->getTolerancesScale());
-	sceneDesc.gravity=PxVec3(0.0f, -9.8f, 0.0f);
-
-	if(!sceneDesc.cpuDispatcher) {
-		PxDefaultCpuDispatcher* mCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
-		if(!mCpuDispatcher)
-			cerr<<"PxDefaultCpuDispatcherCreate failed!"<<endl;
-		sceneDesc.cpuDispatcher = mCpuDispatcher;
-	} 
-
-	if (!sceneDesc.gpuDispatcher && mCudaContextManager )
-	{
-		printf("gpu dispatcher done!\n");
-		sceneDesc.gpuDispatcher = mCudaContextManager->getGpuDispatcher();
-	}
-
-
-	if(!sceneDesc.filterShader)
-		sceneDesc.filterShader  = gDefaultFilterShader;
-
-	gScene = gPhysicsSDK->createScene(sceneDesc);
-
-
 	if (!gScene)
-		cerr<<"createScene failed!"<<endl;
+	{
+		gFoundation=PxCreateFoundation(PX_PHYSICS_VERSION, gDefaultAllocatorCallback, gDefaultErrorCallback);
+		if (!gFoundation)
+		{
+			MessageBox( NULL,"PxCreateFoundation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			exit(0);
+		}
+
+
+		gManager=&PxProfileZoneManager::createProfileZoneManager(gFoundation);
+		if (!gManager)
+		{
+			MessageBox( NULL,"Profile Zone Manager Creation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			exit(0);
+		}
+
+		pxtask::CudaContextManagerDesc cudaContextManagerDesc;
+		pxtask::CudaContextManager* mCudaContextManager = pxtask::createCudaContextManager(*gFoundation,cudaContextManagerDesc,gManager);
+
+		if( mCudaContextManager )
+		{
+			if( !mCudaContextManager->contextIsValid() )
+			{
+				mCudaContextManager->release();
+				mCudaContextManager = NULL;
+			}
+		}
+
+		gPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*gFoundation,PxTolerancesScale(),true,gManager);
+
+		if(gPhysicsSDK == NULL)	
+		{
+			MessageBox( NULL,"Error creating PhysX3 device!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			exit(0);
+		}
+
+		if(!PxInitExtensions(*gPhysicsSDK))
+			cerr<< "PxInitExtensions failed!" <<endl;
+
+
+		PxSceneDesc	sceneDesc(gPhysicsSDK->getTolerancesScale());
+		sceneDesc.gravity=PxVec3(0.0f, -9.8f, 0.0f);
+
+		if(!sceneDesc.cpuDispatcher) {
+			PxDefaultCpuDispatcher* mCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
+			if(!mCpuDispatcher)
+				cerr<<"PxDefaultCpuDispatcherCreate failed!"<<endl;
+			sceneDesc.cpuDispatcher = mCpuDispatcher;
+		} 
+
+		if (!sceneDesc.gpuDispatcher && mCudaContextManager )
+		{
+			printf("gpu dispatcher done!\n");
+			sceneDesc.gpuDispatcher = mCudaContextManager->getGpuDispatcher();
+		}
+
+
+		if(!sceneDesc.filterShader)
+			sceneDesc.filterShader  = gDefaultFilterShader;
+
+		gScene = gPhysicsSDK->createScene(sceneDesc);
+
+		gSceneDesc=&sceneDesc;
+
+		if (!gScene)
+			cerr<<"createScene failed!"<<endl;
 
 
 
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eSCALE,				 1.0);
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES,	1.0f);
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eDEFORMABLE_MESH, 1.0f);
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eDEFORMABLE_SELFCOLLISIONS, 1.0f);
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.0f);
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eDEFORMABLE_SHAPES, 1.0f);
+		//gScene->setVisualizationParameter(PxVisualizationParameter::eSCALE,				 1.0);
+		//gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES,	1.0f);
+		//gScene->setVisualizationParameter(PxVisualizationParameter::eDEFORMABLE_MESH, 1.0f);
+		//gScene->setVisualizationParameter(PxVisualizationParameter::eDEFORMABLE_SELFCOLLISIONS, 1.0f);
+		//gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_DYNAMIC, 1.0f);
+		//gScene->setVisualizationParameter(PxVisualizationParameter::eDEFORMABLE_SHAPES, 1.0f);
 
-	PxMaterial* mMaterial = gPhysicsSDK->createMaterial(0.5,0.5,0.5);
+		PxMaterial* mMaterial = gPhysicsSDK->createMaterial(0.5,0.5,0.5);
 
-	//Create actors 
-	//1) Create ground plane
-	PxReal d = 0.0f;	 
-	PxTransform pose = PxTransform(PxVec3(0.0f, 0.0f, 0.0f),PxQuat(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f)));
+		//Create actors 
+		//1) Create ground plane
+		PxReal d = 0.0f;	 
+		PxTransform pose = PxTransform(PxVec3(0.0f, 0.0f, 0.0f),PxQuat(PxHalfPi, PxVec3(0.0f, 0.0f, 1.0f)));
 
-	PxRigidStatic* plane = gPhysicsSDK->createRigidStatic(pose);
-	if (!plane)
-		cerr<<"create plane failed!"<<endl;
+		PxRigidStatic* plane = gPhysicsSDK->createRigidStatic(pose);
+		if (!plane)
+			cerr<<"create plane failed!"<<endl;
 
-	PxShape* shape = plane->createShape(PxPlaneGeometry(), *mMaterial);
-	if (!shape)
-		cerr<<"create shape failed!"<<endl;
-	gScene->addActor(*plane);
+		PxShape* shape = plane->createShape(PxPlaneGeometry(), *mMaterial);
+		if (!shape)
+			cerr<<"create shape failed!"<<endl;
+		gScene->addActor(*plane);
 
-	return sceneDesc;
+		return sceneDesc;
+	}
+	else
+		return *gSceneDesc;
+		
 }
+
+bool collider_set_up=false;
 
 const physx::PxU32 pairIndHang[]={1,3,
 	0,1,
@@ -580,6 +589,8 @@ void InturlamDressingRoom::setupHumanCollider()
 	col_data.numPairs=24;
 	col_data.pairIndexBuffer=pairInd;
 
+	collider_set_up=true;
+
 }
 PxVec3 clothPos;
 PxVec3 wind;
@@ -587,6 +598,16 @@ float curScale=1;
 
 void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 {
+	
+	if (lowerCloth->cloth)
+	{
+		gScene->removeActor(*lowerCloth->cloth);
+		lowerCloth->cloth->release();
+		lowerCloth->cloth=0;
+		lowerCloth->Reset();
+	}
+
+
 	PxClothMeshDesc meshDesc;
 	meshDesc.setToDefault();
 	clothPos.x=0;
@@ -602,13 +623,13 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	meshDesc=*lowerCloth->loadPhysxCloth(&sceneDesc,fabric,points,&tr,gPhysicsSDK);
 
 	bool withHanger=true;
-
-	setupHumanCollider();	
+	if (!collider_set_up)
+		setupHumanCollider();	
 	//col_data.setToDefault();
 
 	if (col_data.isValid())
 		cloth = gPhysicsSDK->createCloth(tr,*fabric,points,col_data, PxClothFlag::eSWEPT_CONTACT |  PxClothFlag::eGPU );
-
+	
 
 	if(cloth) {	
 		PxClothPhaseSolverConfig bendCfg;	 
@@ -616,7 +637,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		bendCfg.stiffness = 1;
 		bendCfg.stretchStiffness = 0.50;
 		bendCfg.stretchLimit=0.60;
-		cloth->setSolverFrequency(60);
+		cloth->setSolverFrequency(30);
 
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
@@ -655,38 +676,11 @@ void InturlamDressingRoom::createSimulation()
 	femaleNode=clothHandle->createChildSceneNode("FemaleHandle");
 	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
 
-	upperCloth=new SkeletalMesh(mKinect);
 	femaleBody=new SkeletalMesh(mKinect);
-
 	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
-
-	//Sundress
-	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Cloth_Shape.003.mesh");
-	//lowerCloth=new ObjObject("../../media/wavefront/lowerDressv2.obj");
-
-	//Jeans and Suit
-	upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","BlueJeans.mesh");
-	Ogre::MaterialPtr jeans=Ogre::MaterialManager::getSingleton().getByName("Jeans");
-	jeans->setCullingMode(Ogre::CullingMode::CULL_NONE);
-	//Kimono
-	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","kimono.mesh");
-	//lowerCloth=new ObjObject("../../media/wavefront/lowerKimono.obj");
-
-	//Tunic-Vest
-	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
-	//lowerCloth=new ObjObject("../../media/wavefront/lowerTunic.obj");
-
 	createVisualHuman();
-	if (lowerCloth)
-	{
-		lowerCloth->Scale(SCALING_FACTOR);
-		float vec3[3]={0,Y_OFFSET,0};
-		lowerCloth->translate(vec3);
-		lowerCloth->loadIntoOgre(mSceneMgr, "lowerClothMesh");
-		Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity("LowerCloth","lowerClothMesh");
-		lowerClothHandle->attachObject(lowerClothEntity);
-		createCloth(initializePhysics());
-	}
+	loadClothes();
+	
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
@@ -696,6 +690,88 @@ void InturlamDressingRoom::createSimulation()
 	simulationCreated=true;
 }
 
+
+void InturlamDressingRoom::loadClothes()
+{
+
+	for (int i=0;i<CLOTH_COUNT;i++)
+	{
+		SkeletalMesh* tMesh=new SkeletalMesh(mKinect);
+		Ogre::String baseName=skeletonClothNames[i].substr(0,skeletonClothNames[i].length()-5);
+		tMesh->loadMesh(mSceneMgr,clothNode,baseName+"_skel",skeletonClothNames[i]);
+		tMesh->setVisible(false);
+		skeletalMeshes.push_back(tMesh);
+
+		if (PhysicsClothNames[i]!="")
+		{
+			ObjObject* tPhys= new ObjObject(PhysicsClothNames[i].c_str());
+			tPhys->Scale(SCALING_FACTOR);
+			float vec3[3]={0,Y_OFFSET,0};
+			tPhys->translate(vec3);
+			Ogre::String meshName=baseName+"_free_mesh";
+			Ogre::String entityName=baseName+"_free";
+			tPhys->saveInitial();
+			tPhys->loadIntoOgre(mSceneMgr, meshName);
+			Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity(entityName,meshName);
+			lowerClothHandle->attachObject(lowerClothEntity);
+			tPhys->entity=lowerClothEntity;
+			tPhys->setVisible(false);
+			physicsMeshes.push_back(tPhys);
+		}
+		else
+			physicsMeshes.push_back(0);
+
+	}
+	upperCloth=skeletalMeshes.at(currentClothIndex);
+	upperCloth->setVisible(true);
+	initializePhysics();
+	if (physicsMeshes.at(currentClothIndex))
+	{
+		lowerCloth=physicsMeshes.at(currentClothIndex);
+		lowerCloth->setVisible(true);
+		createCloth(initializePhysics());
+	}
+
+	//Tunic-Vest
+	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
+	//lowerCloth=new ObjObject("../../media/wavefront/lowerTunic.obj");
+}
+
+bool justCalibrated=true;
+
+void InturlamDressingRoom::changeCloth(int index)
+{
+	if (currentClothIndex!=index)
+	{
+		upperCloth->setVisible(false);
+		SkeletalMesh* oldCloth=upperCloth;
+		upperCloth=skeletalMeshes.at(index);
+		upperCloth->setVisible(true);
+		if (!oldCloth->bNewUser && upperCloth->bNewUser)
+		{
+			upperCloth->origTorsoPos=oldCloth->origTorsoPos;
+			upperCloth->bNewUser=false;
+		}
+
+		if (physicsMeshes.at(currentClothIndex))
+		{
+			lowerCloth->setVisible(false);
+		}
+		if (physicsMeshes.at(index))
+		{
+			lowerCloth=physicsMeshes.at(index);
+			lowerCloth->setVisible(true);
+			createCloth(initializePhysics());
+		}
+		else
+		{
+			lowerCloth=0;
+		}
+		justCalibrated=true;
+		currentClothIndex=index;
+	}
+
+}
 
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
@@ -733,7 +809,7 @@ void InturlamDressingRoom::createScene(void)
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
     help->hide();
 }
-bool justCalibrated=true;
+
 
 void InturlamDressingRoom::updateCollisionSpheres()
 {
@@ -846,6 +922,10 @@ float totalCalibrationTime=0;
 bool calibrated=false;
 long long cal_start;
 long long cal_end;
+
+
+
+
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	#if USE_KINECT
@@ -853,11 +933,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		timeStep+=evt.timeSinceLastFrame;
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
-		if (simulating && simulationCreated && lowerCloth)
-		{
-			lowerCloth->updateWithPhysics(gScene,timeStep);
-			timeStep=0;
-		}
 		if (mKinect->isUserActive())
 		{
 			if (mKinect->m_UserGenerator.GetSkeletonCap().IsCalibrated(mKinect->activeUser))
@@ -895,9 +970,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 				}
 				#else
 				upperCloth->setUserID(mKinect->activeUser);
-				Ogre::Vector3 targetPos=upperCloth->updateMesh();
+				upperCloth->updateMesh();
 				femaleBody->setUserID(mKinect->activeUser);
-				femaleBody->updateMesh();
+				Ogre::Vector3 targetPos=femaleBody->updateMesh();
 				updateVisualHuman();
 				if (lowerCloth)
 				{
@@ -919,6 +994,11 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			femaleBody->resetBonesToInitialState();
 			upperCloth->resetBonesToInitialState();
 			updateVisualHuman();
+		}
+		if (simulating && simulationCreated && lowerCloth)
+		{
+			lowerCloth->updateWithPhysics(gScene,timeStep);
+			timeStep=0;
 		}
 	}
 	#else
@@ -1024,8 +1104,23 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 
 		updateAcceleration(-acceleration);
 	}
+	else if (arg.key==OIS::KC_1)
+	{
+		changeCloth(0);
+	}
+	else if (arg.key==OIS::KC_2)
+	{
+		changeCloth(1);
+	}
+	else if (arg.key==OIS::KC_3)
+	{
 
-
+		changeCloth(2);
+	}
+	else if (arg.key==OIS::KC_4)
+	{
+		changeCloth(3);
+	}
 	return BaseApplication::keyPressed(arg);
 }
 

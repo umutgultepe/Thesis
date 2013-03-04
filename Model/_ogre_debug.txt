@@ -1,0 +1,20 @@
+17:02:09: Creating resource group General
+17:02:09: Creating resource group Internal
+17:02:09: Creating resource group Autodetect
+17:02:09: Registering ResourceManager for type Mesh
+17:02:09: Registering ResourceManager for type Material
+17:02:09: Registering ResourceManager for type Skeleton
+17:02:09: XMLSkeletonSerializer: reading XML data from C:\Users\UmutGultepe\Desktop\Model\flight-suit\FlightSuit.skeleton.xml...
+17:02:09: XMLSkeletonSerializer: Reading Bones name...
+17:02:09: XMLSkeletonSerializer: Reading Hierarchy data...
+17:02:09: XMLSkeletonSerializer: Reading Bones data...
+17:02:09: XMLSkeletonSerializer: Reading Animations data...
+17:02:09: XMLSkeletonSerializer: Finished. Running SkeletonSerializer...
+17:02:09: Exporting bones..
+17:02:09: Bones exported.
+17:02:09: Exporting animations, count=1
+17:02:09: Exporting animation: my_animation
+17:02:09: Animation exported.
+17:02:09: Unregistering ResourceManager for type Skeleton
+17:02:09: Unregistering ResourceManager for type Material
+17:02:09: Unregistering ResourceManager for type Mesh

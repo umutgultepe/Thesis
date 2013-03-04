@@ -164,35 +164,15 @@ using namespace std;
 	scaleFactor=scaleFactor*scaleRatio;
  }
 
-  void ObjObject::Reset()
+ void ObjObject::Reset()
  {
-	//for(int i=0;i<vertexCount;i++)
-	//{
-	//	for (int j=0;j<3;j++)
-	//		verticeCoordinates.at(i)[j]=initialVerticeCoordinates.at(i)[j];
-	//}
-	//
-	////cloth->get
-	//physx::PxClothParticle* parts=new physx::PxClothParticle[vertexCount];
-
-	//for(int i=0;i<vertexCount;i++)
-	//{
-	//	for (int j=0;j<3;j++)
-	//	{
-	//		verticeCoordinates.at(i)[j]=initialVerticeCoordinates.at(i)[j];
-	//		
-	//	}
-	//	parts[i].pos.x=initialVerticeCoordinates.at(i)[0];
-	//	parts[i].pos.y=initialVerticeCoordinates.at(i)[1];
-	//	parts[i].pos.z=initialVerticeCoordinates.at(i)[2];
-	//	if (i<300)
-	//		parts[i].invWeight=0;
-	//	else
-	//		parts[i].invWeight=1;
-
-	//}
-	//cloth->setParticles(parts);
-
+	for (int i=0;i<vertexCount;i++)
+		memcpy(verticeCoordinates.at(i),initialVerticeCoordinates.at(i),3*sizeof(float));
+	if (normalCount>0)
+	{
+		for (int i=0;i<normalCount;i++)
+			memcpy(normals.at(i),initialNormals.at(i),3*sizeof(float));
+	}
  }
  
  void ObjObject::analyzeFixedVertices()
@@ -208,7 +188,7 @@ using namespace std;
 	  for (unsigned int j=0;j<groupList.size();j++)
 	 {
 		 ObjGroup* curGroup=groupList.at(j);
-		 for (unsigned int i=0;i<curGroup->faceGroupCount;i++)
+		 for (int i=0;i<curGroup->faceGroupCount;i++)
 		 {
 			FaceGroup* curFaceGroup=curGroup->faceGroups.at(i);
 			Ogre::String matName=materialList.at( curFaceGroup->materialIndice)->getName();
@@ -230,6 +210,8 @@ using namespace std;
 ObjObject::ObjObject(void)
 {
 }
+
+
 
 PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric* &fabric,PxClothParticle* &points,PxTransform* tr,PxPhysics* gPhysicsSDK)
 {
@@ -317,6 +299,26 @@ PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric*
 	return meshDesc;
 }
 
+void ObjObject::saveInitial()
+{
+	for (int i=0;i<vertexCount;i++)
+	{
+		float* tF=new float[3];
+		memcpy(tF,verticeCoordinates.at(i),3*sizeof(float));
+		initialVerticeCoordinates.push_back(tF);
+	}
+	if (normalCount>0)
+	{
+		for (int i=0;i<normalCount;i++)
+		{
+			float* tF=new float[3];
+			memcpy(tF,normals.at(i),3*sizeof(float));
+			initialNormals.push_back(tF);
+		}
+	}
+}
+
+
 ObjObject::ObjObject(const char* filename)
 {
 	ifstream  objFile(filename);
@@ -324,12 +326,14 @@ ObjObject::ObjObject(const char* filename)
 	for (int i=0;i<4;i++)
 		name.pop_back();
 	string line;
+	entity=0;
 	scaleFactor=1;
 	vertexCount=0;
 	faceCount=0;
 	textureCount=0;
 	normalCount=0;
 	faceGroupCount=0;
+	cloth=0;
 	groupCount=0;
 	//Counting Pass
 	int activeGroup=-1;
@@ -482,20 +486,7 @@ ObjObject::ObjObject(const char* filename)
 			for (int j=0;j<3;j++)
 				COM[j]=COM[j]+verticeCoordinates.at(i)[j]/vertexCount;
 		printf("Got COM\n");
-
-
 		
-		
-		for (int i=0;i<vertexCount;i++)
-		{
-			float* tt=new float[3];
-			memcpy(tt,verticeCoordinates.at(i),3*sizeof(float));
-			initialVerticeCoordinates.push_back(tt);
-
-		}
-
-
-
 	}
 	else
 		printf("Could not open file!\n");
@@ -541,7 +532,7 @@ void ObjObject::loadMtl(string folder,string filename)
 				  materialCount++;
 				 	  materialList.at(materialCount-1)->setReceiveShadows(false); 
 				materialList.at(materialCount-1)->getTechnique(0)->setLightingEnabled(true); 
-				materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setCullingMode(Ogre::CullingMode::CULL_CLOCKWISE);
+				materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setCullingMode(CULL_CLOCKWISE);
 			  }
 			  else if(line.compare(ss,2,"Ka")==0)
 			  {
@@ -645,7 +636,7 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 	for (unsigned int j=0;j<groupList.size();j++)
 	{
 		ObjGroup* curGroup=groupList.at(j);
-		for (unsigned int i=0;i<curGroup->faceGroupCount;i++)
+		for (int i=0;i<curGroup->faceGroupCount;i++)
 		{
 			FaceGroup* curFaceGroup=curGroup->faceGroups.at(i);
 			Ogre::String matName=materialList.at( curFaceGroup->materialIndice)->getName();
@@ -689,6 +680,12 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 	}
 }
 
+void ObjObject::setVisible(bool visible)
+{
+	if (entity)
+		entity->setVisible(visible);
+}
+
 
 void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
  {
@@ -697,7 +694,7 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
 	 for (unsigned int j=0;j<groupList.size();j++)
 	 {
 		 ObjGroup* curGroup=groupList.at(j);
-		 for (unsigned int i=0;i<curGroup->faceGroupCount;i++)
+		 for (int i=0;i<curGroup->faceGroupCount;i++)
 		 {
 			 FaceGroup* curFaceGroup=curGroup->faceGroups.at(i);
 			 SubMesh *subMesh = object->createSubMesh(curGroup->name+"_face_"+StringConverter::toString(i));
@@ -774,12 +771,12 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
      object->_setBoundingSphereRadius(scaleFactor);
          // this line makes clear the mesh is loaded (avoids memory leaks)
        object->load();
-	   if (!Ogre::MeshManager::getSingleton().resourceExists(name+".mesh"))
-	   {
-		  Ogre::MeshSerializer* mSerializer=new Ogre::MeshSerializer();
-		  mSerializer->exportMesh(object.getPointer(),name+".mesh");
-		   delete mSerializer;
-	   }
+	   //if (!Ogre::MeshManager::getSingleton().resourceExists(name+".mesh"))
+	   //{
+		  //Ogre::MeshSerializer* mSerializer=new Ogre::MeshSerializer();
+		  //mSerializer->exportMesh(object.getPointer(),name+".mesh");
+		  // delete mSerializer;
+	   //}
 	   
   }
 

@@ -120,6 +120,8 @@ public:
 	void setupBone(const String& name,const Ogre::Radian& angle, const Vector3 axis);
 	void resetBonesToInitialState();
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
+	void setOriginalTorsoPosition();
+	void setVisible(bool visibleOrNot);
 
 	Ogre::Quaternion getBoneOrientation(boneID bone);
 	inline Ogre::Skeleton* getSkeleton()
