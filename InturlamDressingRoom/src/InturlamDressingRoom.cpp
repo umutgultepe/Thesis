@@ -640,7 +640,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		bendCfg.stiffness = 1;
 		bendCfg.stretchStiffness = 0.50;
 		bendCfg.stretchLimit=0.60;
-		cloth->setSolverFrequency(30);
+		cloth->setSolverFrequency(120);
 
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
@@ -775,7 +775,8 @@ void InturlamDressingRoom::changeCloth(int index)
 	}
 
 }
-
+DWORD start_time=0;
+DWORD latest_update=0;
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
@@ -808,9 +809,12 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Calibration Time");
 	items.push_back("Body Height");
 	items.push_back("Shoulder Width");
+	items.push_back("Elapsed MS");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
     help->hide();
+	start_time=GetTickCount();
+	latest_update=GetTickCount();
 }
 
 
@@ -919,6 +923,8 @@ long long milliseconds_now() {
     }
 }
 
+
+
 PxReal timeStep=0;
 int initialDelay=0;
 float totalCalibrationTime=0;
@@ -932,8 +938,6 @@ long long cal_end;
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	#if USE_KINECT
-	if (simulating && simulationCreated)
-		timeStep+=evt.timeSinceLastFrame;
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
 		if (mKinect->isUserActive())
@@ -998,19 +1002,20 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			upperCloth->resetBonesToInitialState();
 			updateVisualHuman();
 		}
-		if (simulating && simulationCreated && lowerCloth)
-		{
-			lowerCloth->updateWithPhysics(gScene,timeStep);
-			timeStep=0;
-		}
-	}
-	#else
-	if (simulating && lowerCloth)
-	{
-		timeStep=evt.timeSinceLastFrame;
-		lowerCloth->updateWithPhysics(gScene,timeStep);
 	}
 	#endif
+	if (simulating && lowerCloth)
+	{
+		DWORD t=GetTickCount();
+		float elapsed=t-latest_update;
+		if (elapsed>8)
+		{
+			lowerCloth->updateWithPhysics(gScene,elapsed/1000);
+			latest_update=GetTickCount();
+		}	
+	}
+	
+	help->setParamValue("Elapsed MS",StringConverter::toString(((float)(GetTickCount()-start_time))/1000));
 	return BaseApplication::frameRenderingQueued(evt);
 }
 
