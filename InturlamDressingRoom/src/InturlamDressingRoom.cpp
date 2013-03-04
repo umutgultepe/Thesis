@@ -604,6 +604,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		gScene->removeActor(*lowerCloth->cloth);
 		lowerCloth->cloth->release();
 		lowerCloth->cloth=0;
+		lowerCloth->Reset();
 	}
 
 
@@ -709,6 +710,7 @@ void InturlamDressingRoom::loadClothes()
 			tPhys->translate(vec3);
 			Ogre::String meshName=baseName+"_free_mesh";
 			Ogre::String entityName=baseName+"_free";
+			tPhys->saveInitial();
 			tPhys->loadIntoOgre(mSceneMgr, meshName);
 			Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity(entityName,meshName);
 			lowerClothHandle->attachObject(lowerClothEntity);

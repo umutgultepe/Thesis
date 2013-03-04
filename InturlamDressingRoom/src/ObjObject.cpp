@@ -164,35 +164,15 @@ using namespace std;
 	scaleFactor=scaleFactor*scaleRatio;
  }
 
-  void ObjObject::Reset()
+ void ObjObject::Reset()
  {
-	//for(int i=0;i<vertexCount;i++)
-	//{
-	//	for (int j=0;j<3;j++)
-	//		verticeCoordinates.at(i)[j]=initialVerticeCoordinates.at(i)[j];
-	//}
-	//
-	////cloth->get
-	//physx::PxClothParticle* parts=new physx::PxClothParticle[vertexCount];
-
-	//for(int i=0;i<vertexCount;i++)
-	//{
-	//	for (int j=0;j<3;j++)
-	//	{
-	//		verticeCoordinates.at(i)[j]=initialVerticeCoordinates.at(i)[j];
-	//		
-	//	}
-	//	parts[i].pos.x=initialVerticeCoordinates.at(i)[0];
-	//	parts[i].pos.y=initialVerticeCoordinates.at(i)[1];
-	//	parts[i].pos.z=initialVerticeCoordinates.at(i)[2];
-	//	if (i<300)
-	//		parts[i].invWeight=0;
-	//	else
-	//		parts[i].invWeight=1;
-
-	//}
-	//cloth->setParticles(parts);
-
+	for (int i=0;i<vertexCount;i++)
+		memcpy(verticeCoordinates.at(i),initialVerticeCoordinates.at(i),3*sizeof(float));
+	if (normalCount>0)
+	{
+		for (int i=0;i<normalCount;i++)
+			memcpy(normals.at(i),initialNormals.at(i),3*sizeof(float));
+	}
  }
  
  void ObjObject::analyzeFixedVertices()
@@ -318,6 +298,26 @@ PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric*
 
 	return meshDesc;
 }
+
+void ObjObject::saveInitial()
+{
+	for (int i=0;i<vertexCount;i++)
+	{
+		float* tF=new float[3];
+		memcpy(tF,verticeCoordinates.at(i),3*sizeof(float));
+		initialVerticeCoordinates.push_back(tF);
+	}
+	if (normalCount>0)
+	{
+		for (int i=0;i<normalCount;i++)
+		{
+			float* tF=new float[3];
+			memcpy(tF,normals.at(i),3*sizeof(float));
+			initialNormals.push_back(tF);
+		}
+	}
+}
+
 
 ObjObject::ObjObject(const char* filename)
 {
@@ -486,20 +486,7 @@ ObjObject::ObjObject(const char* filename)
 			for (int j=0;j<3;j++)
 				COM[j]=COM[j]+verticeCoordinates.at(i)[j]/vertexCount;
 		printf("Got COM\n");
-
-
 		
-		
-		for (int i=0;i<vertexCount;i++)
-		{
-			float* tt=new float[3];
-			memcpy(tt,verticeCoordinates.at(i),3*sizeof(float));
-			initialVerticeCoordinates.push_back(tt);
-
-		}
-
-
-
 	}
 	else
 		printf("Could not open file!\n");

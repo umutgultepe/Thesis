@@ -44,6 +44,7 @@ private:
 	std::vector<FaceGroup*> faceGroups;
 	std::vector<float*> verticeCoordinates;
 	std::vector<float*> initialVerticeCoordinates;
+	std::vector<float*> initialNormals;
 	std::vector<float*> normals;
 	std::vector<float*> textureCoordinates;
 	std::vector<ObjGroup*> groupList;
@@ -59,6 +60,7 @@ public:
 	ObjObject(const char* filename);
 	~ObjObject(void);
 	void loadIntoShader();
+	void saveInitial();
 	void drawObject();
 	void Reset();
 	float* moveToOrigin();
