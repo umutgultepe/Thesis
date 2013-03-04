@@ -208,7 +208,7 @@ using namespace std;
 	  for (unsigned int j=0;j<groupList.size();j++)
 	 {
 		 ObjGroup* curGroup=groupList.at(j);
-		 for (unsigned int i=0;i<curGroup->faceGroupCount;i++)
+		 for (int i=0;i<curGroup->faceGroupCount;i++)
 		 {
 			FaceGroup* curFaceGroup=curGroup->faceGroups.at(i);
 			Ogre::String matName=materialList.at( curFaceGroup->materialIndice)->getName();
@@ -230,6 +230,8 @@ using namespace std;
 ObjObject::ObjObject(void)
 {
 }
+
+
 
 PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric* &fabric,PxClothParticle* &points,PxTransform* tr,PxPhysics* gPhysicsSDK)
 {
@@ -324,6 +326,7 @@ ObjObject::ObjObject(const char* filename)
 	for (int i=0;i<4;i++)
 		name.pop_back();
 	string line;
+	entity=0;
 	scaleFactor=1;
 	vertexCount=0;
 	faceCount=0;
@@ -541,7 +544,7 @@ void ObjObject::loadMtl(string folder,string filename)
 				  materialCount++;
 				 	  materialList.at(materialCount-1)->setReceiveShadows(false); 
 				materialList.at(materialCount-1)->getTechnique(0)->setLightingEnabled(true); 
-				materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setCullingMode(Ogre::CullingMode::CULL_CLOCKWISE);
+				materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setCullingMode(CULL_CLOCKWISE);
 			  }
 			  else if(line.compare(ss,2,"Ka")==0)
 			  {
@@ -645,7 +648,7 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 	for (unsigned int j=0;j<groupList.size();j++)
 	{
 		ObjGroup* curGroup=groupList.at(j);
-		for (unsigned int i=0;i<curGroup->faceGroupCount;i++)
+		for (int i=0;i<curGroup->faceGroupCount;i++)
 		{
 			FaceGroup* curFaceGroup=curGroup->faceGroups.at(i);
 			Ogre::String matName=materialList.at( curFaceGroup->materialIndice)->getName();
@@ -689,6 +692,12 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 	}
 }
 
+void ObjObject::setVisible(bool visible)
+{
+	if (entity)
+		entity->setVisible(visible);
+}
+
 
 void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
  {
@@ -697,7 +706,7 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
 	 for (unsigned int j=0;j<groupList.size();j++)
 	 {
 		 ObjGroup* curGroup=groupList.at(j);
-		 for (unsigned int i=0;i<curGroup->faceGroupCount;i++)
+		 for (int i=0;i<curGroup->faceGroupCount;i++)
 		 {
 			 FaceGroup* curFaceGroup=curGroup->faceGroups.at(i);
 			 SubMesh *subMesh = object->createSubMesh(curGroup->name+"_face_"+StringConverter::toString(i));
@@ -774,12 +783,12 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
      object->_setBoundingSphereRadius(scaleFactor);
          // this line makes clear the mesh is loaded (avoids memory leaks)
        object->load();
-	   if (!Ogre::MeshManager::getSingleton().resourceExists(name+".mesh"))
-	   {
-		  Ogre::MeshSerializer* mSerializer=new Ogre::MeshSerializer();
-		  mSerializer->exportMesh(object.getPointer(),name+".mesh");
-		   delete mSerializer;
-	   }
+	   //if (!Ogre::MeshManager::getSingleton().resourceExists(name+".mesh"))
+	   //{
+		  //Ogre::MeshSerializer* mSerializer=new Ogre::MeshSerializer();
+		  //mSerializer->exportMesh(object.getPointer(),name+".mesh");
+		  // delete mSerializer;
+	   //}
 	   
   }
 

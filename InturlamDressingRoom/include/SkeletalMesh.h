@@ -121,6 +121,8 @@ public:
 	void resetBonesToInitialState();
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
 
+	void setVisible(bool visibleOrNot);
+
 	Ogre::Quaternion getBoneOrientation(boneID bone);
 	inline Ogre::Skeleton* getSkeleton()
 	{

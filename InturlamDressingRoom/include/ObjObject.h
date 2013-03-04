@@ -72,8 +72,9 @@ public:
 	void loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name);
 	void loadMtl(string folder,string filename);
 	void updateWithPhysics(PxScene* gScene);
-
+	Ogre::Entity* entity;
 	void analyzeFixedVertices();
+	void setVisible(bool visible);
 	PxCloth* cloth; 
 private:
 	void loadMaterial(int index);
