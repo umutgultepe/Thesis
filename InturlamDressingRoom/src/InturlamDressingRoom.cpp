@@ -49,6 +49,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	firstStep=true;
 	simulationCreated=false;
 	gDefaultFilterShader=PxDefaultSimulationFilterShader;
+	currentClothIndex=INITIAL_CLOTH_INDEX;
 	gPhysicsSDK=0;
 	gScene=0;
 	usingGPU=true;
@@ -679,7 +680,7 @@ void InturlamDressingRoom::createSimulation()
 void InturlamDressingRoom::loadClothes()
 {
 
-	for (int i=0;i<4;i++)
+	for (int i=0;i<CLOTH_COUNT;i++)
 	{
 		SkeletalMesh* tMesh=new SkeletalMesh(mKinect);
 		Ogre::String baseName=skeletonClothNames[i].substr(0,skeletonClothNames[i].length()-5);
@@ -706,18 +707,15 @@ void InturlamDressingRoom::loadClothes()
 		skeletalMeshes.push_back(tMesh);
 
 	}
-
-	upperCloth=skeletalMeshes.at(0);
+	upperCloth=skeletalMeshes.at(currentClothIndex);
 	upperCloth->setVisible(true);
-	if (physicsMeshes.at(0))
+	initializePhysics();
+	if (physicsMeshes.at(currentClothIndex))
 	{
-		lowerCloth=physicsMeshes.at(0);
+		lowerCloth=physicsMeshes.at(currentClothIndex);
 		lowerCloth->setVisible(true);
 		createCloth(initializePhysics());
 	}
-
-	
-
 
 	//Tunic-Vest
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
@@ -728,6 +726,27 @@ void InturlamDressingRoom::loadClothes()
 
 void InturlamDressingRoom::changeCloth(int index)
 {
+	if (currentClothIndex!=index)
+	{
+		upperCloth->setVisible(false);
+		upperCloth=skeletalMeshes.at(index);
+		upperCloth->setVisible(true);
+		if (physicsMeshes.at(currentClothIndex))
+		{
+			lowerCloth->setVisible(false);
+		}
+		if (physicsMeshes.at(index))
+		{
+			lowerCloth=physicsMeshes.at(index);
+			lowerCloth->setVisible(true);
+			createCloth(initializePhysics());
+		}
+		else
+		{
+			lowerCloth=0;
+		}
+		currentClothIndex=index;
+	}
 
 }
 
@@ -1057,6 +1076,23 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 	{
 
 		updateAcceleration(-acceleration);
+	}
+	else if (arg.key==OIS::KC_1)
+	{
+		changeCloth(0);
+	}
+	else if (arg.key==OIS::KC_2)
+	{
+		changeCloth(1);
+	}
+	else if (arg.key==OIS::KC_3)
+	{
+
+		changeCloth(2);
+	}
+	else if (arg.key==OIS::KC_4)
+	{
+		changeCloth(3);
 	}
 	return BaseApplication::keyPressed(arg);
 }

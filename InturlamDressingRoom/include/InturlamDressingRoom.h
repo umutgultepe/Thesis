@@ -30,6 +30,7 @@ using namespace physx;
 
 
 #define CLOTH_COUNT 4
+#define INITIAL_CLOTH_INDEX 2
 
 enum clothIndex
 {
@@ -121,6 +122,8 @@ protected:
 	SkeletalMesh* femaleBody;
 	SkeletalMesh* upperCloth;
 	
+
+	int currentClothIndex;
 	bool usingGPU;
 	bool simulationCreated;
 	ObjObject* lowerCloth;
