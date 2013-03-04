@@ -22,6 +22,7 @@ http://code.google.com/p/ogreappwizards/
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
 #define COLLISION_SPHERE_COUNT 24
+#define COLLISION_CAPSULE_COUNT 25
 
 
 float userWidthScale=1;
@@ -363,30 +364,32 @@ int getBoneIndex(Ogre::String boneName)
 }
 
 const physx::PxU32 pairInd[]={	
-	0,1,
-	0,3,
-	3,4,
-	4,6,
-	6,12,
-	3,5,
-	5,7,
-	7,13,
-	1,9,
-	9,11,
-	11,15,
-	1,8,
-	8,10,
-	10,14,
-	0,4,
-	0,5,
-	16,18,
-	18,20,
-	20,22,
-	17,19,
-	19,21,
-	21,23,
-	10,22,//Knee-to-Hip-Extend
-	11,23};
+	0,1, //Stomach-To-Waist
+	0,3, //Stomach-To-Chest
+	3,4, //Chest-To-Left-Humerus
+	4,6, //Left-Humerus-to-Left-Ulna
+	6,12,//Left-Ulna-to-Left-Hand
+	3,5, //Chest-To-Right-Humerus
+	5,7, //Right-Humerus-to-Right-Ulna
+	7,13,//Right-Ulna-to-Right-Hand
+	1,9, //Waist-to-Right-Thigh
+	9,11,//Right-Thigh-To-Right-Calf
+	11,15,//Right-Calf-To-Right-Foot
+	1,8, //Waist-to-Left-Thigh
+	8,10, //Left-Thigh-To-Left-Calf
+	10,14,//Left-Calf-To-Left-Foot
+	0,4, //Stomach-To-Left-Humerus
+	0,5, //Stomach-To-Right-Humerus
+	16,18,//LexExtension Left 1-2
+	18,20,//LexExtension Left 2-3
+	20,22,//LexExtension Left 3-4
+	17,19,//LexExtension Right 1-2
+	19,21,//LexExtension Right 2-3
+	21,23,//LexExtension Right 3-4
+	10,22,//Knee-to-Hip-Extend Left
+ 	11,23,//Knee-to-Hip-Extend Right
+	10,11//Knee-to-Knee
+};
 
 float radius_modifier=1;
 
@@ -586,7 +589,7 @@ void InturlamDressingRoom::setupHumanCollider()
 
 	col_data.spheres=box_collider;
 	col_data.numSpheres=COLLISION_SPHERE_COUNT;
-	col_data.numPairs=24;
+	col_data.numPairs=COLLISION_CAPSULE_COUNT;
 	col_data.pairIndexBuffer=pairInd;
 
 	collider_set_up=true;
