@@ -528,6 +528,8 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 		
 }
 
+bool collider_set_up=false;
+
 const physx::PxU32 pairIndHang[]={1,3,
 	0,1,
 	0,4,
@@ -587,6 +589,8 @@ void InturlamDressingRoom::setupHumanCollider()
 	col_data.numPairs=24;
 	col_data.pairIndexBuffer=pairInd;
 
+	collider_set_up=true;
+
 }
 PxVec3 clothPos;
 PxVec3 wind;
@@ -594,6 +598,15 @@ float curScale=1;
 
 void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 {
+	
+	if (lowerCloth->cloth)
+	{
+		gScene->removeActor(*lowerCloth->cloth);
+		lowerCloth->cloth->release();
+		lowerCloth->cloth=0;
+	}
+
+
 	PxClothMeshDesc meshDesc;
 	meshDesc.setToDefault();
 	clothPos.x=0;
@@ -609,13 +622,13 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	meshDesc=*lowerCloth->loadPhysxCloth(&sceneDesc,fabric,points,&tr,gPhysicsSDK);
 
 	bool withHanger=true;
-
-	setupHumanCollider();	
+	if (!collider_set_up)
+		setupHumanCollider();	
 	//col_data.setToDefault();
 
 	if (col_data.isValid())
 		cloth = gPhysicsSDK->createCloth(tr,*fabric,points,col_data, PxClothFlag::eSWEPT_CONTACT |  PxClothFlag::eGPU );
-
+	
 
 	if(cloth) {	
 		PxClothPhaseSolverConfig bendCfg;	 
@@ -722,7 +735,7 @@ void InturlamDressingRoom::loadClothes()
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerTunic.obj");
 }
 
-
+bool justCalibrated=true;
 
 void InturlamDressingRoom::changeCloth(int index)
 {
@@ -746,13 +759,13 @@ void InturlamDressingRoom::changeCloth(int index)
 		{
 			lowerCloth=physicsMeshes.at(index);
 			lowerCloth->setVisible(true);
-			if (!lowerCloth->cloth)
-				createCloth(initializePhysics());
+			createCloth(initializePhysics());
 		}
 		else
 		{
 			lowerCloth=0;
 		}
+		justCalibrated=true;
 		currentClothIndex=index;
 	}
 
@@ -794,7 +807,7 @@ void InturlamDressingRoom::createScene(void)
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
     help->hide();
 }
-bool justCalibrated=true;
+
 
 void InturlamDressingRoom::updateCollisionSpheres()
 {
