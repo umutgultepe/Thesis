@@ -30,7 +30,7 @@ using namespace physx;
 
 
 #define CLOTH_COUNT 4
-#define INITIAL_CLOTH_INDEX 2
+#define INITIAL_CLOTH_INDEX 0
 
 enum clothIndex
 {

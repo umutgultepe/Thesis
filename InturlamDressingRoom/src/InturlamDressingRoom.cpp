@@ -684,8 +684,10 @@ void InturlamDressingRoom::loadClothes()
 	{
 		SkeletalMesh* tMesh=new SkeletalMesh(mKinect);
 		Ogre::String baseName=skeletonClothNames[i].substr(0,skeletonClothNames[i].length()-5);
-
 		tMesh->loadMesh(mSceneMgr,clothNode,baseName+"_skel",skeletonClothNames[i]);
+		tMesh->setVisible(false);
+		skeletalMeshes.push_back(tMesh);
+
 		if (PhysicsClothNames[i]!="")
 		{
 			ObjObject* tPhys= new ObjObject(PhysicsClothNames[i].c_str());
@@ -703,8 +705,6 @@ void InturlamDressingRoom::loadClothes()
 		}
 		else
 			physicsMeshes.push_back(0);
-		tMesh->setVisible(false);
-		skeletalMeshes.push_back(tMesh);
 
 	}
 	upperCloth=skeletalMeshes.at(currentClothIndex);
@@ -729,8 +729,15 @@ void InturlamDressingRoom::changeCloth(int index)
 	if (currentClothIndex!=index)
 	{
 		upperCloth->setVisible(false);
+		SkeletalMesh* oldCloth=upperCloth;
 		upperCloth=skeletalMeshes.at(index);
 		upperCloth->setVisible(true);
+		if (!oldCloth->bNewUser && upperCloth->bNewUser)
+		{
+			upperCloth->origTorsoPos=oldCloth->origTorsoPos;
+			upperCloth->bNewUser=false;
+		}
+
 		if (physicsMeshes.at(currentClothIndex))
 		{
 			lowerCloth->setVisible(false);
@@ -739,7 +746,8 @@ void InturlamDressingRoom::changeCloth(int index)
 		{
 			lowerCloth=physicsMeshes.at(index);
 			lowerCloth->setVisible(true);
-			createCloth(initializePhysics());
+			if (!lowerCloth->cloth)
+				createCloth(initializePhysics());
 		}
 		else
 		{
@@ -899,6 +907,10 @@ float totalCalibrationTime=0;
 bool calibrated=false;
 long long cal_start;
 long long cal_end;
+
+
+
+
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	#if USE_KINECT
@@ -943,9 +955,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 				}
 				#else
 				upperCloth->setUserID(mKinect->activeUser);
-				Ogre::Vector3 targetPos=upperCloth->updateMesh();
+				upperCloth->updateMesh();
 				femaleBody->setUserID(mKinect->activeUser);
-				femaleBody->updateMesh();
+				Ogre::Vector3 targetPos=femaleBody->updateMesh();
 				updateVisualHuman();
 				if (lowerCloth)
 				{

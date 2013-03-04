@@ -333,6 +333,7 @@ ObjObject::ObjObject(const char* filename)
 	textureCount=0;
 	normalCount=0;
 	faceGroupCount=0;
+	cloth=0;
 	groupCount=0;
 	//Counting Pass
 	int activeGroup=-1;
