@@ -56,6 +56,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	gScene=0;
 	usingGPU=true;
 	lowerCloth=0;
+	mNui=0;
 }
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
@@ -1014,6 +1015,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}
 	}
 	#endif
+
+	//mNui->Nui_ProcessThread();
+
 	if (simulating && lowerCloth)
 	{
 		DWORD t=GetTickCount();

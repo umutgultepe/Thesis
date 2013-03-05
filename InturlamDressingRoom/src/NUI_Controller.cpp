@@ -412,6 +412,7 @@ void NUI_Controller::Nui_GotDepthAlert( )
 		}
 
 		cvShowImage("result",tImage);
+		cvWaitKey(2);
     }
     else
     {
