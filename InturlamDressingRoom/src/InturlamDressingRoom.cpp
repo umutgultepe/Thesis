@@ -38,6 +38,7 @@ using namespace Ogre;
 
 int numberOfCapsules=0;
 
+
 OgreBites::ParamsPanel* help;
 PxClothCollisionData col_data;
 physx::PxClothCollisionSphere* box_collider;
@@ -59,7 +60,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
 {
-	
+	delete mNui;
 	if (box_collider)
 		delete [] box_collider;
 	if (gScene)
@@ -67,7 +68,7 @@ InturlamDressingRoom::~InturlamDressingRoom(void)
 	if (gPhysicsSDK)
 		gPhysicsSDK->release();
 
-
+	
 }
 void SetupDepthMaterial()
 {
@@ -777,6 +778,11 @@ void InturlamDressingRoom::changeCloth(int index)
 }
 DWORD start_time=0;
 DWORD latest_update=0;
+
+
+
+
+
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
@@ -796,6 +802,10 @@ void InturlamDressingRoom::createScene(void)
 	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
 	#endif
+	mNui=new NUI_Controller();
+	//mNui->Nui_Init();
+
+
 	#if USE_USER_SCALING == 0
 	createSimulation();
 	#endif
