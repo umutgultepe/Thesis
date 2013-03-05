@@ -20,6 +20,7 @@ const uint m_Width = 640;
 const uint m_Height = 480;
 const int RGBX= 1280;
 const int RGBY = 1024;
+const CvSize dSize=cvSize(m_Width,m_Height);
 enum Handstate
 {
 	HAND_UNKNOWN,

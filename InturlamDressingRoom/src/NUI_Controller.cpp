@@ -58,7 +58,7 @@ bool NUI_Controller::Nui_Init()
     m_hNextSkeletonEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
 
 	//Initialize NUI
-	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX | NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
+	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH | NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
 	HRESULT hr=m_pNuiInstance->NuiInitialize(nuiFlags);
 	if( FAILED( hr ) )
     {
@@ -93,8 +93,8 @@ bool NUI_Controller::Nui_Init()
 
 	//Initialize Depth
 	hr = m_pNuiInstance->NuiImageStreamOpen(
-        HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX : NUI_IMAGE_TYPE_DEPTH,
-        NUI_IMAGE_RESOLUTION_320x240,
+        HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH : NUI_IMAGE_TYPE_DEPTH,
+        NUI_IMAGE_RESOLUTION_640x480,
         0,
         2,
         m_hNextDepthFrameEvent,
@@ -365,6 +365,12 @@ void NUI_Controller::Nui_GotVideoAlert( )
     m_pNuiInstance->NuiImageStreamReleaseFrame( m_pVideoStreamHandle, pImageFrame );
 }
 
+
+#include "HandTracker.h"
+IplImage* tImage=0;
+
+
+
 void NUI_Controller::Nui_GotDepthAlert( )
 {
     const NUI_IMAGE_FRAME * pImageFrame = NULL;
@@ -386,21 +392,25 @@ void NUI_Controller::Nui_GotDepthAlert( )
     {
         BYTE * pBuffer = (BYTE*) LockedRect.pBits;
 
-        // draw the bits to the bitmap
-        //RGBQUAD * rgbrun = m_rgbWk;
-        //USHORT * pBufferRun = (USHORT*) pBuffer;
-        //for( int y = 0 ; y < 240 ; y++ )
-        //{
-        //    for( int x = 0 ; x < 320 ; x++ )
-        //    {
-        //        RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun );
-        //        pBufferRun++;
-        //        *rgbrun = quad;
-        //        rgbrun++;
-        //    }
-        //}
+		//Show Result
+		if (!tImage)
+			tImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+		// draw the bits to the bitmap
+		USHORT * pBufferRun = (USHORT*) pBuffer;
 
-        //m_DrawDepth.DrawFrame( (BYTE*) m_rgbWk );
+		for( int y = 0 ; y < m_Height ; y++ )
+		{
+			BYTE* dPtr=(BYTE*)(tImage->imageData+y*tImage->widthStep);
+			for( int x = 0 ; x < m_Width ; x++ )
+			{
+				//RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun );
+				USHORT RealDepth = *pBufferRun & 0xffff;
+				BYTE l = 255 - (BYTE)(256*RealDepth/0x0fff);
+				pBufferRun++;
+				*dPtr = l/2;
+				dPtr++;
+			}
+		}
     }
     else
     {
@@ -638,59 +648,61 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
     //Nui_DoDoubleBuffer(GetDlgItem(m_hWnd,IDC_SKELETALVIEW), m_SkeletonDC);
 }
 
+
+
 //
 //
-//RGBQUAD NUI_Controller::Nui_ShortToQuad_Depth( USHORT s )
-//{
-//    bool hasPlayerData = HasSkeletalEngine(m_pNuiInstance);
-//    USHORT RealDepth = hasPlayerData ? (s & 0xfff8) >> 3 : s & 0xffff;
-//    USHORT Player = hasPlayerData ? s & 7 : 0;
-//
-//    // transform 13-bit depth information into an 8-bit intensity appropriate
-//    // for display (we disregard information in most significant bit)
-//    BYTE l = 255 - (BYTE)(256*RealDepth/0x0fff);
-//
-//    RGBQUAD q;
-//    q.rgbRed = q.rgbBlue = q.rgbGreen = 0;
-//
-//    switch( Player )
-//    {
-//    case 0:
-//        q.rgbRed = l / 2;
-//        q.rgbBlue = l / 2;
-//        q.rgbGreen = l / 2;
-//        break;
-//    case 1:
-//        q.rgbRed = l;
-//        break;
-//    case 2:
-//        q.rgbGreen = l;
-//        break;
-//    case 3:
-//        q.rgbRed = l / 4;
-//        q.rgbGreen = l;
-//        q.rgbBlue = l;
-//        break;
-//    case 4:
-//        q.rgbRed = l;
-//        q.rgbGreen = l;
-//        q.rgbBlue = l / 4;
-//        break;
-//    case 5:
-//        q.rgbRed = l;
-//        q.rgbGreen = l / 4;
-//        q.rgbBlue = l;
-//        break;
-//    case 6:
-//        q.rgbRed = l / 2;
-//        q.rgbGreen = l / 2;
-//        q.rgbBlue = l;
-//        break;
-//    case 7:
-//        q.rgbRed = 255 - ( l / 2 );
-//        q.rgbGreen = 255 - ( l / 2 );
-//        q.rgbBlue = 255 - ( l / 2 );
-//    }
-//
-//    return q;
-//}
+RGBQUAD NUI_Controller::Nui_ShortToQuad_Depth( USHORT s )
+{
+    bool hasPlayerData = HasSkeletalEngine(m_pNuiInstance);
+    USHORT RealDepth = hasPlayerData ? (s & 0xfff8) >> 3 : s & 0xffff;
+    USHORT Player = hasPlayerData ? s & 7 : 0;
+
+    // transform 13-bit depth information into an 8-bit intensity appropriate
+    // for display (we disregard information in most significant bit)
+    BYTE l = 255 - (BYTE)(256*RealDepth/0x0fff);
+
+    RGBQUAD q;
+    q.rgbRed = q.rgbBlue = q.rgbGreen = 0;
+
+    switch( Player )
+    {
+    case 0:
+        q.rgbRed = l / 2;
+        q.rgbBlue = l / 2;
+        q.rgbGreen = l / 2;
+        break;
+    case 1:
+        q.rgbRed = l;
+        break;
+    case 2:
+        q.rgbGreen = l;
+        break;
+    case 3:
+        q.rgbRed = l / 4;
+        q.rgbGreen = l;
+        q.rgbBlue = l;
+        break;
+    case 4:
+        q.rgbRed = l;
+        q.rgbGreen = l;
+        q.rgbBlue = l / 4;
+        break;
+    case 5:
+        q.rgbRed = l;
+        q.rgbGreen = l / 4;
+        q.rgbBlue = l;
+        break;
+    case 6:
+        q.rgbRed = l / 2;
+        q.rgbGreen = l / 2;
+        q.rgbBlue = l;
+        break;
+    case 7:
+        q.rgbRed = 255 - ( l / 2 );
+        q.rgbGreen = 255 - ( l / 2 );
+        q.rgbBlue = 255 - ( l / 2 );
+    }
+
+    return q;
+}

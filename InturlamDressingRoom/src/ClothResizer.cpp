@@ -48,7 +48,7 @@ IplImage *uImage,*dImage,*showImage;
 
 short minD=65536,maxD=0;
 
-CvSize dSize=cvSize(m_Width,m_Height);
+
 extern OgreBites::ParamsPanel* help;
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)

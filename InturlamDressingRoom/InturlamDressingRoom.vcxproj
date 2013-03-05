@@ -128,6 +128,7 @@
   <ItemGroup>
     <ClInclude Include="include\BaseApplication.h" />
     <ClInclude Include="include\ClothResizer.h" />
+    <ClInclude Include="include\CVUtils.h" />
     <ClInclude Include="include\HandTracker.h" />
     <ClInclude Include="include\InturlamDressingRoom.h" />
     <ClInclude Include="include\KinectController.h" />
@@ -143,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="src\BaseApplication.cpp" />
     <ClCompile Include="src\ClothResizer.cpp" />
+    <ClCompile Include="src\CVUtils.cpp" />
     <ClCompile Include="src\HandTracker.cpp" />
     <ClCompile Include="src\InturlamDressingRoom.cpp" />
     <ClCompile Include="src\KinectController.cpp" />
