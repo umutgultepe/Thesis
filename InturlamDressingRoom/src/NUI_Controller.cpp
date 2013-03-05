@@ -58,7 +58,7 @@ bool NUI_Controller::Nui_Init()
     m_hNextSkeletonEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
 
 	//Initialize NUI
-	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH | NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
+	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX | NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
 	HRESULT hr=m_pNuiInstance->NuiInitialize(nuiFlags);
 	if( FAILED( hr ) )
     {
@@ -93,8 +93,8 @@ bool NUI_Controller::Nui_Init()
 
 	//Initialize Depth
 	hr = m_pNuiInstance->NuiImageStreamOpen(
-        HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH : NUI_IMAGE_TYPE_DEPTH,
-        NUI_IMAGE_RESOLUTION_640x480,
+        HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX : NUI_IMAGE_TYPE_DEPTH,
+        NUI_IMAGE_RESOLUTION_320x240,
         0,
         2,
         m_hNextDepthFrameEvent,
@@ -394,7 +394,7 @@ void NUI_Controller::Nui_GotDepthAlert( )
 
 		//Show Result
 		if (!tImage)
-			tImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+			tImage=cvCreateImage(dSize,IPL_DEPTH_8U,3);
 		// draw the bits to the bitmap
 		USHORT * pBufferRun = (USHORT*) pBuffer;
 
@@ -403,14 +403,15 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			BYTE* dPtr=(BYTE*)(tImage->imageData+y*tImage->widthStep);
 			for( int x = 0 ; x < m_Width ; x++ )
 			{
-				//RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun );
-				USHORT RealDepth = *pBufferRun & 0xffff;
-				BYTE l = 255 - (BYTE)(256*RealDepth/0x0fff);
-				pBufferRun++;
-				*dPtr = l/2;
-				dPtr++;
+				RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun++ );
+				*dPtr++ = quad.rgbRed;
+                *dPtr++ = quad.rgbGreen;
+				*dPtr++ = quad.rgbBlue;
 			}
+
 		}
+
+		cvShowImage("result",tImage);
     }
     else
     {
