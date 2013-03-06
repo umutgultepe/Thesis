@@ -183,7 +183,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 
 	}
 	setupBone("Root",Degree(0),Degree(0),Degree(0));
-//	setupBone("Waist",Degree(0),Degree(0),Degree(0));
+	//setupBone("Waist",Degree(0),Degree(0),Degree(0));
 
 
 	return Mesh;
@@ -470,10 +470,24 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	//Ogre::Quaternion qI=rootBone->getInitialOrientation();
 	
 	
-	/*NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[NUI_SKELETON_POSITION_HIP_CENTER];
-	Ogre::Quaternion bodyRotation=convertNUItoOgre(hip);
-	rootBone->setOrientation(bodyRotation);
-*/
+	NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[NUI_SKELETON_POSITION_HIP_CENTER];
+	Ogre::Quaternion q=convertNUItoOgre(hip);
+	Ogre::Quaternion q2(Ogre::Degree(180),Ogre::Vector3(0,1,0));
+	Ogre::Quaternion rootOrientation=q*q2;
+	Ogre::Matrix3 tMat;
+	Radian yaw,pitch,roll;
+	rootOrientation.ToRotationMatrix(tMat);
+	tMat.ToEulerAnglesZXY(yaw,pitch,roll);
+	tMat.FromEulerAnglesZXY(Radian(0),Radian(0),roll);
+	rootOrientation.FromRotationMatrix(tMat);
+
+	/*Quaternion q;
+	q.x=hip.hierarchicalRotation.rotationQuaternion.x;
+	q.y=hip.hierarchicalRotation.rotationQuaternion.y;
+	q.z=hip.hierarchicalRotation.rotationQuaternion.z;
+	q.w=hip.hierarchicalRotation.rotationQuaternion.w;*/
+	rootBone->setOrientation(rootOrientation);
+
 	
 	return newPos2;
 }
