@@ -54,6 +54,7 @@ public:
 //    HGDIOBJ       m_SkeletonOldObj;
 //    int           m_PensTotal;
     NUI_Vector4         m_Points[NUI_SKELETON_POSITION_COUNT];
+	NUI_SKELETON_BONE_ORIENTATION m_Orientations[NUI_SKELETON_POSITION_COUNT];
 //    RGBQUAD       m_rgbWk[640*480];
 //    int           m_LastSkeletonFoundTime;
 //    bool          m_bScreenBlanked;

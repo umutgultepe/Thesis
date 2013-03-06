@@ -574,8 +574,10 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
 		{
 			m_Points[i]=SkeletonFrame.SkeletonData[0].SkeletonPositions[i];
 		}
+		NuiSkeletonCalculateBoneOrientations(SkeletonFrame.SkeletonData,m_Orientations);
 		mSkeletonUpdated=true;
 	}
+
 	
     //Nui_DoDoubleBuffer(GetDlgItem(m_hWnd,IDC_SKELETALVIEW), m_SkeletonDC);
 }
