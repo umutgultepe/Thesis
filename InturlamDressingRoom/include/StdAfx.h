@@ -8,7 +8,9 @@
 #include <string>
 #include <vector>
 #include <math.h>
-#include "MSR_NuiApi.h"
+#include "NuiApi.h"
+typedef _Vector4 NUI_Vector4;
+
 #include "Ogre.h"
 #include "OIS.h"
 #include <opencv\cv.h>

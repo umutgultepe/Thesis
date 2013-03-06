@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#pragma once
 class NUI_Controller
 {
 public:
@@ -13,6 +14,7 @@ public:
     void                Nui_GotVideoAlert( );
     void                Nui_GotSkeletonAlert( );
     void                Nui_Zero();
+	void				bufferSkeletonData( NUI_SKELETON_DATA * pSkel);
 //    void                    Nui_BlankSkeletonScreen( HWND hWnd );
 //    void                    Nui_DoDoubleBuffer(HWND hWnd,HDC hDC);
 //    void                    Nui_DrawSkeleton( bool bBlank, NUI_SKELETON_DATA * pSkel, HWND hWnd, int WhichSkeletonColor );
@@ -32,9 +34,9 @@ public:
 //	CRITICAL_SECTION        m_critSecUi; // Gate UI operations on the background thread.
     static DWORD WINAPI     Nui_ProcessThread(LPVOID pParam);
     DWORD WINAPI            Nui_ProcessThread();
-    INuiInstance*           m_pNuiInstance;
+    INuiSensor*           m_pNuiInstance;
     BSTR                    m_instanceId;
-//
+	bool	mSkeletonUpdated;
 //
 //    // thread handling
     HANDLE        m_hThNuiProcess;
@@ -51,7 +53,7 @@ public:
 //    HBITMAP       m_SkeletonBMP;
 //    HGDIOBJ       m_SkeletonOldObj;
 //    int           m_PensTotal;
-//    POINT         m_Points[NUI_SKELETON_POSITION_COUNT];
+    NUI_Vector4         m_Points[NUI_SKELETON_POSITION_COUNT];
 //    RGBQUAD       m_rgbWk[640*480];
 //    int           m_LastSkeletonFoundTime;
 //    bool          m_bScreenBlanked;

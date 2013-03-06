@@ -1,6 +1,7 @@
 #pragma once
 #include "StdAfx.h"
 #include "KinectController.h"
+#include "NUI_Controller.h"
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
 #define ACTIVE_BONE_COUNT 12
@@ -87,12 +88,13 @@ XN_SKEL_RIGHT_HAND,
 XN_SKEL_LEFT_FOOT,
 XN_SKEL_RIGHT_FOOT,
 (XnSkeletonJoint)0};
-
+static NUI_Vector4* boneOrientations=0;
 class SkeletalMesh
 {
 public:
 
 
+	static void updateOrientations(NUI_Vector4* locations);
 	SkeletalMesh(void);
 	SkeletalMesh(KinectController* kinect);
 	~SkeletalMesh(void);

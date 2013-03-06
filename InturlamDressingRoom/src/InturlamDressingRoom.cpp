@@ -1065,6 +1065,12 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 	updateDepthTexture();
 
+	if (mNui->mSkeletonUpdated)
+	{
+		SkeletalMesh::updateOrientations(mNui->m_Points);
+		mNui->mSkeletonUpdated=false;
+	}
+
 	if (simulating && lowerCloth)
 	{
 		DWORD t=GetTickCount();
@@ -1076,6 +1082,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}	
 	}
 	
+
+
+
 	help->setParamValue("Elapsed MS",StringConverter::toString(((float)(GetTickCount()-start_time))/1000));
 	return BaseApplication::frameRenderingQueued(evt);
 }

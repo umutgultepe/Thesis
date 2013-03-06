@@ -3,7 +3,15 @@
 
 
 
+void SkeletalMesh::updateOrientations(NUI_Vector4* locations)
+{
 
+
+
+
+	return;
+
+}
 
 SkeletalMesh::SkeletalMesh(void)
 {
@@ -18,7 +26,6 @@ SkeletalMesh::SkeletalMesh(void)
 
 SkeletalMesh::SkeletalMesh(KinectController* kinect)
 {
-
 	m_SmoothingFactor = 0.6;
 	m_SmoothingDelta = 0;
 	gKinect=kinect;

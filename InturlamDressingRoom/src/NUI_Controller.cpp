@@ -23,6 +23,7 @@ void NUI_Controller::Nui_Zero()
     m_pVideoStreamHandle = NULL;
     m_hThNuiProcess=NULL;
     m_hEvNuiProcessStop=NULL;
+	mSkeletonUpdated=false;
     //ZeroMemory(m_Pen,sizeof(m_Pen));
     //m_SkeletonDC = NULL;
     //m_SkeletonBMP = NULL;
@@ -43,13 +44,13 @@ bool NUI_Controller::Nui_Init()
 
 	if (!m_pNuiInstance)
     {
-        HRESULT hr = MSR_NuiCreateInstanceByIndex(0, &m_pNuiInstance);
+        HRESULT hr = NuiCreateSensorByIndex(0, &m_pNuiInstance);
         if (FAILED(hr))
         {
             return hr;
 			MessageBox( NULL, "Failed to create NUI instance", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
         }
-        m_instanceId = m_pNuiInstance->NuiInstanceName();
+        m_instanceId = m_pNuiInstance->NuiDeviceConnectionId();
     }
 
 	//Create Events
@@ -153,14 +154,6 @@ void NUI_Controller::Nui_Shutdown()
 }
 
 
-//
-//
-//void CALLBACK NUI_Controller::Nui_StatusProcThunk(const NuiStatusData *pStatusData)
-//{
-//    g_NUI_Controller.Nui_StatusProc(pStatusData);
-//}
-//
-//
 //static const COLORREF g_JointColorTable[NUI_SKELETON_POSITION_COUNT] = 
 //{
 //    RGB(169, 176, 155), // NUI_SKELETON_POSITION_HIP_CENTER
@@ -184,78 +177,7 @@ void NUI_Controller::Nui_Shutdown()
 //    RGB(245, 228, 156), // NUI_SKELETON_POSITION_ANKLE_RIGHT
 //    RGB(77,  109, 243) // NUI_SKELETON_POSITION_FOOT_RIGHT
 //};
-//
-//
-//
-//
-//
 
-//
-//void CALLBACK NUI_Controller::Nui_StatusProc(const NuiStatusData *pStatusData)
-//{
-//    if (SUCCEEDED(pStatusData->hrStatus))
-//    {
-//        // Update UI
-//        //::PostMessageW(m_hWnd, WM_USER_UPDATE_COMBO, 0, 0);
-//
-//        if (m_instanceId && 0 == wcscmp(pStatusData->instanceName, m_instanceId))
-//        {
-//            Nui_Init(m_instanceId);
-//        }
-//        else if (!m_pNuiInstance)
-//        {
-//            Nui_Init(0);
-//        }
-//
-//    }
-//    else
-//    {
-//        if (0 == wcscmp(pStatusData->instanceName, m_instanceId))
-//        {
-//            Nui_UnInit();
-//            Nui_Zero();
-//        }
-//    }
-//}
-//
-//HRESULT NUI_Controller::Nui_Init(OLECHAR *instanceName)
-//{
-//    HRESULT hr = MSR_NuiCreateInstanceByName(instanceName, &m_pNuiInstance);
-//
-//    if (FAILED(hr))
-//    {
-//        return hr;
-//    }
-//
-//    if (m_instanceId)
-//    {
-//        ::SysFreeString(m_instanceId);
-//    }
-//
-//    m_instanceId = m_pNuiInstance->NuiInstanceName();
-//
-//    return Nui_Init();
-//}
-//
-//HRESULT NUI_Controller::Nui_Init(int index)
-//{
-//    HRESULT hr = MSR_NuiCreateInstanceByIndex(index, &m_pNuiInstance);
-//
-//    if (FAILED(hr))
-//    {
-//        return hr;
-//    }
-//
-//    if (m_instanceId)
-//    {
-//        ::SysFreeString(m_instanceId);
-//    }
-//
-//    m_instanceId = m_pNuiInstance->NuiInstanceName();
-//
-//    return Nui_Init();
-//}
-//
 
 DWORD WINAPI NUI_Controller::Nui_ProcessThread(LPVOID pParam)
 {
@@ -286,51 +208,37 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
         // If the stop event, stop looping and exit
         if(nEventIdx==0)
             break;            
-
-        // Perform FPS processing
-        //t = timeGetTime( );
-        //if( m_LastFPStime == -1 )
-        //{
-        //    m_LastFPStime = t;
-        //    m_LastFramesTotal = m_FramesTotal;
-        //}
-        //dt = t - m_LastFPStime;
-        //if( dt > 1000 )
-        //{
-        //    m_LastFPStime = t;
-        //    int FrameDelta = m_FramesTotal - m_LastFramesTotal;
-        //    m_LastFramesTotal = m_FramesTotal;
-        //    ::PostMessageW(m_hWnd, WM_USER_UPDATE_FPS, IDC_FPS, FrameDelta);
-        //}
-
-        // Perform skeletal panel blanking
-        //if( m_LastSkeletonFoundTime == -1 )
-        //    m_LastSkeletonFoundTime = t;
-        //dt = t - m_LastSkeletonFoundTime;
-        //if( dt > 250 )
-        //{
-        //    if( !m_bScreenBlanked )
-        //    {
-        //        Nui_BlankSkeletonScreen( GetDlgItem( m_hWnd, IDC_SKELETALVIEW ) );
-        //        m_bScreenBlanked = true;
-        //    }
-        //}
-
         // Process signal events
-        switch(nEventIdx)
+        //switch(nEventIdx)
+        //{
+        //    case 1:
+        //        Nui_GotDepthAlert();
+        //        break;
+
+        //    case 2:
+        //        Nui_GotVideoAlert();
+        //        break;
+
+        //    case 3:
+        //        Nui_GotSkeletonAlert( );
+        //        break;
+        //}
+		if ( WAIT_OBJECT_0 == WaitForSingleObject( m_hNextDepthFrameEvent, 0 ) )
         {
-            case 1:
-                Nui_GotDepthAlert();
-                break;
-
-            case 2:
-                Nui_GotVideoAlert();
-                break;
-
-            case 3:
-                Nui_GotSkeletonAlert( );
-                break;
+			Nui_GotDepthAlert();
         }
+
+        if ( WAIT_OBJECT_0 == WaitForSingleObject( m_hNextVideoFrameEvent, 0 ) )
+        {
+            Nui_GotVideoAlert();
+        }
+
+        if (  WAIT_OBJECT_0 == WaitForSingleObject( m_hNextSkeletonEvent, 0 ) )
+        {
+            Nui_GotSkeletonAlert( );
+        }
+
+
     }
 #pragma warning(pop)
 
@@ -339,7 +247,7 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
 //
 void NUI_Controller::Nui_GotVideoAlert( )
 {
-    const NUI_IMAGE_FRAME * pImageFrame = NULL;
+    NUI_IMAGE_FRAME pImageFrame;
 
     HRESULT hr = m_pNuiInstance->NuiImageStreamGetNextFrame(
         m_pVideoStreamHandle,
@@ -350,7 +258,7 @@ void NUI_Controller::Nui_GotVideoAlert( )
         return;
     }
 
-    INuiFrameTexture * pTexture = pImageFrame->pFrameTexture;
+    INuiFrameTexture * pTexture = pImageFrame.pFrameTexture;
     NUI_LOCKED_RECT LockedRect;
     pTexture->LockRect( 0, &LockedRect, NULL, 0 );
     if( LockedRect.Pitch != 0 )
@@ -362,7 +270,7 @@ void NUI_Controller::Nui_GotVideoAlert( )
 		MessageBox( NULL, "Buffer length of received texture is bogus\r", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
     }
 
-    m_pNuiInstance->NuiImageStreamReleaseFrame( m_pVideoStreamHandle, pImageFrame );
+    m_pNuiInstance->NuiImageStreamReleaseFrame( m_pVideoStreamHandle, &pImageFrame );
 }
 
 
@@ -371,9 +279,13 @@ IplImage* tImage=0;
 bool textureUpdated=false;
 
 
+static const int g_IntensityShiftByPlayerR[] = { 1, 2, 0, 2, 0, 0, 2, 0 };
+static const int g_IntensityShiftByPlayerG[] = { 1, 2, 2, 0, 2, 0, 0, 1 };
+static const int g_IntensityShiftByPlayerB[] = { 1, 0, 2, 2, 0, 2, 0, 2 };
+
 void NUI_Controller::Nui_GotDepthAlert( )
 {
-    const NUI_IMAGE_FRAME * pImageFrame = NULL;
+    NUI_IMAGE_FRAME pImageFrame;
 
     HRESULT hr = m_pNuiInstance->NuiImageStreamGetNextFrame(
         m_pDepthStreamHandle,
@@ -385,7 +297,7 @@ void NUI_Controller::Nui_GotDepthAlert( )
         return;
     }
 
-    INuiFrameTexture * pTexture = pImageFrame->pFrameTexture;
+    INuiFrameTexture * pTexture = pImageFrame.pFrameTexture;
     NUI_LOCKED_RECT LockedRect;
     pTexture->LockRect( 0, &LockedRect, NULL, 0 );
     if( LockedRect.Pitch != 0 )
@@ -402,22 +314,31 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			BYTE* dPtr=(BYTE*)(tImage->imageData+y*tImage->widthStep);
 			for( int x = 0 ; x < m_Width ; x++ )
 			{
-				RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun++ );
-				*dPtr++ = quad.rgbRed;
-				*dPtr++ = quad.rgbGreen;
-				*dPtr++ = quad.rgbBlue;
+				USHORT depth     = *pBufferRun++;
+				USHORT realDepth = NuiDepthPixelToDepth(depth);
+				USHORT player    = NuiDepthPixelToPlayerIndex(depth);
+				BYTE intensity = static_cast<BYTE>(~(realDepth >> 4));
+				//RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun++ );
+				*dPtr++ = intensity >> g_IntensityShiftByPlayerB[player];;
+				*dPtr++ = intensity >> g_IntensityShiftByPlayerG[player];
+				*dPtr++ = intensity >> g_IntensityShiftByPlayerR[player];
 			}
 		}
+		cvShowImage("result",tImage);cvWaitKey(2);
 		textureUpdated=true;
     }
     else
     {
 		MessageBox( NULL, "Buffer length of received texture is bogus\r" , "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
     }
-
-    m_pNuiInstance->NuiImageStreamReleaseFrame( m_pDepthStreamHandle, pImageFrame );
+    m_pNuiInstance->NuiImageStreamReleaseFrame( m_pDepthStreamHandle, &pImageFrame );
 }
-//
+
+
+
+
+
+
 
 //void NUI_Controller::Nui_BlankSkeletonScreen(HWND hWnd)
 //{
@@ -597,6 +518,9 @@ void NUI_Controller::Nui_GotDepthAlert( )
 //
 //}
 //
+
+
+
 void NUI_Controller::Nui_GotSkeletonAlert( )
 {
     NUI_SKELETON_FRAME SkeletonFrame;
@@ -630,19 +554,29 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
 
     // draw each skeleton color according to the slot within they are found.
     //
-    bool bBlank = true;
-    for( int i = 0 ; i < NUI_SKELETON_COUNT ; i++ )
-    {
-        // Show skeleton only if it is tracked, and the center-shoulder joint is at least inferred.
+    //bool bBlank = true;
+    //for( int i = 0 ; i < NUI_SKELETON_COUNT ; i++ )
+    //{
+    //    // Show skeleton only if it is tracked, and the center-shoulder joint is at least inferred.
 
-        if( SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED &&
-            SkeletonFrame.SkeletonData[i].eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_CENTER] != NUI_SKELETON_POSITION_NOT_TRACKED)
-        {
-            //Nui_DrawSkeleton( bBlank, &SkeletonFrame.SkeletonData[i], GetDlgItem( m_hWnd, IDC_SKELETALVIEW ), i );
-            bBlank = false;
-        }
-    }
+    //    if( SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED &&
+    //        SkeletonFrame.SkeletonData[i].eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_CENTER] != NUI_SKELETON_POSITION_NOT_TRACKED)
+    //    {
+    //        //Nui_DrawSkeleton( bBlank, &SkeletonFrame.SkeletonData[i], GetDlgItem( m_hWnd, IDC_SKELETALVIEW ), i );
+			
+    //        bBlank = false;
+    //    }
+    //}
 
+	if (NUI_SKELETON_COUNT > 1)
+	{
+		for (  int i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
+		{
+			m_Points[i]=SkeletonFrame.SkeletonData[0].SkeletonPositions[i];
+		}
+		mSkeletonUpdated=true;
+	}
+	
     //Nui_DoDoubleBuffer(GetDlgItem(m_hWnd,IDC_SKELETALVIEW), m_SkeletonDC);
 }
 
