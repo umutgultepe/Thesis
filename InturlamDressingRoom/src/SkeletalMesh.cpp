@@ -182,7 +182,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 		setupBone(tBone->getName(),q*q2);
 
 	}
-//	setupBone("Root",Degree(0),Degree(0),Degree(0));
+	setupBone("Root",Degree(0),Degree(0),Degree(0));
 //	setupBone("Waist",Degree(0),Degree(0),Degree(0));
 
 
@@ -223,36 +223,40 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 	} 
 }
 
+Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj)
+{
+	Quaternion q;
+	q.x=sj.absoluteRotation.rotationQuaternion.x;
+	q.y=sj.absoluteRotation.rotationQuaternion.y;
+	q.z=sj.absoluteRotation.rotationQuaternion.z;
+	q.w=sj.absoluteRotation.rotationQuaternion.w;
+	Ogre::Matrix3 rotM;
+	Radian yaw,pitch,roll;
+
+	q.ToRotationMatrix(rotM);
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
+	q.FromRotationMatrix(rotM);
+	return q;
+
+}
+
+
 void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip)
 {
 	// Get the model skeleton bone info
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
-	Ogre::Quaternion qI = bone->getInitialOrientation();
-	Ogre::Quaternion newQ = Quaternion::IDENTITY;
+	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint);
+	bone->setOrientation(newQ);			
+	
+	
 
+		//Ogre::Quaternion qI = bone->getInitialOrientation();
 	// Get the Kinect SDK bone info
-	newQ.x=skelJoint.absoluteRotation.rotationQuaternion.x;
-	newQ.y=skelJoint.absoluteRotation.rotationQuaternion.y;
-	newQ.z=skelJoint.absoluteRotation.rotationQuaternion.z;
-	newQ.w=skelJoint.absoluteRotation.rotationQuaternion.w;
-
-
-	Quaternion flipZ=Quaternion::IDENTITY;
+	//Quaternion flipZ=Quaternion::IDENTITY;
 	//flipZ.FromAngleAxis(Ogre::Degree(180),Ogre::Vector3(0,-1,0));
-
-	Ogre::Matrix3 rotM;
-	Radian yaw,pitch,roll;
-
-	newQ.ToRotationMatrix(rotM);
-	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-	rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
-	
-
-
-	
-	
-	
+	//static float deg = 0;
 	//Ogre::Vector3 v;
 	//v=rotM.GetColumn(0);
 	//v.z=-v.z;
@@ -267,9 +271,6 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON
 	//v.y=-v.y;
 	//rotM.SetColumn(2,v);
 
-	newQ.FromRotationMatrix(rotM);
-
-	static float deg = 0;
 	//XnVector3D col1 = xnCreatePoint3D(jointOri.orientation.elements[0], jointOri.orientation.elements[3], jointOri.orientation.elements[6]);
 	//XnVector3D col2 = xnCreatePoint3D(jointOri.orientation.elements[1], jointOri.orientation.elements[4], jointOri.orientation.elements[7]);
 	//XnVector3D col3 = xnCreatePoint3D(jointOri.orientation.elements[2], jointOri.orientation.elements[5], jointOri.orientation.elements[8]);
@@ -280,11 +281,11 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON
 	//Quaternion q;
 	//newQ.FromRotationMatrix(matOri);
 			
-	bone->resetOrientation(); //in order for the conversion from world to local to work.
+	//bone->resetOrientation(); //in order for the conversion from world to local to work.
 	//newQ = bone->convertWorldToLocalOrientation(newQ);
 			
 	//bone->setOrientation(newQ*qI);			
-	bone->setOrientation(flipZ*newQ);			
+	
 }
 
 
@@ -426,7 +427,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 		{
 			if (i==BONE_CHEST || i==BONE_STOMACH)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true);
-			else
+			else if (i!=BONE_ROOT)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 		}
 	}
@@ -466,13 +467,13 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	//hipVector.y=0;
 
 	////Ogre::Quaternion bodyRotation=hipVector.getRotationTo(initialVector);
-	//NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[nuiIDs[i]]
-
-	//Ogre::Quaternion bodyRotation=initialVector.getRotationTo(hipVector);
-	//	
 	//Ogre::Quaternion qI=rootBone->getInitialOrientation();
-	//rootBone->setOrientation(bodyRotation*qI);
-
+	
+	
+	/*NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[NUI_SKELETON_POSITION_HIP_CENTER];
+	Ogre::Quaternion bodyRotation=convertNUItoOgre(hip);
+	rootBone->setOrientation(bodyRotation);
+*/
 	
 	return newPos2;
 }
