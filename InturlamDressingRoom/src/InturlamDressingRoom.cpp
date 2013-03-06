@@ -71,7 +71,7 @@ InturlamDressingRoom::~InturlamDressingRoom(void)
 
 	
 }
-void SetupDepthMaterial()
+Ogre::OverlayElement* SetupDepthMaterial()
 {
 	// Create the texture
 	Ogre::TexturePtr depthTexture = Ogre::TextureManager::getSingleton().createManual(
@@ -90,6 +90,49 @@ void SetupDepthMaterial()
 		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 	material->getTechnique(0)->getPass(0)->createTextureUnitState("MyDepthTexture");
 	material->getTechnique(0)->getPass(0)->setSceneBlending(SBT_TRANSPARENT_ALPHA);
+
+	Ogre::OverlayElement* mDepthPanel = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel","DepthPanel");
+	mDepthPanel->setMaterialName("DepthTextureMaterial");
+	mDepthPanel->setMetricsMode(Ogre::GMM_PIXELS);
+	mDepthPanel->setWidth(320);
+	mDepthPanel->setHeight(240);
+	mDepthPanel->setHorizontalAlignment(GHA_RIGHT);
+	mDepthPanel->setVerticalAlignment(GVA_BOTTOM);
+	mDepthPanel->setLeft(-mDepthPanel->getWidth());
+	mDepthPanel->setTop(-mDepthPanel->getHeight());
+	return mDepthPanel;
+}
+
+extern IplImage* tImage;
+extern bool textureUpdated;
+
+void updateDepthTexture()
+{
+	if (tImage && textureUpdated)
+	{
+		//Depth texture
+		TexturePtr texture = TextureManager::getSingleton().getByName("MyDepthTexture");
+		HardwarePixelBufferSharedPtr pixelBuffer = texture->getBuffer();// Get the pixel buffer
+		pixelBuffer->lock(HardwareBuffer::HBL_DISCARD); // Lock the pixel buffer and get a pixel box
+		const PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+		unsigned char* pDest = static_cast<unsigned char*>(pixelBox.data);
+
+		for( int y = 0 ; y < m_Height ; y++ )
+		{
+			pDest = static_cast<unsigned char*>(pixelBox.data) + y*pixelBox.rowPitch*4;
+			BYTE* dPtr=(BYTE*)(tImage->imageData+y*tImage->widthStep);
+			for( int x = 0 ; x < m_Width ; x++ )
+			{
+				*pDest++ = *dPtr++;	// write to output buffer
+				*pDest++ =  *dPtr++;	// write to output buffer
+				*pDest++ = *dPtr++;	// write to output buffer
+				*pDest++ =  255;	// write to output buffer
+			}
+
+		}
+		pixelBuffer->unlock();
+		textureUpdated=false;
+	}	
 }
 
 void InturlamDressingRoom::createCapsule(const Ogre::String& strName, const float r,const float r2,const float d, const int nRings , const int nSegments )
@@ -803,6 +846,10 @@ void InturlamDressingRoom::createScene(void)
 	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
 	#endif
+	
+	Ogre::OverlayElement* mDepthPanel=SetupDepthMaterial();
+	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
+	mDepthPanel->show();
 	mNui=new NUI_Controller();
 	//mNui->Nui_Init();
 
@@ -1016,7 +1063,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	}
 	#endif
 
-	//mNui->Nui_ProcessThread();
+	updateDepthTexture();
 
 	if (simulating && lowerCloth)
 	{
@@ -1079,12 +1126,15 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
         {
             mTrayMgr->moveWidgetToTray(help, OgreBites::TL_TOPRIGHT, 0);
             help->show();
+			
         }
         else
         {
             mTrayMgr->removeWidgetFromTray(help);
             help->hide();
         }
+		
+		
 	}
 	else if (arg.key==OIS::KC_TAB)
 	{

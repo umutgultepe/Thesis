@@ -368,7 +368,7 @@ void NUI_Controller::Nui_GotVideoAlert( )
 
 #include "HandTracker.h"
 IplImage* tImage=0;
-
+bool textureUpdated=false;
 
 
 void NUI_Controller::Nui_GotDepthAlert( )
@@ -397,7 +397,6 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			tImage=cvCreateImage(dSize,IPL_DEPTH_8U,3);
 		// draw the bits to the bitmap
 		USHORT * pBufferRun = (USHORT*) pBuffer;
-
 		for( int y = 0 ; y < m_Height ; y++ )
 		{
 			BYTE* dPtr=(BYTE*)(tImage->imageData+y*tImage->widthStep);
@@ -405,14 +404,11 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			{
 				RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun++ );
 				*dPtr++ = quad.rgbRed;
-                *dPtr++ = quad.rgbGreen;
+				*dPtr++ = quad.rgbGreen;
 				*dPtr++ = quad.rgbBlue;
 			}
-
 		}
-
-		cvShowImage("result",tImage);
-		cvWaitKey(2);
+		textureUpdated=true;
     }
     else
     {
@@ -705,6 +701,6 @@ RGBQUAD NUI_Controller::Nui_ShortToQuad_Depth( USHORT s )
         q.rgbGreen = 255 - ( l / 2 );
         q.rgbBlue = 255 - ( l / 2 );
     }
-
+	q.rgbReserved=255;
     return q;
 }
