@@ -956,16 +956,16 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 
 void InturlamDressingRoom::updateVisualHuman()
 {
-
+#if USE_KINECT
 	Ogre::Vector3 leftHip=mKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
 	Ogre::Vector3 rightHip=mKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
 	Ogre::Vector3 hipVector=(rightHip-leftHip);
 	Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
 	hipVector.y=0;
 	bodyRotation=hipVector.getRotationTo(initialVector);
+#endif
 	Ogre::Bone* rootBone=femaleBody->getSkeleton()->getBone("Root");
 	updateJoints(rootBone);
-
 
 }
 
@@ -1064,13 +1064,23 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	#endif
 
 	updateDepthTexture();
-
+#if USE_NUI
 	if (mNui->mSkeletonUpdated)
 	{
-		SkeletalMesh::updateOrientations(mNui->m_Points);
+		upperCloth->updateMesh(mNui);
+		Ogre::Vector3 targetPos=femaleBody->updateMesh(mNui);
+		
+		updateVisualHuman();
+		if (lowerCloth)
+		{
+			lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
+			lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+			updateCloth();
+		}
 		mNui->mSkeletonUpdated=false;
 	}
 
+#endif 
 	if (simulating && lowerCloth)
 	{
 		DWORD t=GetTickCount();

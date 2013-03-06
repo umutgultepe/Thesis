@@ -5,6 +5,7 @@
 
 #ifndef USE_KINECT
 #define USE_KINECT 0
+#define USE_NUI 1
 #define USE_USER_SCALING 0
 #endif
 enum 

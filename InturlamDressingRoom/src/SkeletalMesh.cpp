@@ -2,17 +2,6 @@
 #include "SkeletalMesh.h"
 
 
-
-void SkeletalMesh::updateOrientations(NUI_Vector4* locations)
-{
-
-
-
-
-	return;
-
-}
-
 SkeletalMesh::SkeletalMesh(void)
 {
 
@@ -135,8 +124,9 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 		}
 		else if  (tBone->getName()=="Ulna.L")
 		{
-			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,-1));	 
-			q2.FromAngleAxis(Ogre::Degree(45),Vector3(0,-1,0));	
+			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));		 
+			q2.FromAngleAxis(Ogre::Degree(45),Vector3(0,-1,0));			
+			q2=q2.Inverse();
 			boneExists.at(BONE_LEFT_ULNA)=true;
 
 		}
@@ -147,22 +137,22 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			q2=q2.Inverse();
 			boneExists.at(BONE_RIGHT_ULNA)=true;
 		}
-		else if (tBone->getName()=="Chest" )
-		{
-			q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-			boneExists.at(BONE_CHEST)=true;
-			setupBone(tBone->getName(),q);
-			continue;
+		//else if (tBone->getName()=="Chest" )
+		//{
+		//	q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
+		//	boneExists.at(BONE_CHEST)=true;
+		//	setupBone(tBone->getName(),q);
+		//	continue;
 
-		}
+		//}
 
-		else if (tBone->getName()=="Stomach")
-		{
-			q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-			boneExists.at(BONE_STOMACH)=true;
-			setupBone(tBone->getName(),q);
-			continue;
-		}
+		//else if (tBone->getName()=="Stomach")
+		//{
+		//	q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
+		//	boneExists.at(BONE_STOMACH)=true;
+		//	setupBone(tBone->getName(),q);
+		//	continue;
+		//}
 		else 
 		{
 			q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
@@ -177,6 +167,8 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 						boneExists.at(BONE_RIGHT_CALF)=true;
 			else if (tBone->getName()=="Root")
 			{
+				q.FromAngleAxis(Ogre::Degree(180),Vector3(0,1,0));	
+				//setupBone(tBone->getName(),q*q2);
 				boneExists.at(BONE_ROOT)=true;
 				continue;
 			}
@@ -190,7 +182,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 		setupBone(tBone->getName(),q*q2);
 
 	}
-	setupBone("Root",Degree(0),Degree(0),Degree(0));
+//	setupBone("Root",Degree(0),Degree(0),Degree(0));
 //	setupBone("Waist",Degree(0),Degree(0),Degree(0));
 
 
@@ -229,6 +221,70 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 			
 		bone->setOrientation(newQ*qI);			
 	} 
+}
+
+void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip)
+{
+	// Get the model skeleton bone info
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* bone = skel->getBone(modelBoneName);
+	Ogre::Quaternion qI = bone->getInitialOrientation();
+	Ogre::Quaternion newQ = Quaternion::IDENTITY;
+
+	// Get the Kinect SDK bone info
+	newQ.x=skelJoint.absoluteRotation.rotationQuaternion.x;
+	newQ.y=skelJoint.absoluteRotation.rotationQuaternion.y;
+	newQ.z=skelJoint.absoluteRotation.rotationQuaternion.z;
+	newQ.w=skelJoint.absoluteRotation.rotationQuaternion.w;
+
+
+	Quaternion flipZ=Quaternion::IDENTITY;
+	//flipZ.FromAngleAxis(Ogre::Degree(180),Ogre::Vector3(0,-1,0));
+
+	Ogre::Matrix3 rotM;
+	Radian yaw,pitch,roll;
+
+	newQ.ToRotationMatrix(rotM);
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
+	
+
+
+	
+	
+	
+	//Ogre::Vector3 v;
+	//v=rotM.GetColumn(0);
+	//v.z=-v.z;
+	//rotM.SetColumn(0,v);
+	//
+	//v=rotM.GetColumn(1);
+	//v.z=-v.z;
+	//rotM.SetColumn(1,v);
+	//
+	//v=rotM.GetColumn(2);
+	//v.x=-v.x;
+	//v.y=-v.y;
+	//rotM.SetColumn(2,v);
+
+	newQ.FromRotationMatrix(rotM);
+
+	static float deg = 0;
+	//XnVector3D col1 = xnCreatePoint3D(jointOri.orientation.elements[0], jointOri.orientation.elements[3], jointOri.orientation.elements[6]);
+	//XnVector3D col2 = xnCreatePoint3D(jointOri.orientation.elements[1], jointOri.orientation.elements[4], jointOri.orientation.elements[7]);
+	//XnVector3D col3 = xnCreatePoint3D(jointOri.orientation.elements[2], jointOri.orientation.elements[5], jointOri.orientation.elements[8]);
+	//
+	//Ogre::Matrix3 matOri(jointOri.orientation.elements[0],-jointOri.orientation.elements[1],jointOri.orientation.elements[2],
+	//					-jointOri.orientation.elements[3],jointOri.orientation.elements[4],-jointOri.orientation.elements[5],
+	//					jointOri.orientation.elements[6],-jointOri.orientation.elements[7],jointOri.orientation.elements[8]);
+	//Quaternion q;
+	//newQ.FromRotationMatrix(matOri);
+			
+	bone->resetOrientation(); //in order for the conversion from world to local to work.
+	//newQ = bone->convertWorldToLocalOrientation(newQ);
+			
+	//bone->setOrientation(newQ*qI);			
+	bone->setOrientation(flipZ*newQ);			
 }
 
 
@@ -339,4 +395,84 @@ Ogre::Vector3 SkeletalMesh::updateMesh()
 	
 		return newPos2;
 	
+}
+
+Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
+{
+	mGoalDirection = Vector3::ZERO;   // we will calculate this
+
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* rootBone = skel->getBone("Root");
+
+	NUI_Vector4 torsoPos;
+	Vector3 newPos2=Vector3(0,0,0);
+
+	if(bNewUser)
+	{			
+		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
+		origTorsoPos.x = -torsoPos.x*1000;
+		origTorsoPos.y = torsoPos.y*1000;
+		origTorsoPos.z = -torsoPos.z*1000;
+		bNewUser = false;
+	}
+
+
+	Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
+	int i=0;
+
+	for (int i=0;i<ACTIVE_BONE_COUNT;i++)
+	{
+		if (boneExists.at(i))
+		{
+			if (i==BONE_CHEST || i==BONE_STOMACH)
+				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true);
+			else
+				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+		}
+	}
+
+
+
+	if(!bNewUser)
+	{			 
+		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
+		Vector3 newPos;
+		newPos.x = -torsoPos.x*1000;
+		newPos.y = torsoPos.y*1000;
+		newPos.z = -torsoPos.z*1000;
+
+		newPos2 = (newPos - origTorsoPos)/100;
+
+		newPos2.y -= 0.3;
+
+		if (newPos2.y < 0)
+		{
+			newPos2.y /= 2.5;
+
+			if (newPos2.y < -1.5)
+			{
+				newPos2.y = -1.5;
+			}
+		}
+
+		rootBone->setPosition(newPos2);
+	}
+
+
+	//Ogre::Vector3 leftHip=gKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
+	//Ogre::Vector3 rightHip=gKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
+	//Ogre::Vector3 hipVector=(rightHip-leftHip);
+	//Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
+	//hipVector.y=0;
+
+	////Ogre::Quaternion bodyRotation=hipVector.getRotationTo(initialVector);
+	//NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[nuiIDs[i]]
+
+	//Ogre::Quaternion bodyRotation=initialVector.getRotationTo(hipVector);
+	//	
+	//Ogre::Quaternion qI=rootBone->getInitialOrientation();
+	//rootBone->setOrientation(bodyRotation*qI);
+
+	
+	return newPos2;
 }

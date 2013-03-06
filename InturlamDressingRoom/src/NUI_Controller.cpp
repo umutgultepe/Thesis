@@ -324,7 +324,6 @@ void NUI_Controller::Nui_GotDepthAlert( )
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerR[player];
 			}
 		}
-		cvShowImage("result",tImage);cvWaitKey(2);
 		textureUpdated=true;
     }
     else
@@ -526,7 +525,8 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
     NUI_SKELETON_FRAME SkeletonFrame;
 
     bool bFoundSkeleton = false;
-
+	bool updatedSkeleton= false;
+	int skeletonIndex=-1;
     if( SUCCEEDED(m_pNuiInstance->NuiSkeletonGetNextFrame( 0, &SkeletonFrame )) )
     {
         for( int i = 0 ; i < NUI_SKELETON_COUNT ; i++ )
@@ -534,6 +534,12 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
             if( SkeletonFrame.SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED )
             {
                 bFoundSkeleton = true;
+				if (!updatedSkeleton)
+				{				
+					skeletonIndex=i;
+					updatedSkeleton=true;
+				}
+
             }
         }
     }
@@ -547,6 +553,15 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
 
     // smooth out the skeleton data
     m_pNuiInstance->NuiTransformSmooth(&SkeletonFrame,NULL);
+
+
+	for (  int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++)
+	{
+		m_Points[j]=SkeletonFrame.SkeletonData[skeletonIndex].SkeletonPositions[j];
+	}
+	NuiSkeletonCalculateBoneOrientations(&(SkeletonFrame.SkeletonData[skeletonIndex]),m_Orientations);					
+	mSkeletonUpdated=true;
+	
 
     // we found a skeleton, re-start the timer
     //m_bScreenBlanked = false;
@@ -568,15 +583,6 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
     //    }
     //}
 
-	if (NUI_SKELETON_COUNT > 1)
-	{
-		for (  int i = 0; i < NUI_SKELETON_POSITION_COUNT; i++)
-		{
-			m_Points[i]=SkeletonFrame.SkeletonData[0].SkeletonPositions[i];
-		}
-		NuiSkeletonCalculateBoneOrientations(SkeletonFrame.SkeletonData,m_Orientations);
-		mSkeletonUpdated=true;
-	}
 
 	
     //Nui_DoDoubleBuffer(GetDlgItem(m_hWnd,IDC_SKELETALVIEW), m_SkeletonDC);
