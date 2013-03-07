@@ -24,6 +24,7 @@ InturlamDressingRoom/Debug*/
 *.lib
 *.sbr
 *.csv
+*.exe
 obj/
 InturlamDressingRoom/Release*/
 _ReSharper*/
