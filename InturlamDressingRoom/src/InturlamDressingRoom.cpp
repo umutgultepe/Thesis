@@ -22,6 +22,7 @@ http://code.google.com/p/ogreappwizards/
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
 #define COLLISION_SPHERE_COUNT 24
+#define COLLISION_CAPSULE_COUNT 25
 
 
 float userWidthScale=1;
@@ -36,6 +37,7 @@ extern float estimatedBodyHeight;
 using namespace Ogre;
 
 int numberOfCapsules=0;
+
 
 OgreBites::ParamsPanel* help;
 PxClothCollisionData col_data;
@@ -52,13 +54,16 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	currentClothIndex=INITIAL_CLOTH_INDEX;
 	gPhysicsSDK=0;
 	gScene=0;
+	mKinect=0;
 	usingGPU=true;
 	lowerCloth=0;
+	mNui=0;
 }
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
 {
-	
+	if (mNui)
+		delete mNui;
 	if (box_collider)
 		delete [] box_collider;
 	if (gScene)
@@ -66,9 +71,9 @@ InturlamDressingRoom::~InturlamDressingRoom(void)
 	if (gPhysicsSDK)
 		gPhysicsSDK->release();
 
-
+	
 }
-void SetupDepthMaterial()
+Ogre::OverlayElement* SetupDepthMaterial()
 {
 	// Create the texture
 	Ogre::TexturePtr depthTexture = Ogre::TextureManager::getSingleton().createManual(
@@ -87,6 +92,49 @@ void SetupDepthMaterial()
 		ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 	material->getTechnique(0)->getPass(0)->createTextureUnitState("MyDepthTexture");
 	material->getTechnique(0)->getPass(0)->setSceneBlending(SBT_TRANSPARENT_ALPHA);
+
+	Ogre::OverlayElement* mDepthPanel = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel","DepthPanel");
+	mDepthPanel->setMaterialName("DepthTextureMaterial");
+	mDepthPanel->setMetricsMode(Ogre::GMM_PIXELS);
+	mDepthPanel->setWidth(320);
+	mDepthPanel->setHeight(240);
+	mDepthPanel->setHorizontalAlignment(GHA_RIGHT);
+	mDepthPanel->setVerticalAlignment(GVA_BOTTOM);
+	mDepthPanel->setLeft(-mDepthPanel->getWidth());
+	mDepthPanel->setTop(-mDepthPanel->getHeight());
+	return mDepthPanel;
+}
+
+extern IplImage* tImage;
+extern bool textureUpdated;
+
+void updateDepthTexture()
+{
+	if (tImage && textureUpdated)
+	{
+		//Depth texture
+		TexturePtr texture = TextureManager::getSingleton().getByName("MyDepthTexture");
+		HardwarePixelBufferSharedPtr pixelBuffer = texture->getBuffer();// Get the pixel buffer
+		pixelBuffer->lock(HardwareBuffer::HBL_DISCARD); // Lock the pixel buffer and get a pixel box
+		const PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+		unsigned char* pDest = static_cast<unsigned char*>(pixelBox.data);
+
+		for( int y = 0 ; y < m_Height ; y++ )
+		{
+			pDest = static_cast<unsigned char*>(pixelBox.data) + y*pixelBox.rowPitch*4;
+			BYTE* dPtr=(BYTE*)(tImage->imageData+y*tImage->widthStep);
+			for( int x = 0 ; x < m_Width ; x++ )
+			{
+				*pDest++ = *dPtr++;	// write to output buffer
+				*pDest++ =  *dPtr++;	// write to output buffer
+				*pDest++ = *dPtr++;	// write to output buffer
+				*pDest++ =  255;	// write to output buffer
+			}
+
+		}
+		pixelBuffer->unlock();
+		textureUpdated=false;
+	}	
 }
 
 void InturlamDressingRoom::createCapsule(const Ogre::String& strName, const float r,const float r2,const float d, const int nRings , const int nSegments )
@@ -363,30 +411,32 @@ int getBoneIndex(Ogre::String boneName)
 }
 
 const physx::PxU32 pairInd[]={	
-	0,1,
-	0,3,
-	3,4,
-	4,6,
-	6,12,
-	3,5,
-	5,7,
-	7,13,
-	1,9,
-	9,11,
-	11,15,
-	1,8,
-	8,10,
-	10,14,
-	0,4,
-	0,5,
-	16,18,
-	18,20,
-	20,22,
-	17,19,
-	19,21,
-	21,23,
-	10,22,//Knee-to-Hip-Extend
-	11,23};
+	0,1, //Stomach-To-Waist
+	0,3, //Stomach-To-Chest
+	3,4, //Chest-To-Left-Humerus
+	4,6, //Left-Humerus-to-Left-Ulna
+	6,12,//Left-Ulna-to-Left-Hand
+	3,5, //Chest-To-Right-Humerus
+	5,7, //Right-Humerus-to-Right-Ulna
+	7,13,//Right-Ulna-to-Right-Hand
+	1,9, //Waist-to-Right-Thigh
+	9,11,//Right-Thigh-To-Right-Calf
+	11,15,//Right-Calf-To-Right-Foot
+	1,8, //Waist-to-Left-Thigh
+	8,10, //Left-Thigh-To-Left-Calf
+	10,14,//Left-Calf-To-Left-Foot
+	0,4, //Stomach-To-Left-Humerus
+	0,5, //Stomach-To-Right-Humerus
+	16,18,//LexExtension Left 1-2
+	18,20,//LexExtension Left 2-3
+	20,22,//LexExtension Left 3-4
+	17,19,//LexExtension Right 1-2
+	19,21,//LexExtension Right 2-3
+	21,23,//LexExtension Right 3-4
+	10,22,//Knee-to-Hip-Extend Left
+ 	11,23,//Knee-to-Hip-Extend Right
+	10,11//Knee-to-Knee
+};
 
 float radius_modifier=1;
 
@@ -586,7 +636,7 @@ void InturlamDressingRoom::setupHumanCollider()
 
 	col_data.spheres=box_collider;
 	col_data.numSpheres=COLLISION_SPHERE_COUNT;
-	col_data.numPairs=24;
+	col_data.numPairs=COLLISION_CAPSULE_COUNT;
 	col_data.pairIndexBuffer=pairInd;
 
 	collider_set_up=true;
@@ -606,8 +656,6 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		lowerCloth->cloth=0;
 		lowerCloth->Reset();
 	}
-
-
 	PxClothMeshDesc meshDesc;
 	meshDesc.setToDefault();
 	clothPos.x=0;
@@ -637,7 +685,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		bendCfg.stiffness = 1;
 		bendCfg.stretchStiffness = 0.50;
 		bendCfg.stretchLimit=0.60;
-		cloth->setSolverFrequency(30);
+		cloth->setSolverFrequency(120);
 
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
@@ -772,26 +820,29 @@ void InturlamDressingRoom::changeCloth(int index)
 	}
 
 }
+DWORD start_time=0;
+DWORD latest_update=0;
+
+
+
+
 
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
-	#if USE_KINECT//Kinect And Stuff
-	SetupDepthMaterial();
+	Ogre::OverlayElement* mDepthPanel = SetupDepthMaterial();
+	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
+	#if USE_KINECT//Kinect And Stuff	
 	mKinect=new KinectController(false);
 	mKinect->createRTT(mRoot,mTrayMgr);
-	Ogre::OverlayElement* mDepthPanel = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel","DepthPanel");
-	mDepthPanel->setMaterialName("DepthTextureMaterial");
-	mDepthPanel->setMetricsMode(Ogre::GMM_RELATIVE);
-	mDepthPanel->setWidth(0.25);
-	mDepthPanel->setHeight(0.25*480/640);
-	mDepthPanel->setHorizontalAlignment(GHA_RIGHT);
-	mDepthPanel->setVerticalAlignment(GVA_BOTTOM);
-	mDepthPanel->setLeft(-mDepthPanel->getWidth());
-	mDepthPanel->setTop(-mDepthPanel->getHeight());
-	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
+	#elif USE_NUI
+	mNui=new NUI_Controller();
+	#else
+	mDepthPanel->hide();
 	#endif
+	
+	
 	#if USE_USER_SCALING == 0
 	createSimulation();
 	#endif
@@ -805,9 +856,12 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Calibration Time");
 	items.push_back("Body Height");
 	items.push_back("Shoulder Width");
+	items.push_back("Elapsed MS");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
     help->hide();
+	start_time=GetTickCount();
+	latest_update=GetTickCount();
 }
 
 
@@ -891,16 +945,16 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 
 void InturlamDressingRoom::updateVisualHuman()
 {
-
+#if USE_KINECT
 	Ogre::Vector3 leftHip=mKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
 	Ogre::Vector3 rightHip=mKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
 	Ogre::Vector3 hipVector=(rightHip-leftHip);
 	Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
 	hipVector.y=0;
 	bodyRotation=hipVector.getRotationTo(initialVector);
+#endif
 	Ogre::Bone* rootBone=femaleBody->getSkeleton()->getBone("Root");
 	updateJoints(rootBone);
-
 
 }
 
@@ -916,6 +970,8 @@ long long milliseconds_now() {
     }
 }
 
+
+
 PxReal timeStep=0;
 int initialDelay=0;
 float totalCalibrationTime=0;
@@ -929,8 +985,6 @@ long long cal_end;
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	#if USE_KINECT
-	if (simulating && simulationCreated)
-		timeStep+=evt.timeSinceLastFrame;
 	if (mKinect->addTime(evt.timeSinceLastFrame))
 	{
 		if (mKinect->isUserActive())
@@ -995,19 +1049,42 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			upperCloth->resetBonesToInitialState();
 			updateVisualHuman();
 		}
-		if (simulating && simulationCreated && lowerCloth)
-		{
-			lowerCloth->updateWithPhysics(gScene,timeStep);
-			timeStep=0;
-		}
-	}
-	#else
-	if (simulating && lowerCloth)
-	{
-		timeStep=evt.timeSinceLastFrame;
-		lowerCloth->updateWithPhysics(gScene,timeStep);
 	}
 	#endif
+
+	
+	#if USE_NUI
+	updateDepthTexture();
+	if (mNui->mSkeletonUpdated)
+	{
+		upperCloth->updateMesh(mNui);
+		Ogre::Vector3 targetPos=femaleBody->updateMesh(mNui);
+		
+		updateVisualHuman();
+		if (lowerCloth)
+		{
+			lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
+			lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+			updateCloth();
+		}
+		mNui->mSkeletonUpdated=false;
+	}
+	#endif 
+	if (simulating && lowerCloth)
+	{
+		DWORD t=GetTickCount();
+		float elapsed=t-latest_update;
+		if (elapsed>8)
+		{
+			lowerCloth->updateWithPhysics(gScene,elapsed/1000);
+			latest_update=GetTickCount();
+		}	
+	}
+	
+
+
+
+	help->setParamValue("Elapsed MS",StringConverter::toString(((float)(GetTickCount()-start_time))/1000));
 	return BaseApplication::frameRenderingQueued(evt);
 }
 
@@ -1057,12 +1134,15 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
         {
             mTrayMgr->moveWidgetToTray(help, OgreBites::TL_TOPRIGHT, 0);
             help->show();
+			
         }
         else
         {
             mTrayMgr->removeWidgetFromTray(help);
             help->hide();
         }
+		
+		
 	}
 	else if (arg.key==OIS::KC_TAB)
 	{

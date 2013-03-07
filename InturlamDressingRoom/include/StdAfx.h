@@ -1,3 +1,16 @@
+#define WIN32_LEAN_AND_MEAN   
+#include <windows.h>
+#include <ole2.h>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <math.h>
+#include "NuiApi.h"
+typedef _Vector4 NUI_Vector4;
+
 #include "Ogre.h"
 #include "OIS.h"
 #include <opencv\cv.h>
@@ -13,7 +26,7 @@
 #include <OgreStringConverter.h>
 #include <OgreErrorDialog.h>
 
-#include <math.h>
+
 #include <XnCppWrapper.h>
 #include "SamplePlugin.h"
 #include <OgreCamera.h>
@@ -30,17 +43,11 @@
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
-
+#include "PxPhysics.h"
 #include <SdkTrays.h>
 #include <SdkCameraMan.h>
 
-#include <stdio.h>
-#include "PxPhysics.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
+
 #include <PxPhysicsAPI.h> 
 #include <PxExtensionsAPI.h>   
 #include <PxGpuDispatcher.h>

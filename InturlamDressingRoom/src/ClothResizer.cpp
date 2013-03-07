@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "..\include\ClothResizer.h"
+#include "ClothResizer.h"
 
 float* radiiBuffer[29];
 float* bodySizeBuffer[29];
@@ -46,9 +46,9 @@ float estimatedBodyHeight=0;
 
 IplImage *uImage,*dImage,*showImage;
 
-short minD=65536,maxD=0;
+short minD=65535,maxD=0;
 
-CvSize dSize=cvSize(m_Width,m_Height);
+
 extern OgreBites::ParamsPanel* help;
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
@@ -182,7 +182,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 				if (x_init-step>-1)
 				{
 					unsigned char tValue=*(iPtr-step);
-					if( !(bool)tValue )
+					if( tValue!=0 )
 					{
 						endOfJoint.X-=(step-1);
 						endOfJoint.Z=*(dPtr-(step-1));
@@ -194,7 +194,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 				if (x_init+step<640)
 				{
 					unsigned char tValue=*(iPtr+step);
-					if(!(bool)tValue )
+					if( tValue!=0)
 					{
 						endOfJoint.X+=(step-1);
 						endOfJoint.Z=*(dPtr+(step-1));
@@ -208,7 +208,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 					if (y_init-step>-1)
 					{
 						unsigned char tValue=*(iPtr-step*uImage->widthStep);
-						if( !(bool)tValue )
+						if(  tValue!=0 )
 						{
 							endOfJoint.Y-=(step-1);
 							endOfJoint.Z=*(dPtr-(step-1)*dImage->widthStep/2);	//Divide widthstep by 2, since step is in bytes an pointer increments in 2 bytes
@@ -220,7 +220,7 @@ void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userI
 					if (y_init+step<480)
 					{
 						unsigned char tValue=*(iPtr+step*uImage->widthStep);
-						if( !(bool)tValue )
+						if( tValue!=0)
 						{
 							endOfJoint.Y+=(step-1);
 							endOfJoint.Z=*(dPtr+(step-1)*dImage->widthStep/2);

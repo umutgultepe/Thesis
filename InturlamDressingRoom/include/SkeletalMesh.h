@@ -1,9 +1,13 @@
 #pragma once
 #include "StdAfx.h"
+#include "ClothResizer.h"
 #include "KinectController.h"
+#include "NUI_Controller.h"
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
 #define ACTIVE_BONE_COUNT 12
+class KinectController;
+
 enum boneID
 {
 	BONE_STOMACH= 0,
@@ -88,10 +92,53 @@ XN_SKEL_LEFT_FOOT,
 XN_SKEL_RIGHT_FOOT,
 (XnSkeletonJoint)0};
 
+static _NUI_SKELETON_POSITION_INDEX nuiIDs[]=
+{
+	NUI_SKELETON_POSITION_SPINE,
+	NUI_SKELETON_POSITION_SPINE,
+	NUI_SKELETON_POSITION_HIP_CENTER,
+	NUI_SKELETON_POSITION_SPINE,
+	NUI_SKELETON_POSITION_ELBOW_LEFT,
+	NUI_SKELETON_POSITION_ELBOW_RIGHT,
+	NUI_SKELETON_POSITION_WRIST_LEFT,
+	NUI_SKELETON_POSITION_WRIST_RIGHT,
+	NUI_SKELETON_POSITION_KNEE_LEFT,
+	NUI_SKELETON_POSITION_KNEE_RIGHT,
+	NUI_SKELETON_POSITION_ANKLE_LEFT,
+	NUI_SKELETON_POSITION_ANKLE_RIGHT,
+	NUI_SKELETON_POSITION_HAND_LEFT,
+	NUI_SKELETON_POSITION_HAND_RIGHT,
+	NUI_SKELETON_POSITION_FOOT_LEFT,
+	NUI_SKELETON_POSITION_FOOT_RIGHT,
+	(_NUI_SKELETON_POSITION_INDEX)-1
+};
+
+//static _NUI_SKELETON_POSITION_INDEX nuiIDs[]=
+//{
+//	NUI_SKELETON_POSITION_SPINE,
+//	NUI_SKELETON_POSITION_HIP_CENTER,
+//	NUI_SKELETON_POSITION_HIP_CENTER,
+//	NUI_SKELETON_POSITION_SPINE,
+//	NUI_SKELETON_POSITION_SHOULDER_LEFT,
+//	NUI_SKELETON_POSITION_SHOULDER_RIGHT,
+//	NUI_SKELETON_POSITION_ELBOW_LEFT,
+//	NUI_SKELETON_POSITION_ELBOW_RIGHT,
+//	NUI_SKELETON_POSITION_HIP_LEFT,
+//	NUI_SKELETON_POSITION_HIP_RIGHT,
+//	NUI_SKELETON_POSITION_KNEE_LEFT,
+//	NUI_SKELETON_POSITION_KNEE_RIGHT,
+//	NUI_SKELETON_POSITION_WRIST_LEFT,
+//	NUI_SKELETON_POSITION_WRIST_RIGHT,
+//	NUI_SKELETON_POSITION_FOOT_LEFT,
+//	NUI_SKELETON_POSITION_FOOT_RIGHT,
+//	(_NUI_SKELETON_POSITION_INDEX)-1
+//};
+
+
+static NUI_Vector4* boneOrientations=0;
 class SkeletalMesh
 {
 public:
-
 
 	SkeletalMesh(void);
 	SkeletalMesh(KinectController* kinect);
@@ -114,12 +161,15 @@ public:
 	Ogre::Entity* loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::SceneNode* parentNode,Ogre::String entityName,Ogre::String meshID);
 
 	Ogre::Vector3 updateMesh();
+	Ogre::Vector3 updateMesh(NUI_Controller* nui);
+	
 
 	void setupBone(const String& name,const Degree& yaw,const Degree& pitch,const Degree& roll);
 	void setupBone(const String& name,const Ogre::Quaternion& q);
 	void setupBone(const String& name,const Ogre::Radian& angle, const Vector3 axis);
 	void resetBonesToInitialState();
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
+	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=false);
 	void setOriginalTorsoPosition();
 	void setVisible(bool visibleOrNot);
 
