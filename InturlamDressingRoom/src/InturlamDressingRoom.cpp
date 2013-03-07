@@ -733,9 +733,9 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	//clothNode->setVisible(false);
-	//lowerClothHandle->setVisible(false);
-	femaleNode->setVisible(false);
+	clothNode->setVisible(false);
+	lowerClothHandle->setVisible(false);
+	//femaleNode->setVisible(false);
 	//rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
@@ -873,12 +873,14 @@ void InturlamDressingRoom::updateCollisionSpheres()
 
 	//clothHandle->setScale(Ogre::Vector3(1));
 	Vector3 ColliderOffset=rootColliderNode->_getDerivedPosition();
+	Quaternion ColliderOrientation=upperCloth->getBoneOrientation(BONE_ROOT).Inverse();
 	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+"Node";
 		Ogre::SceneNode* gNode=mSceneMgr->getSceneNode(nodeName);
-		Vector3 localPosition=gNode->_getDerivedPosition()+Vector3(0,Y_OFFSET,0)-ColliderOffset;
+		Vector3 localPosition=ColliderOrientation*(gNode->_getDerivedPosition()+Vector3(0,Y_OFFSET,0)-ColliderOffset);
+		
 		if (boneStrings[i]=="Root")
 		{
 			box_collider[i].pos.x=localPosition.x;
@@ -908,10 +910,10 @@ void InturlamDressingRoom::updateCloth()
 	PxVec3 trans=PxVec3(ts.x,ts.y,ts.z);
 
 	//Ogre::Quaternion qRot=Quaternion::IDENTITY;
-	Ogre::Quaternion qRot=bodyRotation;
+	Ogre::Quaternion qRot=upperCloth->getBoneOrientation(BONE_ROOT);
 
 
-	PxQuat quat=PxQuat(qRot.x,qRot.y,qRot.z,qRot.w);
+	PxQuat quat(qRot.x,qRot.y,qRot.z,qRot.w);
 
 
 	if (justCalibrated)
@@ -936,9 +938,13 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 			{
 				Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
 				Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
+				#if USE_KINECT
 				Ogre::Quaternion qI = boneNode->getInitialOrientation();
+				#elif USE_NUI
+				Ogre::Quaternion qI = Ogre::Quaternion::IDENTITY;
+				#endif
 				boneNode->resetOrientation();
-				boneNode->setOrientation(bodyRotation*bone->getOrientation()*qI);
+				boneNode->setOrientation(bone->getOrientation()*qI);
 			}
 			updateJoints(childBone,level+1);
 		}
