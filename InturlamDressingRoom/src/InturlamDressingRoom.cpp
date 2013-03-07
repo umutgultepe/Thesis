@@ -54,6 +54,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	currentClothIndex=INITIAL_CLOTH_INDEX;
 	gPhysicsSDK=0;
 	gScene=0;
+	mKinect=0;
 	usingGPU=true;
 	lowerCloth=0;
 	mNui=0;
@@ -61,7 +62,8 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
 {
-	delete mNui;
+	if (mNui)
+		delete mNui;
 	if (box_collider)
 		delete [] box_collider;
 	if (gScene)
@@ -654,8 +656,6 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		lowerCloth->cloth=0;
 		lowerCloth->Reset();
 	}
-
-
 	PxClothMeshDesc meshDesc;
 	meshDesc.setToDefault();
 	clothPos.x=0;
@@ -830,30 +830,19 @@ DWORD latest_update=0;
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
-	#if USE_KINECT//Kinect And Stuff
-	SetupDepthMaterial();
+	Ogre::OverlayElement* mDepthPanel = SetupDepthMaterial();
+	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
+	#if USE_KINECT//Kinect And Stuff	
 	mKinect=new KinectController(false);
 	mKinect->createRTT(mRoot,mTrayMgr);
-	Ogre::OverlayElement* mDepthPanel = Ogre::OverlayManager::getSingleton().createOverlayElement("Panel","DepthPanel");
-	mDepthPanel->setMaterialName("DepthTextureMaterial");
-	mDepthPanel->setMetricsMode(Ogre::GMM_RELATIVE);
-	mDepthPanel->setWidth(0.25);
-	mDepthPanel->setHeight(0.25*480/640);
-	mDepthPanel->setHorizontalAlignment(GHA_RIGHT);
-	mDepthPanel->setVerticalAlignment(GVA_BOTTOM);
-	mDepthPanel->setLeft(-mDepthPanel->getWidth());
-	mDepthPanel->setTop(-mDepthPanel->getHeight());
-	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
 	mDepthPanel->show();
+	#elif USE_NUI
+	mNui=new NUI_Controller();
+	#else
+	mDepthPanel->hide();
 	#endif
 	
-	Ogre::OverlayElement* mDepthPanel=SetupDepthMaterial();
-	mTrayMgr->getTraysLayer()->add2D((Ogre::OverlayContainer*)mDepthPanel);
-	mDepthPanel->show();
-	mNui=new NUI_Controller();
-	//mNui->Nui_Init();
-
-
+	
 	#if USE_USER_SCALING == 0
 	createSimulation();
 	#endif
@@ -1063,8 +1052,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	}
 	#endif
 
+	
+	#if USE_NUI
 	updateDepthTexture();
-#if USE_NUI
 	if (mNui->mSkeletonUpdated)
 	{
 		upperCloth->updateMesh(mNui);
@@ -1079,8 +1069,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}
 		mNui->mSkeletonUpdated=false;
 	}
-
-#endif 
+	#endif 
 	if (simulating && lowerCloth)
 	{
 		DWORD t=GetTickCount();

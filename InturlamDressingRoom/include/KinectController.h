@@ -27,6 +27,7 @@
 #include "StdAfx.h"
 #define SHOW_DEPTH 1
 #define SHOW_BAR 0
+#include "ClothResizer.h"
 #include "HandTracker.h"
 #include "PointDrawer.h"
 #if SHOW_DEPTH && DEPTH_BAR

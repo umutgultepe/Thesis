@@ -1,10 +1,13 @@
 #pragma once
 #include "StdAfx.h"
+#include "ClothResizer.h"
 #include "KinectController.h"
 #include "NUI_Controller.h"
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
 #define ACTIVE_BONE_COUNT 12
+class KinectController;
+
 enum boneID
 {
 	BONE_STOMACH= 0,

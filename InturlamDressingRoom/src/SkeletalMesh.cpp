@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "ClothResizer.h"
 #include "SkeletalMesh.h"
 
 
@@ -89,12 +90,6 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 	Skeleton->setBlendMode(ANIMBLEND_CUMULATIVE);	
 
 	Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
-
-	
-
-
-
-
 	while (bIter.hasMoreElements())
 	{
 		Ogre::Bone* tBone=bIter.getNext();
@@ -124,9 +119,8 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 		}
 		else if  (tBone->getName()=="Ulna.L")
 		{
-			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));		 
+			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,-1));		 
 			q2.FromAngleAxis(Ogre::Degree(45),Vector3(0,-1,0));			
-			q2=q2.Inverse();
 			boneExists.at(BONE_LEFT_ULNA)=true;
 
 		}
@@ -137,6 +131,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			q2=q2.Inverse();
 			boneExists.at(BONE_RIGHT_ULNA)=true;
 		}
+		//#if USE_KINECT
 		//else if (tBone->getName()=="Chest" )
 		//{
 		//	q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
@@ -153,6 +148,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 		//	setupBone(tBone->getName(),q);
 		//	continue;
 		//}
+		//#endif
 		else 
 		{
 			q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
@@ -167,8 +163,6 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 						boneExists.at(BONE_RIGHT_CALF)=true;
 			else if (tBone->getName()=="Root")
 			{
-				q.FromAngleAxis(Ogre::Degree(180),Vector3(0,1,0));	
-				//setupBone(tBone->getName(),q*q2);
 				boneExists.at(BONE_ROOT)=true;
 				continue;
 			}

@@ -54,9 +54,6 @@
     <ClInclude Include="include\NUI_Controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\CVUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InturlamDressingRoom.cpp">
@@ -90,9 +87,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\NUI_Controller.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CVUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

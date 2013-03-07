@@ -1,26 +1,22 @@
 #include "StdAfx.h"
 #include "SkeletonPoseDetector.h"
 #include "PointDrawer.h"
+#include "ClothResizer.h"
 
 #ifndef HAND_TRACKER_HPP
 #define HAND_TRACKER_HPP
-
 #ifndef SHOW_DEPTH
 #define SHOW_DEPTH 1
 #endif
 #ifndef SHOW_BAR
 #define SHOW_BAR 0
 #endif
-
 #define averaging_size 15
 
 
-
-const uint m_Width = 320;
-const uint m_Height = 240;
 const int RGBX= 1280;
 const int RGBY = 1024;
-const CvSize dSize=cvSize(m_Width,m_Height);
+
 enum Handstate
 {
 	HAND_UNKNOWN,
