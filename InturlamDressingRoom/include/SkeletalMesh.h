@@ -97,7 +97,7 @@ static _NUI_SKELETON_POSITION_INDEX nuiIDs[]=
 	NUI_SKELETON_POSITION_SPINE,
 	NUI_SKELETON_POSITION_SPINE,
 	NUI_SKELETON_POSITION_HIP_CENTER,
-	NUI_SKELETON_POSITION_SPINE,
+	NUI_SKELETON_POSITION_SHOULDER_CENTER,
 	NUI_SKELETON_POSITION_ELBOW_LEFT,
 	NUI_SKELETON_POSITION_ELBOW_RIGHT,
 	NUI_SKELETON_POSITION_WRIST_LEFT,
@@ -169,7 +169,7 @@ public:
 	void setupBone(const String& name,const Ogre::Radian& angle, const Vector3 axis);
 	void resetBonesToInitialState();
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
-	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=false);
+	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=true,Quaternion factor=Quaternion::IDENTITY);
 	void setOriginalTorsoPosition();
 	void setVisible(bool visibleOrNot);
 

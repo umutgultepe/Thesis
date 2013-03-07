@@ -131,16 +131,14 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			q2=q2.Inverse();
 			boneExists.at(BONE_RIGHT_ULNA)=true;
 		}
-		//#if USE_KINECT
-		//else if (tBone->getName()=="Chest" )
-		//{
-		//	q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-		//	boneExists.at(BONE_CHEST)=true;
-		//	setupBone(tBone->getName(),q);
-		//	continue;
-
-		//}
-
+		
+		else if (tBone->getName()=="Chest" )
+		{
+			q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
+			boneExists.at(BONE_CHEST)=true;
+			setupBone(tBone->getName(),q);
+			continue;
+		}
 		//else if (tBone->getName()=="Stomach")
 		//{
 		//	q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
@@ -148,7 +146,6 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 		//	setupBone(tBone->getName(),q);
 		//	continue;
 		//}
-		//#endif
 		else 
 		{
 			q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
@@ -217,32 +214,34 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 	} 
 }
 
-Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj)
+Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip=true)
 {
 	Quaternion q;
 	q.x=sj.absoluteRotation.rotationQuaternion.x;
 	q.y=sj.absoluteRotation.rotationQuaternion.y;
 	q.z=sj.absoluteRotation.rotationQuaternion.z;
 	q.w=sj.absoluteRotation.rotationQuaternion.w;
-	Ogre::Matrix3 rotM;
-	Radian yaw,pitch,roll;
-
-	q.ToRotationMatrix(rotM);
-	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-	rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
-	q.FromRotationMatrix(rotM);
+	if (flip)
+	{
+		Ogre::Matrix3 rotM;
+		Radian yaw,pitch,roll;
+		q.ToRotationMatrix(rotM);
+		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+		rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
+		q.FromRotationMatrix(rotM);
+	}
 	return q;
 
 }
 
 
-void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip)
+void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip,Quaternion factor)
 {
 	// Get the model skeleton bone info
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
-	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint);
-	bone->setOrientation(newQ);			
+	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint,flip);
+	bone->setOrientation(newQ*factor);			
 	
 	
 
@@ -419,8 +418,10 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	{
 		if (boneExists.at(i))
 		{
-			if (i==BONE_CHEST || i==BONE_STOMACH)
-				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true);
+			if (i==BONE_CHEST)
+				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(180),Ogre::Vector3(0,1,0)));
+			//else if (i==BONE_STOMACH)
+			//	transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
 			else if (i!=BONE_ROOT)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 		}

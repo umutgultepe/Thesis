@@ -58,6 +58,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	usingGPU=true;
 	lowerCloth=0;
 	mNui=0;
+	bodyRotation=Ogre::Quaternion::IDENTITY;
 }
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
@@ -848,9 +849,9 @@ void InturlamDressingRoom::createScene(void)
 	#endif
 
 	buildAxes();
-	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
-	Ogre::Light* l = mSceneMgr->createLight("MainLight");
-	l->setPosition(0,30,0);
+	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.7, 0.7, 0.7));
+	//Ogre::Light* l = mSceneMgr->createLight("MainLight");
+	//l->setPosition(0,30,0);
 	StringVector items;
 	items.push_back("Passed Frames");
 	items.push_back("Calibration Time");
