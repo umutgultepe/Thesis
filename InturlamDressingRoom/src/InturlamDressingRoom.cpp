@@ -733,9 +733,10 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	//clothNode->setVisible(false);
-	//femaleNode->setVisible(false);
-	rootColliderNode->setVisible(false);
+	clothNode->setVisible(false);
+	lowerClothHandle->setVisible(false);
+	femaleNode->setVisible(false);
+	//rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
@@ -871,13 +872,13 @@ void InturlamDressingRoom::updateCollisionSpheres()
 	//Ogre::Vector3 scale=clothHandle->getScale();
 
 	//clothHandle->setScale(Ogre::Vector3(1));
-
+	Vector3 ColliderOffset=rootColliderNode->_getDerivedPosition();
 	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+"Node";
 		Ogre::SceneNode* gNode=mSceneMgr->getSceneNode(nodeName);
-		Vector3 localPosition=gNode->_getDerivedPosition()+Vector3(0,Y_OFFSET,0);
+		Vector3 localPosition=gNode->_getDerivedPosition()+Vector3(0,Y_OFFSET,0)-ColliderOffset;
 		if (boneStrings[i]=="Root")
 		{
 			box_collider[i].pos.x=localPosition.x;
@@ -1066,6 +1067,8 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		{
 			lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
 			lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+			rootColliderNode->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR));
+			rootColliderNode->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
 			updateCloth();
 		}
 		mNui->mSkeletonUpdated=false;
