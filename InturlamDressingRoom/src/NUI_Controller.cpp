@@ -47,8 +47,8 @@ bool NUI_Controller::Nui_Init()
         HRESULT hr = NuiCreateSensorByIndex(0, &m_pNuiInstance);
         if (FAILED(hr))
         {
-            return hr;
 			MessageBox( NULL, "Failed to create NUI instance", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			return FAILED(hr);
         }
         m_instanceId = m_pNuiInstance->NuiDeviceConnectionId();
     }
@@ -74,7 +74,7 @@ bool NUI_Controller::Nui_Init()
         if( FAILED( hr ) )
         {
             MessageBox( NULL, "Failed to Init Skeleton", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-            return hr;
+            return FAILED(hr);
         }
     }
 
@@ -89,7 +89,7 @@ bool NUI_Controller::Nui_Init()
     if( FAILED( hr ) )
     {
         MessageBox( NULL, "Failed to Init Video", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-        return hr;
+        return FAILED(hr);
     }
 
 	//Initialize Depth
@@ -103,7 +103,7 @@ bool NUI_Controller::Nui_Init()
     if( FAILED( hr ) )
     {
        MessageBox( NULL, "Failed to Init Depth", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-        return hr;
+       return FAILED(hr);
     }
 
 	// Start the Nui processing thread
@@ -318,7 +318,6 @@ void NUI_Controller::Nui_GotDepthAlert( )
 				USHORT realDepth = NuiDepthPixelToDepth(depth);
 				USHORT player    = NuiDepthPixelToPlayerIndex(depth);
 				BYTE intensity = static_cast<BYTE>(~(realDepth >> 4));
-				//RGBQUAD quad = Nui_ShortToQuad_Depth( *pBufferRun++ );
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerB[player];;
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerG[player];
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerR[player];
@@ -332,12 +331,6 @@ void NUI_Controller::Nui_GotDepthAlert( )
     }
     m_pNuiInstance->NuiImageStreamReleaseFrame( m_pDepthStreamHandle, &pImageFrame );
 }
-
-
-
-
-
-
 
 //void NUI_Controller::Nui_BlankSkeletonScreen(HWND hWnd)
 //{
@@ -520,6 +513,10 @@ void NUI_Controller::Nui_GotDepthAlert( )
 
 
 
+
+const NUI_TRANSFORM_SMOOTH_PARAMETERS VerySmoothParams = {0.7f, 0.3f, 1.0f, 1.0f, 1.0f};
+const NUI_TRANSFORM_SMOOTH_PARAMETERS SomewhatLatentParams = {0.5f, 0.1f, 0.5f, 0.1f, 0.1f};
+
 void NUI_Controller::Nui_GotSkeletonAlert( )
 {
     NUI_SKELETON_FRAME SkeletonFrame;
@@ -552,7 +549,7 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
     }
 
     // smooth out the skeleton data
-    m_pNuiInstance->NuiTransformSmooth(&SkeletonFrame,NULL);
+    m_pNuiInstance->NuiTransformSmooth(&SkeletonFrame,&VerySmoothParams );
 
 
 	for (  int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++)
@@ -586,63 +583,4 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
 
 	
     //Nui_DoDoubleBuffer(GetDlgItem(m_hWnd,IDC_SKELETALVIEW), m_SkeletonDC);
-}
-
-
-
-//
-//
-RGBQUAD NUI_Controller::Nui_ShortToQuad_Depth( USHORT s )
-{
-    bool hasPlayerData = HasSkeletalEngine(m_pNuiInstance);
-    USHORT RealDepth = hasPlayerData ? (s & 0xfff8) >> 3 : s & 0xffff;
-    USHORT Player = hasPlayerData ? s & 7 : 0;
-
-    // transform 13-bit depth information into an 8-bit intensity appropriate
-    // for display (we disregard information in most significant bit)
-    BYTE l = 255 - (BYTE)(256*RealDepth/0x0fff);
-
-    RGBQUAD q;
-    q.rgbRed = q.rgbBlue = q.rgbGreen = 0;
-
-    switch( Player )
-    {
-    case 0:
-        q.rgbRed = l / 2;
-        q.rgbBlue = l / 2;
-        q.rgbGreen = l / 2;
-        break;
-    case 1:
-        q.rgbRed = l;
-        break;
-    case 2:
-        q.rgbGreen = l;
-        break;
-    case 3:
-        q.rgbRed = l / 4;
-        q.rgbGreen = l;
-        q.rgbBlue = l;
-        break;
-    case 4:
-        q.rgbRed = l;
-        q.rgbGreen = l;
-        q.rgbBlue = l / 4;
-        break;
-    case 5:
-        q.rgbRed = l;
-        q.rgbGreen = l / 4;
-        q.rgbBlue = l;
-        break;
-    case 6:
-        q.rgbRed = l / 2;
-        q.rgbGreen = l / 2;
-        q.rgbBlue = l;
-        break;
-    case 7:
-        q.rgbRed = 255 - ( l / 2 );
-        q.rgbGreen = 255 - ( l / 2 );
-        q.rgbBlue = 255 - ( l / 2 );
-    }
-	q.rgbReserved=255;
-    return q;
 }

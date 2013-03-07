@@ -69,7 +69,7 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 	{
 	for ( j= 0; j < m_Height; j++)
 	{
-		char* uPtr=(char*)(uImage->imageData+j*uImage->widthStep);
+		unsigned char* uPtr=(unsigned char*)(uImage->imageData+j*uImage->widthStep);
 		unsigned short* dPtr=(unsigned short*)(dImage->imageData+j*dImage->widthStep);
 		for(i = 0; i < m_Width; i++)
 		{		

@@ -702,7 +702,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	}
 
 	lowerCloth->cloth=cloth;
-	clothDirection=still;
+	//clothDirection=still;
 	clothRotation=none;
 	guyMoves=standing;
 }
@@ -1080,9 +1080,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			latest_update=GetTickCount();
 		}	
 	}
-	
-
-
 
 	help->setParamValue("Elapsed MS",StringConverter::toString(((float)(GetTickCount()-start_time))/1000));
 	return BaseApplication::frameRenderingQueued(evt);
@@ -1154,27 +1151,27 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 	{
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,0,1);
-		clothDirection=moveDirection::forward;
+		//clothDirection=moveDirection::forward;
 		updateAcceleration(PxVec3(0,0,1));
 
 	}
 	else if (arg.key==OIS::KC_NUMPAD2)
 	{
-		clothDirection=moveDirection::backward;
+//		clothDirection=moveDirection::backward;
 		updateAcceleration(PxVec3(0,0,-1));
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,0,-1);
 	}
 	else if (arg.key==OIS::KC_NUMPAD6)
 	{
-		clothDirection=moveDirection::right;
+		//clothDirection=moveDirection::right;
 		updateAcceleration(PxVec3(1,0,0));
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,1,0);
 	}
 	else if (arg.key==OIS::KC_NUMPAD4)
 	{
-		clothDirection=moveDirection::left;
+		//clothDirection=moveDirection::left;
 		updateAcceleration(PxVec3(-1,0,0));
 		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
 		//ax->translate(0,-1,0);

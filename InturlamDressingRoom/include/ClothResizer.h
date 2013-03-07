@@ -3,8 +3,8 @@
 #include "SkeletalMesh.h"
 
 #ifndef USE_KINECT
-#define USE_KINECT 1
-#define USE_NUI 0
+#define USE_KINECT 0
+#define USE_NUI 1
 #define USE_USER_SCALING 0
 #endif
 
