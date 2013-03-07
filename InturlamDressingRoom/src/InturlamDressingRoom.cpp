@@ -733,8 +733,8 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	clothNode->setVisible(false);
-	lowerClothHandle->setVisible(false);
+	//clothNode->setVisible(false);
+	//lowerClothHandle->setVisible(false);
 	femaleNode->setVisible(false);
 	//rootColliderNode->setVisible(false);
 	simulationCreated=true;

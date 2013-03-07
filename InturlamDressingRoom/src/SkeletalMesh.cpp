@@ -139,13 +139,13 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			setupBone(tBone->getName(),q);
 			continue;
 		}
-		//else if (tBone->getName()=="Stomach")
-		//{
-		//	q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-		//	boneExists.at(BONE_STOMACH)=true;
-		//	setupBone(tBone->getName(),q);
-		//	continue;
-		//}
+		else if (tBone->getName()=="Stomach")
+		{
+			q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
+			boneExists.at(BONE_STOMACH)=true;
+			setupBone(tBone->getName(),q);
+			continue;
+		}
 		else 
 		{
 			q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
@@ -420,8 +420,8 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 		{
 			if (i==BONE_CHEST)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(180),Ogre::Vector3(0,1,0)));
-			//else if (i==BONE_STOMACH)
-			//	transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
+			else if (i==BONE_STOMACH)
+				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
 			else if (i!=BONE_ROOT)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 		}
