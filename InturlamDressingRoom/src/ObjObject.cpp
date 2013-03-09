@@ -294,7 +294,7 @@ PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric*
 	   p++;
 	}
 
-
+	
 	cooking->release();
 	return meshDesc;
 }

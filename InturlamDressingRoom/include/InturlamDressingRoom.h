@@ -93,7 +93,11 @@ class PhysxErrorReporter:  public PxDefaultErrorCallback
 			if (code==PxErrorCode::eINVALID_PARAMETER)
 				MessageBox( NULL, message, "Invalid Parameter!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 			else if (code==PxErrorCode::eINVALID_OPERATION)
+			{
+				if (line==195)
+					return;
 				MessageBox( NULL, message, "Invalid Operation!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
+			}
 			else if (code==PxErrorCode::eOUT_OF_MEMORY)
 				MessageBox( NULL, message, "Out Of Memory!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 			else if (code==PxErrorCode::eABORT || code==PxErrorCode::eINTERNAL_ERROR)

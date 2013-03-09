@@ -70,13 +70,12 @@ InturlamDressingRoom::~InturlamDressingRoom(void)
 		delete [] box_collider;
 	if (gPhysicsSDK)
 	{
-		if (lowerCloth)
-			lowerCloth->cloth->release();
-		gPhysicsSDK->release();
-		mCpuDispatcher->release();
+		gScene->release();
 		if (mCudaContextManager)
 			mCudaContextManager->release();
+		mCpuDispatcher->release();
 		gManager->release();
+		gPhysicsSDK->release();
 		gFoundation->release();
 	}
 	
@@ -474,9 +473,6 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 		parentNode->attachObject(endPart);
 	}
 }
-
-
-
 void InturlamDressingRoom::createVisualHuman()
 {
 	int mirror=1;
@@ -505,6 +501,8 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 			exit(0);
 		}
 
+
+
 		pxtask::CudaContextManagerDesc cudaContextManagerDesc;
 		mCudaContextManager = pxtask::createCudaContextManager(*gFoundation,cudaContextManagerDesc,gManager);
 
@@ -518,6 +516,7 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 		}
 
 		gPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*gFoundation,PxTolerancesScale(),true,gManager);
+		
 
 		if(gPhysicsSDK == NULL)	
 		{
@@ -683,7 +682,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	if (!collider_set_up)
 		setupHumanCollider();	
 	//col_data.setToDefault();
-
+	
 	if (col_data.isValid())
 		cloth = gPhysicsSDK->createCloth(tr,*fabric,points,col_data, PxClothFlag::eSWEPT_CONTACT |  PxClothFlag::eGPU );
 	
