@@ -467,6 +467,8 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 	}
 }
 
+
+
 void InturlamDressingRoom::createVisualHuman()
 {
 	int mirror=1;
@@ -951,7 +953,8 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 			Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
 			if (!childBone->getInheritOrientation())
 			{
-				boneNode->setOrientation(bone->_getDerivedOrientation());
+				Ogre::Quaternion qI = boneNode->getInitialOrientation();
+				boneNode->setOrientation(bone->_getDerivedOrientation()*qI);
 			}
 			else if (!bone->getInheritOrientation())
 			{
