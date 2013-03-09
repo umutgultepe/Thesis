@@ -760,15 +760,14 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
 			iBuf->unlock();
 			subMesh->setMaterialName(materialList.at( curFaceGroup->materialIndice)->getName());
 			subMesh->useSharedVertices = false;
+		
 		 }
 
 
 	  }
-
-	 
      // the original code was missing this line:
-     object->_setBounds( AxisAlignedBox( Vector3(-scaleFactor, -scaleFactor, -scaleFactor), Vector3(scaleFactor, scaleFactor, scaleFactor) ), false );
-     object->_setBoundingSphereRadius(scaleFactor);
+	 object->_setBounds( AxisAlignedBox::BOX_INFINITE, false );
+    // object->_setBoundingSphereRadius(scaleFactor);
          // this line makes clear the mesh is loaded (avoids memory leaks)
        object->load();
 	   //if (!Ogre::MeshManager::getSingleton().resourceExists(name+".mesh"))
