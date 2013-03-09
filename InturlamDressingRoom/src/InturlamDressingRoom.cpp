@@ -56,6 +56,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	gScene=0;
 	mKinect=0;
 	usingGPU=true;
+	upperCloth=0;
 	lowerCloth=0;
 	mNui=0;
 	bodyRotation=Ogre::Quaternion::IDENTITY;
@@ -67,11 +68,17 @@ InturlamDressingRoom::~InturlamDressingRoom(void)
 		delete mNui;
 	if (box_collider)
 		delete [] box_collider;
-	if (gScene)
-		gScene->release();
 	if (gPhysicsSDK)
+	{
+		if (lowerCloth)
+			lowerCloth->cloth->release();
 		gPhysicsSDK->release();
-
+		mCpuDispatcher->release();
+		if (mCudaContextManager)
+			mCudaContextManager->release();
+		gManager->release();
+		gFoundation->release();
+	}
 	
 }
 Ogre::OverlayElement* SetupDepthMaterial()
@@ -488,7 +495,7 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 			MessageBox( NULL,"PxCreateFoundation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 			exit(0);
 		}
-
+		
 
 		gManager=&PxProfileZoneManager::createProfileZoneManager(gFoundation);
 		if (!gManager)
@@ -498,7 +505,7 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 		}
 
 		pxtask::CudaContextManagerDesc cudaContextManagerDesc;
-		pxtask::CudaContextManager* mCudaContextManager = pxtask::createCudaContextManager(*gFoundation,cudaContextManagerDesc,gManager);
+		mCudaContextManager = pxtask::createCudaContextManager(*gFoundation,cudaContextManagerDesc,gManager);
 
 		if( mCudaContextManager )
 		{
@@ -519,18 +526,18 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 
 		if(!PxInitExtensions(*gPhysicsSDK))
 			cerr<< "PxInitExtensions failed!" <<endl;
-
+		
 
 		PxSceneDesc	sceneDesc(gPhysicsSDK->getTolerancesScale());
 		sceneDesc.gravity=PxVec3(0.0f, -9.8f, 0.0f);
 
 		if(!sceneDesc.cpuDispatcher) {
-			PxDefaultCpuDispatcher* mCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
+			mCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
 			if(!mCpuDispatcher)
 				cerr<<"PxDefaultCpuDispatcherCreate failed!"<<endl;
 			sceneDesc.cpuDispatcher = mCpuDispatcher;
 		} 
-
+		
 		if (!sceneDesc.gpuDispatcher && mCudaContextManager )
 		{
 			printf("gpu dispatcher done!\n");
@@ -671,7 +678,6 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	PxTransform tr;
 
 	meshDesc=*lowerCloth->loadPhysxCloth(&sceneDesc,fabric,points,&tr,gPhysicsSDK);
-
 	bool withHanger=true;
 	if (!collider_set_up)
 		setupHumanCollider();	
@@ -699,7 +705,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		cloth->setCollisionMassScale(20.0f);
 		cloth->setInertiaScale(0.5);
 		cloth->setClothFlag(PxClothFlag::eGPU,usingGPU);
-
+		
 		gScene->addActor(*cloth); 
 	}
 
@@ -734,10 +740,10 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	clothNode->setVisible(false);
-	lowerClothHandle->setVisible(false);
+	//clothNode->setVisible(false);
+	//lowerClothHandle->setVisible(false);
 	//femaleNode->setVisible(false);
-	//rootColliderNode->setVisible(false);
+	rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
@@ -747,12 +753,20 @@ void InturlamDressingRoom::loadClothes()
 
 	for (int i=0;i<CLOTH_COUNT;i++)
 	{
-		SkeletalMesh* tMesh=new SkeletalMesh(mKinect);
-		Ogre::String baseName=skeletonClothNames[i].substr(0,skeletonClothNames[i].length()-5);
-		tMesh->loadMesh(mSceneMgr,clothNode,baseName+"_skel",skeletonClothNames[i]);
-		tMesh->setVisible(false);
-		skeletalMeshes.push_back(tMesh);
-
+		Ogre::String baseName;
+		if (skeletonClothNames[i]!="")
+		{
+			SkeletalMesh* tMesh=new SkeletalMesh(mKinect);
+			baseName=skeletonClothNames[i].substr(0,skeletonClothNames[i].length()-5);
+			tMesh->loadMesh(mSceneMgr,clothNode,baseName+"_skel",skeletonClothNames[i]);
+			tMesh->setVisible(false);
+			skeletalMeshes.push_back(tMesh);
+		}
+		else	
+		{
+			skeletalMeshes.push_back(0);
+			baseName="NoUpper"+StringConverter::toString(i);
+		}
 		if (PhysicsClothNames[i]!="")
 		{
 			ObjObject* tPhys= new ObjObject(PhysicsClothNames[i].c_str());
@@ -773,8 +787,11 @@ void InturlamDressingRoom::loadClothes()
 			physicsMeshes.push_back(0);
 
 	}
-	upperCloth=skeletalMeshes.at(currentClothIndex);
-	upperCloth->setVisible(true);
+	if (skeletalMeshes.at(currentClothIndex))
+	{
+		upperCloth=skeletalMeshes.at(currentClothIndex);
+		upperCloth->setVisible(true);
+	}
 	initializePhysics();
 	if (physicsMeshes.at(currentClothIndex))
 	{
@@ -794,16 +811,22 @@ void InturlamDressingRoom::changeCloth(int index)
 {
 	if (currentClothIndex!=index)
 	{
-		upperCloth->setVisible(false);
-		SkeletalMesh* oldCloth=upperCloth;
-		upperCloth=skeletalMeshes.at(index);
-		upperCloth->setVisible(true);
-		if (!oldCloth->bNewUser && upperCloth->bNewUser)
+		if (upperCloth)
+			upperCloth->setVisible(false);
+		if (skeletalMeshes.at(index))
 		{
-			upperCloth->origTorsoPos=oldCloth->origTorsoPos;
-			upperCloth->bNewUser=false;
+			upperCloth=skeletalMeshes.at(index);
+			upperCloth->setVisible(true);
+			if (!femaleBody->bNewUser && upperCloth->bNewUser)
+			{
+				upperCloth->origTorsoPos=femaleBody->origTorsoPos;
+				upperCloth->bNewUser=false;
+			}
 		}
-
+		else
+		{
+			upperCloth=0;
+		}
 		if (physicsMeshes.at(currentClothIndex))
 		{
 			lowerCloth->setVisible(false);
@@ -874,7 +897,7 @@ void InturlamDressingRoom::updateCollisionSpheres()
 
 	//clothHandle->setScale(Ogre::Vector3(1));
 	Vector3 ColliderOffset=rootColliderNode->_getDerivedPosition();
-	Quaternion ColliderOrientation=upperCloth->getBoneOrientation(BONE_ROOT).Inverse();
+	Quaternion ColliderOrientation=femaleBody->getBoneOrientation(BONE_ROOT).Inverse();
 	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
 		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
@@ -911,7 +934,7 @@ void InturlamDressingRoom::updateCloth()
 	PxVec3 trans=PxVec3(ts.x,ts.y,ts.z);
 
 	//Ogre::Quaternion qRot=Quaternion::IDENTITY;
-	Ogre::Quaternion qRot=upperCloth->getBoneOrientation(BONE_ROOT);
+	Ogre::Quaternion qRot=femaleBody->getBoneOrientation(BONE_ROOT);
 
 
 	PxQuat quat(qRot.x,qRot.y,qRot.z,qRot.w);
@@ -938,7 +961,7 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 			Ogre::SceneNode* jointNode=mSceneMgr->getSceneNode(bone->getName() + "Node");
 			#if USE_KINECT
 			Ogre::Quaternion qI = boneNode->getInitialOrientation();
-			#elif USE_NUI
+			#else
 			Ogre::Quaternion qI = Ogre::Quaternion::IDENTITY;
 			#endif
 			//jointNode->resetOrientation();
@@ -1081,16 +1104,16 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	updateDepthTexture();
 	if (mNui->mSkeletonUpdated)
 	{
-		upperCloth->updateMesh(mNui);
+		if (upperCloth)
+			upperCloth->updateMesh(mNui);
 		Ogre::Vector3 targetPos=femaleBody->updateMesh(mNui);
 		
 		updateVisualHuman();
 		if (lowerCloth)
 		{
 			lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
-			lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+			lowerClothHandle->setOrientation(femaleBody->getBoneOrientation(BONE_ROOT));
 			rootColliderNode->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR));
-			//rootColliderNode->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
 			updateCloth();
 		}
 		mNui->mSkeletonUpdated=false;
@@ -1223,6 +1246,10 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 	else if (arg.key==OIS::KC_4)
 	{
 		changeCloth(3);
+	}
+	else if (arg.key==OIS::KC_5)
+	{
+		changeCloth(4);
 	}
 	return BaseApplication::keyPressed(arg);
 }
