@@ -394,11 +394,9 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 	Ogre::SceneNode* cNode=node->createChildSceneNode(childNodeName,Ogre::Vector3(0,distance,0));
 	Ogre::Quaternion rotQ=up.getRotationTo(endPosition);
 	node->setOrientation(rotQ);
-	node->setInitialState();
-
-	node->rotate(orientation);
 	node->setInheritOrientation(inheritOrientation);
-
+	node->setInitialState();
+	node->rotate(orientation);
 	return cNode;
 }
 
@@ -931,7 +929,7 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 {
 	if (bone->numChildren()>0 && level<7)
 	{
-		if (!bone->getInheritOrientation() && level>0)
+		if (!bone->getInheritOrientation())
 		{
 			//Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
 			//Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
@@ -949,11 +947,15 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 		while(childIterator.hasMoreElements())
 		{
 			Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
+			Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
+			Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
 			if (!childBone->getInheritOrientation())
 			{
-				Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
-				Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
 				boneNode->setOrientation(bone->_getDerivedOrientation());
+			}
+			else if (!bone->getInheritOrientation())
+			{
+				boneNode->resetToInitialState();
 			}
 			updateJoints(childBone,level+1);
 		}
@@ -1085,7 +1087,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			lowerClothHandle->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,-Y_OFFSET,0));
 			lowerClothHandle->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
 			rootColliderNode->setPosition(targetPos*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR));
-			rootColliderNode->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
+			//rootColliderNode->setOrientation(upperCloth->getBoneOrientation(BONE_ROOT));
 			updateCloth();
 		}
 		mNui->mSkeletonUpdated=false;
