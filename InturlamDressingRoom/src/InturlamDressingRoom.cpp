@@ -398,6 +398,7 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 
 	node->rotate(orientation);
 	node->setInheritOrientation(inheritOrientation);
+
 	return cNode;
 }
 
@@ -930,21 +931,29 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 {
 	if (bone->numChildren()>0 && level<7)
 	{
+		if (!bone->getInheritOrientation() && level>0)
+		{
+			//Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
+			//Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
+			Ogre::SceneNode* jointNode=mSceneMgr->getSceneNode(bone->getName() + "Node");
+			#if USE_KINECT
+			Ogre::Quaternion qI = boneNode->getInitialOrientation();
+			#elif USE_NUI
+			Ogre::Quaternion qI = Ogre::Quaternion::IDENTITY;
+			#endif
+			//jointNode->resetOrientation();
+			jointNode->setOrientation(bone->getOrientation()*qI);
+		}
+
 		Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
 		while(childIterator.hasMoreElements())
 		{
 			Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
-			if (!bone->getInheritOrientation() && level>0)
+			if (!childBone->getInheritOrientation())
 			{
 				Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
 				Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
-				#if USE_KINECT
-				Ogre::Quaternion qI = boneNode->getInitialOrientation();
-				#elif USE_NUI
-				Ogre::Quaternion qI = Ogre::Quaternion::IDENTITY;
-				#endif
-				boneNode->resetOrientation();
-				boneNode->setOrientation(bone->getOrientation()*qI);
+				boneNode->setOrientation(bone->_getDerivedOrientation());
 			}
 			updateJoints(childBone,level+1);
 		}
@@ -962,6 +971,8 @@ void InturlamDressingRoom::updateVisualHuman()
 	bodyRotation=hipVector.getRotationTo(initialVector);
 #endif
 	Ogre::Bone* rootBone=femaleBody->getSkeleton()->getBone("Root");
+	//Ogre::SceneNode* coreBone=mSceneMgr->getSceneNode("Root to Waist Node");
+	//coreBone->setOrientation(rootBone->getOrientation());
 	updateJoints(rootBone);
 
 }
