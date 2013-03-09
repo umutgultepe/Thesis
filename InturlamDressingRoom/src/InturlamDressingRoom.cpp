@@ -22,7 +22,7 @@ http://code.google.com/p/ogreappwizards/
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
 #define COLLISION_SPHERE_COUNT 24
-#define COLLISION_CAPSULE_COUNT 25
+#define COLLISION_CAPSULE_COUNT 26
 
 
 float userWidthScale=1;
@@ -442,7 +442,8 @@ const physx::PxU32 pairInd[]={
 	21,23,//LexExtension Right 3-4
 	10,22,//Knee-to-Hip-Extend Left
  	11,23,//Knee-to-Hip-Extend Right
-	10,11//Knee-to-Knee
+	10,11,//Knee-to-Knee
+	4,5//Shoulder-To-Shoulder
 };
 
 float radius_modifier=1;
