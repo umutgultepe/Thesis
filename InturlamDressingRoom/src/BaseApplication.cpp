@@ -94,15 +94,18 @@ void BaseApplication::createCamera(void)
 
     // Position it at 500 in Z direction
   //  mCamera->setPosition(Ogre::Vector3(13.986768,12.066955,8.5510149));
-	mCamera->setPosition(Ogre::Vector3(0,29.386364,92.627502));
+	mCamera->setPosition(Ogre::Vector3(0,6.5635023,71.540855));
     // Look back along -Z
     //mCamera->lookAt(Ogre::Vector3(0,0,-300));
 	//mCamera->setOrientation(Ogre::Quaternion(0.79585552,-0.14534906,0.57822263,0.10560346));
-	mCamera->setOrientation(Ogre::Quaternion(-0.97608817,0.21684033,0.015333609,0.0034063626));
+	mCamera->setOrientation(Ogre::Quaternion(-0.99930859,0.036642991,0.0065405401,0.00023978321));
 
     mCamera->setNearClipDistance(0.1);
 
     mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
+
+	mCameraMan->setTopSpeed(mCameraMan->getTopSpeed()/5);
+	
 }
 //-------------------------------------------------------------------------------------
 void BaseApplication::createFrameListener(void)

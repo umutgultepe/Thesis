@@ -442,7 +442,7 @@ const physx::PxU32 pairInd[]={
 	10,22,//Knee-to-Hip-Extend Left
  	11,23,//Knee-to-Hip-Extend Right
 	10,11,//Knee-to-Knee
-	4,5//Shoulder-To-Shoulder
+	20,21//Leg Extension 3 Left-Right
 };
 
 float radius_modifier=1;
@@ -740,7 +740,7 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	//clothNode->setVisible(false);
+	clothNode->setVisible(false);
 	//lowerClothHandle->setVisible(false);
 	//femaleNode->setVisible(false);
 	rootColliderNode->setVisible(false);
@@ -875,8 +875,8 @@ void InturlamDressingRoom::createScene(void)
 
 	buildAxes();
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.7, 0.7, 0.7));
-	//Ogre::Light* l = mSceneMgr->createLight("MainLight");
-	//l->setPosition(0,30,0);
+	Ogre::Light* l = mSceneMgr->createLight("MainLight");
+	l->setPosition(0,30,0);
 	StringVector items;
 	items.push_back("Passed Frames");
 	items.push_back("Calibration Time");
@@ -1150,8 +1150,9 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		simulating=!simulating;
 	else if (arg.key==OIS::KC_L)
 	{
-		mCamera->setPosition(Ogre::Vector3(0,0,80));
-		mCamera->lookAt(Ogre::Vector3(0,0,-300));
+		Ogre::Vector3 vp=mCamera->getPosition();
+		Ogre::Quaternion vq=mCamera->getOrientation();
+		vq=vq;
 	}
 	else if (arg.key==OIS::KC_H)
 	{

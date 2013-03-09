@@ -532,7 +532,7 @@ void ObjObject::loadMtl(string folder,string filename)
 				  materialCount++;
 				 	  materialList.at(materialCount-1)->setReceiveShadows(false); 
 				materialList.at(materialCount-1)->getTechnique(0)->setLightingEnabled(true); 
-				materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setCullingMode(CULL_CLOCKWISE);
+				materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setCullingMode(CULL_NONE);
 			  }
 			  else if(line.compare(ss,2,"Ka")==0)
 			  {
@@ -578,15 +578,18 @@ void ObjObject::loadMtl(string folder,string filename)
 					tt=getArray(line,2);
 				  else
 					tt=getArray(line,3);
-				   materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-				   materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
+				  if (tt[0]<1)
+				  {
+					   materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+					   materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
 
-					 Ogre::ColourValue diffuse=materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->getDiffuse();
+						Ogre::ColourValue diffuse=materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->getDiffuse();
 					  Ogre::ColourValue ambient=materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->getAmbient();
 					  diffuse.a=tt[0];
 					  ambient.a=tt[0];
 					materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setDiffuse(diffuse);
 					 materialList.at(materialCount-1)->getTechnique(0)->getPass(0)->setAmbient(ambient);
+				  }
 
 			  }
 		  }
