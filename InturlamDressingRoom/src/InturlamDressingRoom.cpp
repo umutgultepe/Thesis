@@ -480,9 +480,6 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 			Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
 			Ogre::Vector3 childLocalPosition=childBone->getPosition();
 			Ogre::SceneNode* subJointNode=parentNode->createChildSceneNode(childBone->getName() + "Node",childLocalPosition);
-
-
-
 			float startRadius=sphereRadii[getBoneIndex(bone->getName())]/SCALING_FACTOR;
 			float endRadius = sphereRadii[getBoneIndex(childBone->getName())]/SCALING_FACTOR;
 			createLimb(bone->getName()+" to "+ childBone->getName(),startRadius,childLocalPosition,endRadius,parentNode);
@@ -497,7 +494,6 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 			//Ogre::SceneNode* childJointNode=createLimb(limbName,childBone->getName()+"Node",startRadius,childLocalPosition,endRadius,boneNode,childBone->getInheritOrientation(),bone->getOrientation());
 			//createSphereAndCapsule(childBone,childJointNode,level+1);
 		}
-		//parentNode->setInheritOrientation(bone->getInheritOrientation());
 	}
 	else
 	{	  
@@ -938,23 +934,6 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 		Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
 		while(childIterator.hasMoreElements())
 			updateJoints((Ogre::Bone*)childIterator.getNext(),level+1);
-		//Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
-		//while(childIterator.hasMoreElements())
-		//{
-		//	Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
-		//	Ogre::String limbName=boneName+" to "+ childBone->getName();
-		//	Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
-		//	if (!childBone->getInheritOrientation())
-		//	{
-		//		Ogre::Quaternion qI = boneNode->getInitialOrientation();
-		//		boneNode->setOrientation(bone->_getDerivedOrientation()*qI);
-		//	}
-		//	else if (!bone->getInheritOrientation())
-		//	{
-		//		boneNode->resetToInitialState();
-		//	}
-		//	updateJoints(childBone,level+1);
-		//}
 	}
 }
 
@@ -1104,10 +1083,10 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	//clothNode->setVisible(false);
+	clothNode->setVisible(false);
 	//lowerClothHandle->setVisible(false);
-	//femaleNode->setVisible(false);
-	rootColliderNode->setVisible(false);
+	femaleNode->setVisible(false);
+	//rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 

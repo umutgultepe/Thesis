@@ -346,43 +346,6 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
 	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint,flip);
 	bone->setOrientation(newQ*factor);			
-	
-	
-
-		//Ogre::Quaternion qI = bone->getInitialOrientation();
-	// Get the Kinect SDK bone info
-	//Quaternion flipZ=Quaternion::IDENTITY;
-	//flipZ.FromAngleAxis(Ogre::Degree(180),Ogre::Vector3(0,-1,0));
-	//static float deg = 0;
-	//Ogre::Vector3 v;
-	//v=rotM.GetColumn(0);
-	//v.z=-v.z;
-	//rotM.SetColumn(0,v);
-	//
-	//v=rotM.GetColumn(1);
-	//v.z=-v.z;
-	//rotM.SetColumn(1,v);
-	//
-	//v=rotM.GetColumn(2);
-	//v.x=-v.x;
-	//v.y=-v.y;
-	//rotM.SetColumn(2,v);
-
-	//XnVector3D col1 = xnCreatePoint3D(jointOri.orientation.elements[0], jointOri.orientation.elements[3], jointOri.orientation.elements[6]);
-	//XnVector3D col2 = xnCreatePoint3D(jointOri.orientation.elements[1], jointOri.orientation.elements[4], jointOri.orientation.elements[7]);
-	//XnVector3D col3 = xnCreatePoint3D(jointOri.orientation.elements[2], jointOri.orientation.elements[5], jointOri.orientation.elements[8]);
-	//
-	//Ogre::Matrix3 matOri(jointOri.orientation.elements[0],-jointOri.orientation.elements[1],jointOri.orientation.elements[2],
-	//					-jointOri.orientation.elements[3],jointOri.orientation.elements[4],-jointOri.orientation.elements[5],
-	//					jointOri.orientation.elements[6],-jointOri.orientation.elements[7],jointOri.orientation.elements[8]);
-	//Quaternion q;
-	//newQ.FromRotationMatrix(matOri);
-			
-	//bone->resetOrientation(); //in order for the conversion from world to local to work.
-	//newQ = bone->convertWorldToLocalOrientation(newQ);
-			
-	//bone->setOrientation(newQ*qI);			
-	
 }
 
 
