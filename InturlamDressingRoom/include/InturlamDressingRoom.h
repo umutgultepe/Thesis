@@ -55,7 +55,7 @@ static Ogre::String skeletonClothNames[]={
 	};
 
 static Ogre::String PhysicsClothNames[]={
-	"../../media/wavefront/lowerDressv3.obj",
+	"../../media/wavefront/lowerDressv2.obj",
 	"../../media/wavefront/lowerKimono.obj",
 	"",
 	"",

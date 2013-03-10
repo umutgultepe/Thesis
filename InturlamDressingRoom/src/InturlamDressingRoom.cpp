@@ -21,8 +21,8 @@ http://code.google.com/p/ogreappwizards/
 #define SCALING_FACTOR 5
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
-#define COLLISION_SPHERE_COUNT 24
-#define COLLISION_CAPSULE_COUNT 26
+#define COLLISION_SPHERE_COUNT 26
+#define COLLISION_CAPSULE_COUNT 28
 
 
 float userWidthScale=1;
@@ -396,7 +396,6 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 	Ogre::Entity* limb = mSceneMgr->createEntity(limbName, name);
 	node->attachObject(limb);
 	Ogre::Vector3 up(0,1,0);
-
 	Ogre::SceneNode* cNode=node->createChildSceneNode(childNodeName,Ogre::Vector3(0,distance,0));
 	Ogre::Quaternion rotQ=up.getRotationTo(endPosition);
 	node->setOrientation(rotQ);
@@ -442,7 +441,10 @@ const physx::PxU32 pairInd[]={
 	10,22,//Knee-to-Hip-Extend Left
  	11,23,//Knee-to-Hip-Extend Right
 	10,11,//Knee-to-Knee
-	20,21//Leg Extension 3 Left-Right
+	20,21,//Leg Extension 3 Left-Right
+	1,24,//Stomach - Waist Extent Left
+	1,25//Stomach - Waist Extent Right
+
 };
 
 float radius_modifier=1;
@@ -492,20 +494,14 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 			MessageBox( NULL,"PxCreateFoundation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 			exit(0);
 		}
-		
-
 		gManager=&PxProfileZoneManager::createProfileZoneManager(gFoundation);
 		if (!gManager)
 		{
 			MessageBox( NULL,"Profile Zone Manager Creation failed!","Something Wrong With PhysX", MB_OK | MB_ICONERROR | MB_TASKMODAL);
 			exit(0);
 		}
-
-
-
 		pxtask::CudaContextManagerDesc cudaContextManagerDesc;
 		mCudaContextManager = pxtask::createCudaContextManager(*gFoundation,cudaContextManagerDesc,gManager);
-
 		if( mCudaContextManager )
 		{
 			if( !mCudaContextManager->contextIsValid() )
@@ -715,39 +711,6 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 	guyMoves=standing;
 }
 
-void InturlamDressingRoom::createSimulation()
-{
-	#if USE_USER_SCALING
-	userHeightScale=SCALING_FACTOR*estimatedTorsoHeight/MODEL_TORSO_HEIGHT;
-	userWidthScale=SCALING_FACTOR*estimatedShoulderWidth/MODEL_SHOULDER_WIDTH;
-	userDepthScale=(userHeightScale+userWidthScale)/2;
-	#else
-	userHeightScale=SCALING_FACTOR;
-	userWidthScale=SCALING_FACTOR;
-	userDepthScale=SCALING_FACTOR;
-	#endif
-
-	clothHandle=mSceneMgr->getRootSceneNode()->createChildSceneNode();
-	clothNode=clothHandle->createChildSceneNode("ClothNode");
-	femaleNode=clothHandle->createChildSceneNode("FemaleHandle");
-	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
-
-	femaleBody=new SkeletalMesh(mKinect);
-	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
-	createVisualHuman();
-	loadClothes();
-	
-	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
-	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
-	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	clothNode->setVisible(false);
-	//lowerClothHandle->setVisible(false);
-	//femaleNode->setVisible(false);
-	rootColliderNode->setVisible(false);
-	simulationCreated=true;
-}
-
-
 void InturlamDressingRoom::loadClothes()
 {
 
@@ -849,10 +812,6 @@ void InturlamDressingRoom::changeCloth(int index)
 DWORD start_time=0;
 DWORD latest_update=0;
 
-
-
-
-
 //-------------------------------------------------------------------------------------
 void InturlamDressingRoom::createScene(void)
 {
@@ -890,56 +849,38 @@ void InturlamDressingRoom::createScene(void)
 	latest_update=GetTickCount();
 }
 
-
 void InturlamDressingRoom::updateCollisionSpheres()
 {
-	//Ogre::Vector3 scale=clothHandle->getScale();
-
-	//clothHandle->setScale(Ogre::Vector3(1));
 	Vector3 ColliderOffset=rootColliderNode->_getDerivedPosition();
 	Quaternion ColliderOrientation=femaleBody->getBoneOrientation(BONE_ROOT).Inverse();
 	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
 	{
-		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
 		Ogre::String nodeName=boneStrings[i]+"Node";
 		Ogre::SceneNode* gNode=mSceneMgr->getSceneNode(nodeName);
 		Vector3 localPosition=ColliderOrientation*(gNode->_getDerivedPosition()+Vector3(0,Y_OFFSET,0)-ColliderOffset);
-		
 		if (boneStrings[i]=="Root")
 		{
 			box_collider[i].pos.x=localPosition.x;
 			box_collider[i].pos.y=localPosition.y;
 			box_collider[i].pos.z=localPosition.z;
-			//box_collider[i].radius=0.1;
 		}
 		else
 		{
 			box_collider[i].pos.x=localPosition.x;
 			box_collider[i].pos.y=localPosition.y;
 			box_collider[i].pos.z=localPosition.z;
-			//box_collider[i].radius=0.2;
 		}
 	}
-
 	cloth->setCollisionSpheres(box_collider);
-	//clothHandle->setScale(scale);
 }
 
 void InturlamDressingRoom::updateCloth()
 {
-
 	updateCollisionSpheres();
-
 	Vector3 ts=lowerClothHandle->getPosition()+Vector3(0,Y_OFFSET,0);
 	PxVec3 trans=PxVec3(ts.x,ts.y,ts.z);
-
-	//Ogre::Quaternion qRot=Quaternion::IDENTITY;
 	Ogre::Quaternion qRot=femaleBody->getBoneOrientation(BONE_ROOT);
-
-
 	PxQuat quat(qRot.x,qRot.y,qRot.z,qRot.w);
-
-
 	if (justCalibrated)
 	{
 		cloth->setGlobalPose(PxTransform(trans,quat));
@@ -947,24 +888,21 @@ void InturlamDressingRoom::updateCloth()
 	}
 	else
 		cloth->setTargetPose(PxTransform(trans,quat));
-
 }
 
 void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 {
 	if (bone->numChildren()>0 && level<7)
 	{
+		Ogre::String boneName=bone->getName();
 		if (!bone->getInheritOrientation())
 		{
-			//Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
-			//Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
-			Ogre::SceneNode* jointNode=mSceneMgr->getSceneNode(bone->getName() + "Node");
+			Ogre::SceneNode* jointNode=mSceneMgr->getSceneNode(boneName + "Node");
 			#if USE_KINECT
 			Ogre::Quaternion qI = boneNode->getInitialOrientation();
 			#else
 			Ogre::Quaternion qI = Ogre::Quaternion::IDENTITY;
 			#endif
-			//jointNode->resetOrientation();
 			jointNode->setOrientation(bone->getOrientation()*qI);
 		}
 
@@ -972,7 +910,7 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 		while(childIterator.hasMoreElements())
 		{
 			Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
-			Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
+			Ogre::String limbName=boneName+" to "+ childBone->getName();
 			Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
 			if (!childBone->getInheritOrientation())
 			{
@@ -1017,8 +955,6 @@ long long milliseconds_now() {
     }
 }
 
-
-
 PxReal timeStep=0;
 int initialDelay=0;
 float totalCalibrationTime=0;
@@ -1026,8 +962,122 @@ bool calibrated=false;
 long long cal_start;
 long long cal_end;
 
+PxVec3 acceleration=PxVec3(0);
+void InturlamDressingRoom::updateAcceleration(PxVec3 add)
+{
+	acceleration+=add;
+	cloth->setExternalAcceleration(acceleration);
+}
 
+bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
+{
+	if (arg.key==OIS::KC_SPACE)
+		simulating=!simulating;
+	else if (arg.key==OIS::KC_L)
+	{
+		Ogre::Vector3 vp=mCamera->getPosition();
+		Ogre::Quaternion vq=mCamera->getOrientation();
+		vq=vq;
+	}
+	else if (arg.key==OIS::KC_H)
+	{
+		femaleNode->flipVisibility();
+	}
+	else if (arg.key==OIS::KC_ADD)
+	{
+		PxReal scale=cloth->getInertiaScale();
+		if (scale<=0.9)
+			cloth->setInertiaScale(scale+0.1);
+	}
+	else if (arg.key==OIS::KC_SUBTRACT)
+	{
+		PxReal scale=cloth->getInertiaScale();
+		if (scale>=0.1)
+			cloth->setInertiaScale(scale-0.1);
+	}
+	else if (arg.key==OIS::KC_J)
+	{
+		if (help->getTrayLocation() == OgreBites::TL_NONE)
+        {
+            mTrayMgr->moveWidgetToTray(help, OgreBites::TL_TOPRIGHT, 0);
+            help->show();
+        }
+        else
+        {
+            mTrayMgr->removeWidgetFromTray(help);
+            help->hide();
+        }
+	}
+	else if (arg.key==OIS::KC_TAB)
+	{
+		usingGPU=!usingGPU;
+		cloth->setClothFlag(PxClothFlag::eGPU,usingGPU);
+	}
+	else if (arg.key==OIS::KC_NUMPAD8)
+		updateAcceleration(PxVec3(0,0,1));
+	else if (arg.key==OIS::KC_NUMPAD2)
+		updateAcceleration(PxVec3(0,0,-1));
+	else if (arg.key==OIS::KC_NUMPAD6)
+		updateAcceleration(PxVec3(1,0,0));
+	else if (arg.key==OIS::KC_NUMPAD4)
+		updateAcceleration(PxVec3(-1,0,0));
+	else if (arg.key==OIS::KC_NUMPAD5)
+		updateAcceleration(-acceleration);
+	else if (arg.key==OIS::KC_1)
+		changeCloth(0);
+	else if (arg.key==OIS::KC_2)
+		changeCloth(1);
+	else if (arg.key==OIS::KC_3)
+		changeCloth(2);
+	else if (arg.key==OIS::KC_4)
+		changeCloth(3);
+	else if (arg.key==OIS::KC_5)
+		changeCloth(4);
+	return BaseApplication::keyPressed(arg);
+}
 
+bool InturlamDressingRoom::keyReleased( const OIS::KeyEvent &arg )
+{
+	if (arg.key==OIS::KC_NUMPAD8 || arg.key==OIS::KC_NUMPAD5 || arg.key==OIS::KC_NUMPAD6 || arg.key==OIS::KC_NUMPAD4)
+		clothDirection=still;
+	else if (arg.key==OIS::KC_NUMPAD7 || arg.key==OIS::KC_NUMPAD9)
+		clothRotation=none;
+	else if (arg.key==OIS::KC_NUMPAD1 || arg.key==OIS::KC_NUMPAD3)
+		guyMoves=standing;
+	return BaseApplication::keyReleased(arg);
+}
+
+void InturlamDressingRoom::createSimulation()
+{
+	#if USE_USER_SCALING
+	userHeightScale=SCALING_FACTOR*estimatedTorsoHeight/MODEL_TORSO_HEIGHT;
+	userWidthScale=SCALING_FACTOR*estimatedShoulderWidth/MODEL_SHOULDER_WIDTH;
+	userDepthScale=(userHeightScale+userWidthScale)/2;
+	#else
+	userHeightScale=SCALING_FACTOR;
+	userWidthScale=SCALING_FACTOR;
+	userDepthScale=SCALING_FACTOR;
+	#endif
+
+	clothHandle=mSceneMgr->getRootSceneNode()->createChildSceneNode();
+	clothNode=clothHandle->createChildSceneNode("ClothNode");
+	femaleNode=clothHandle->createChildSceneNode("FemaleHandle");
+	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
+
+	femaleBody=new SkeletalMesh(mKinect);
+	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+	createVisualHuman();
+	loadClothes();
+	
+	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
+	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
+	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
+	clothNode->setVisible(false);
+	lowerClothHandle->setVisible(false);
+	femaleNode->setVisible(false);
+	//rootColliderNode->setVisible(false);
+	simulationCreated=true;
+}
 
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
@@ -1135,153 +1185,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 }
 
 
-PxVec3 acceleration=PxVec3(0);
-void InturlamDressingRoom::updateAcceleration(PxVec3 add)
-{
-	acceleration+=add;
-	cloth->setExternalAcceleration(acceleration);
-}
-
-
-
-bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
-{
-	if (arg.key==OIS::KC_SPACE)
-		simulating=!simulating;
-	else if (arg.key==OIS::KC_L)
-	{
-		Ogre::Vector3 vp=mCamera->getPosition();
-		Ogre::Quaternion vq=mCamera->getOrientation();
-		vq=vq;
-	}
-	else if (arg.key==OIS::KC_H)
-	{
-		femaleNode->flipVisibility();
-	}
-	else if (arg.key==OIS::KC_ADD)
-	{
-		PxReal scale=cloth->getInertiaScale();
-		if (scale<=0.9)
-			cloth->setInertiaScale(scale+0.1);
-
-		/* curScale+=0.01;
-		clothNode->setScale(curScale,curScale,curScale);*/
-	}
-	else if (arg.key==OIS::KC_SUBTRACT)
-	{
-		PxReal scale=cloth->getInertiaScale();
-		if (scale>=0.1)
-			cloth->setInertiaScale(scale-0.1);
-		//curScale-=0.01;
-		//clothNode->setScale(curScale,curScale,curScale);
-	}
-	else if (arg.key==OIS::KC_J)
-	{
-		if (help->getTrayLocation() == OgreBites::TL_NONE)
-        {
-            mTrayMgr->moveWidgetToTray(help, OgreBites::TL_TOPRIGHT, 0);
-            help->show();
-			
-        }
-        else
-        {
-            mTrayMgr->removeWidgetFromTray(help);
-            help->hide();
-        }
-		
-		
-	}
-	else if (arg.key==OIS::KC_TAB)
-	{
-		usingGPU=!usingGPU;
-		cloth->setClothFlag(PxClothFlag::eGPU,usingGPU);
-		//cloth->setClothFlag(PxClothFlag::eG
-	}
-	else if (arg.key==OIS::KC_NUMPAD8)
-	{
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(0,0,1);
-		//clothDirection=moveDirection::forward;
-		updateAcceleration(PxVec3(0,0,1));
-
-	}
-	else if (arg.key==OIS::KC_NUMPAD2)
-	{
-//		clothDirection=moveDirection::backward;
-		updateAcceleration(PxVec3(0,0,-1));
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(0,0,-1);
-	}
-	else if (arg.key==OIS::KC_NUMPAD6)
-	{
-		//clothDirection=moveDirection::right;
-		updateAcceleration(PxVec3(1,0,0));
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(0,1,0);
-	}
-	else if (arg.key==OIS::KC_NUMPAD4)
-	{
-		//clothDirection=moveDirection::left;
-		updateAcceleration(PxVec3(-1,0,0));
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(0,-1,0);
-	}
-	else if (arg.key==OIS::KC_NUMPAD5)
-	{
-
-		updateAcceleration(-acceleration);
-	}
-	else if (arg.key==OIS::KC_1)
-	{
-		changeCloth(0);
-	}
-	else if (arg.key==OIS::KC_2)
-	{
-		changeCloth(1);
-	}
-	else if (arg.key==OIS::KC_3)
-	{
-
-		changeCloth(2);
-	}
-	else if (arg.key==OIS::KC_4)
-	{
-		changeCloth(3);
-	}
-	else if (arg.key==OIS::KC_5)
-	{
-		changeCloth(4);
-	}
-	return BaseApplication::keyPressed(arg);
-}
-
-bool InturlamDressingRoom::keyReleased( const OIS::KeyEvent &arg )
-{
-	if (arg.key==OIS::KC_NUMPAD8 || arg.key==OIS::KC_NUMPAD5 || arg.key==OIS::KC_NUMPAD6 || arg.key==OIS::KC_NUMPAD4)
-	{
-		//Ogre::SceneNode* ax=mSceneMgr->getSceneNode("Axes");
-		//ax->translate(0,0,1);
-		clothDirection=still;
-
-	}
-	else if (arg.key==OIS::KC_NUMPAD7 || arg.key==OIS::KC_NUMPAD9)
-	{
-		clothRotation=none;
-	}
-	else if (arg.key==OIS::KC_NUMPAD1 || arg.key==OIS::KC_NUMPAD3)
-	{
-		guyMoves=standing;
-	}
-
-
-	return BaseApplication::keyReleased(arg);
-}
-
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-#define WIN32_LEAN_AND_MEAN
-#include "windows.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
