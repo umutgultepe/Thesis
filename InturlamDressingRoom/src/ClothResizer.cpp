@@ -31,12 +31,12 @@ float sphereRadii[] =
 	2.025,//BONE_LE1.R
 	2.2275,//BONE_LE2.L
 	2.2275,//BONE_LE2.R
-	2.425,//BONE_LEH.L
-	2.425,//BONE_LEH.R
-	2.475,//BONE_LEH2.L
-	2.475,//BONE_LEH2.R
-	2.3275,//BONE_WaistExtent.L
-	2.3275,//BONE_WaistExtent.R
+	2,//BONE_LEH.L
+	2,//BONE_LEH.R
+	2,//BONE_LEH2.L
+	2,//BONE_LEH2.R
+	2.5,//BONE_WaistExtent.L
+	2.5,//BONE_WaistExtent.R
 	0.01
 };
 	

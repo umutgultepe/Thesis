@@ -22,7 +22,7 @@ http://code.google.com/p/ogreappwizards/
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
 #define COLLISION_SPHERE_COUNT 26
-#define COLLISION_CAPSULE_COUNT 28
+#define COLLISION_CAPSULE_COUNT 27
 
 
 float userWidthScale=1;
@@ -459,8 +459,7 @@ const physx::PxU32 pairInd[]={
  	11,23,//Knee-to-Hip-Extend Right
 	10,11,//Knee-to-Knee
 	20,21,//Leg Extension 3 Left-Right
-	1,24,//Stomach - Waist Extent Left
-	1,25//Stomach - Waist Extent Right
+	24,25,//Waist Extent Left - Right
 
 };
 
@@ -723,7 +722,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg) ;
 		//	cloth->setClothFlag(physx::PxClothFlag::eGPU,true); 
 		cloth->setDampingCoefficient(0.2f);	   
-		cloth->setFrictionCoefficient(0.5f); 
+		cloth->setFrictionCoefficient(0.2f); 
 		cloth->setCollisionMassScale(20.0f);
 		cloth->setInertiaScale(0.5);
 		cloth->setClothFlag(PxClothFlag::eGPU,usingGPU);
@@ -1083,10 +1082,10 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	clothNode->setVisible(false);
+	//clothNode->setVisible(false);
 	//lowerClothHandle->setVisible(false);
-	femaleNode->setVisible(false);
-	//rootColliderNode->setVisible(false);
+	//femaleNode->setVisible(false);
+	rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
