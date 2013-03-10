@@ -127,6 +127,8 @@ protected:
 	void createCapsule(const Ogre::String& strName, const float r,const float r2,const float d, const int nRings = 16, const int nSegments = 16);
 	void createVisualHuman();
 	Ogre::SceneNode* createLimb(Ogre::String limbName,Ogre::String childNodeName,float startRadius, Ogre::Vector3 endPosition,float endRadius,Ogre::SceneNode* node,bool inheritOrientation,Quaternion orientation);
+	Ogre::SceneNode* createLimb(Ogre::String limbName,float startRadius, Ogre::Vector3 endPosition,float endRadius,Ogre::SceneNode* jointNode);
+
 	ManualObject* createLine(Ogre::String name,Vector3 startPos,Vector3 endPos,Ogre::ColourValue color);
 	void createSphere(const float r, const int nRings = 16, const int nSegments = 16);
 

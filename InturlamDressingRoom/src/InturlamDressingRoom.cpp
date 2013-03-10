@@ -405,6 +405,23 @@ SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,Ogre::String c
 	return cNode;
 }
 
+SceneNode* InturlamDressingRoom::createLimb(Ogre::String limbName,float startRadius, Ogre::Vector3 endPosition,float endRadius,Ogre::SceneNode* jointNode)
+{
+	float distance=endPosition.length();
+	Ogre::String name="capsule"+Ogre::StringConverter::toString(numberOfCapsules++);
+	createCapsule(name,endRadius,startRadius,distance);
+	Ogre::Entity* limb = mSceneMgr->createEntity(limbName, name);
+	Ogre::Vector3 up(0,1,0);
+	Ogre::SceneNode* cNode=jointNode->createChildSceneNode(limbName + " Node");
+	cNode->attachObject(limb);
+	Ogre::Quaternion rotQ=up.getRotationTo(endPosition);
+	cNode->setOrientation(rotQ);
+	cNode->setInheritOrientation(true);
+	cNode->setInitialState();
+	return cNode;
+}
+
+
 int getBoneIndex(Ogre::String boneName)
 {
 	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
@@ -455,19 +472,32 @@ void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNo
 {
 	if (bone->numChildren()>0 && level<7)
 	{
+		parentNode->setInheritOrientation(bone->getInheritOrientation());
+		parentNode->setOrientation(bone->getOrientation());
 		Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
 		while(childIterator.hasMoreElements())
 		{
 			Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
 			Ogre::Vector3 childLocalPosition=childBone->getPosition();
-			Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
-			Ogre::SceneNode* boneNode=parentNode->createChildSceneNode(limbName + " Node");
+			Ogre::SceneNode* subJointNode=parentNode->createChildSceneNode(childBone->getName() + "Node",childLocalPosition);
+
+
+
 			float startRadius=sphereRadii[getBoneIndex(bone->getName())]/SCALING_FACTOR;
 			float endRadius = sphereRadii[getBoneIndex(childBone->getName())]/SCALING_FACTOR;
-			Ogre::SceneNode* childJointNode=createLimb(limbName,childBone->getName()+"Node",startRadius,childLocalPosition,endRadius,boneNode,childBone->getInheritOrientation(),bone->getOrientation());
-			createSphereAndCapsule(childBone,childJointNode,level+1);
+			createLimb(bone->getName()+" to "+ childBone->getName(),startRadius,childLocalPosition,endRadius,parentNode);
+			createSphereAndCapsule(childBone,subJointNode,level+1);
+
+			//Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
+			//Ogre::Vector3 childLocalPosition=childBone->getPosition();
+			//Ogre::String limbName=bone->getName()+" to "+ childBone->getName();
+			//Ogre::SceneNode* boneNode=parentNode->createChildSceneNode(limbName + " Node");
+			//float startRadius=sphereRadii[getBoneIndex(bone->getName())]/SCALING_FACTOR;
+			//float endRadius = sphereRadii[getBoneIndex(childBone->getName())]/SCALING_FACTOR;
+			//Ogre::SceneNode* childJointNode=createLimb(limbName,childBone->getName()+"Node",startRadius,childLocalPosition,endRadius,boneNode,childBone->getInheritOrientation(),bone->getOrientation());
+			//createSphereAndCapsule(childBone,childJointNode,level+1);
 		}
-		parentNode->setInheritOrientation(bone->getInheritOrientation());
+		//parentNode->setInheritOrientation(bone->getInheritOrientation());
 	}
 	else
 	{	  
@@ -905,24 +935,26 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 			#endif
 			jointNode->setOrientation(bone->getOrientation()*qI);
 		}
-
 		Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
 		while(childIterator.hasMoreElements())
-		{
-			Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
-			Ogre::String limbName=boneName+" to "+ childBone->getName();
-			Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
-			if (!childBone->getInheritOrientation())
-			{
-				Ogre::Quaternion qI = boneNode->getInitialOrientation();
-				boneNode->setOrientation(bone->_getDerivedOrientation()*qI);
-			}
-			else if (!bone->getInheritOrientation())
-			{
-				boneNode->resetToInitialState();
-			}
-			updateJoints(childBone,level+1);
-		}
+			updateJoints((Ogre::Bone*)childIterator.getNext(),level+1);
+		//Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
+		//while(childIterator.hasMoreElements())
+		//{
+		//	Ogre::Bone* childBone=(Ogre::Bone*)childIterator.getNext();
+		//	Ogre::String limbName=boneName+" to "+ childBone->getName();
+		//	Ogre::SceneNode* boneNode=mSceneMgr->getSceneNode(limbName + " Node");
+		//	if (!childBone->getInheritOrientation())
+		//	{
+		//		Ogre::Quaternion qI = boneNode->getInitialOrientation();
+		//		boneNode->setOrientation(bone->_getDerivedOrientation()*qI);
+		//	}
+		//	else if (!bone->getInheritOrientation())
+		//	{
+		//		boneNode->resetToInitialState();
+		//	}
+		//	updateJoints(childBone,level+1);
+		//}
 	}
 }
 
@@ -1072,10 +1104,10 @@ void InturlamDressingRoom::createSimulation()
 	clothNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	femaleNode->scale(userWidthScale,userHeightScale,userDepthScale);
 	rootColliderNode->scale(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR);
-	clothNode->setVisible(false);
-	lowerClothHandle->setVisible(false);
-	femaleNode->setVisible(false);
-	//rootColliderNode->setVisible(false);
+	//clothNode->setVisible(false);
+	//lowerClothHandle->setVisible(false);
+	//femaleNode->setVisible(false);
+	rootColliderNode->setVisible(false);
 	simulationCreated=true;
 }
 
