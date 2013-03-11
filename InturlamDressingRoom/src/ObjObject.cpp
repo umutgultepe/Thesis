@@ -361,7 +361,7 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 	memcpy(&indices[0], meshDesc->triangles.data, sizeof(PxU32)*meshDesc->triangles.count*3);
 
 	//Virtual Particles
-	int numSamples=2;
+	int numSamples=4;
 	PxU32 numParticles = faceCount * numSamples;
 	std::vector<PxU32> virtualParticleIndices;
     virtualParticleIndices.reserve(4 * numParticles);

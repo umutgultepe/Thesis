@@ -874,7 +874,6 @@ void InturlamDressingRoom::updateCollisionSpheres()
 
 void InturlamDressingRoom::updateCloth()
 {
-	updateCollisionSpheres();
 	Vector3 ts=lowerClothHandle->getPosition()+Vector3(0,Y_OFFSET,0);
 	PxVec3 trans=PxVec3(ts.x,ts.y,ts.z);
 	Ogre::Quaternion qRot=femaleBody->getBoneOrientation(BONE_ROOT);
@@ -886,6 +885,7 @@ void InturlamDressingRoom::updateCloth()
 	}
 	else
 		cloth->setTargetPose(PxTransform(trans,quat));
+	updateCollisionSpheres();
 }
 
 void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
@@ -1187,6 +1187,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		float elapsed=t-latest_update;
 		if (elapsed>8)
 		{
+			updateCollisionSpheres();
 			lowerCloth->updateWithPhysics(gScene,elapsed/1000);
 			latest_update=GetTickCount();
 		}	
