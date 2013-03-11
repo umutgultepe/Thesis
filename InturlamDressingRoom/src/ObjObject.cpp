@@ -360,7 +360,41 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 	
 	memcpy(&indices[0], meshDesc->triangles.data, sizeof(PxU32)*meshDesc->triangles.count*3);
 
-	
+	//Virtual Particles
+	int numSamples=2;
+	PxU32 numParticles = faceCount * numSamples;
+	std::vector<PxU32> virtualParticleIndices;
+    virtualParticleIndices.reserve(4 * numParticles);
+	PxU8* triangles = (PxU8*)meshDesc->triangles.data;
+	for (PxU32 i = 0; i < faceCount; i++)
+    {
+            for (int s = 0; s < numSamples; ++s)
+            {
+                    PxU32 v0, v1, v2;
+
+                    if (meshDesc->flags & PxMeshFlag::e16_BIT_INDICES)
+                    {
+                            PxU16* triangle = (PxU16*)triangles;
+                            v0 = triangle[0];
+                            v1 = triangle[1];
+                            v2 = triangle[2];
+                    }
+                    else
+                    {
+                            PxU32* triangle = (PxU32*)triangles;
+                            v0 = triangle[0];
+                            v1 = triangle[1];
+                            v2 = triangle[2];
+                    }
+
+                    virtualParticleIndices.push_back(v0);
+                    virtualParticleIndices.push_back(v1);
+                    virtualParticleIndices.push_back(v2);
+                    virtualParticleIndices.push_back(s);
+            }
+            triangles += meshDesc->triangles.stride;
+    }
+	//End virtual particles
 
 
 	//Make sure everything is fine so far
@@ -407,6 +441,8 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 	
 
 	if(cloth) {	
+		cloth->setVirtualParticles(numParticles,(const PxU32*)virtualParticleIndices.data(), numSamples, virtualWeights);
+
 		PxClothPhaseSolverConfig bendCfg;	 
 		bendCfg.solverType= PxClothPhaseSolverConfig::eSTIFF;
 		bendCfg.stiffness = 1;
