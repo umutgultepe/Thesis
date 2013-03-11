@@ -708,7 +708,6 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 
 void InturlamDressingRoom::loadClothes()
 {
-
 	for (int i=0;i<CLOTH_COUNT;i++)
 	{
 		Ogre::String baseName;
@@ -718,6 +717,7 @@ void InturlamDressingRoom::loadClothes()
 			baseName=skeletonClothNames[i].substr(0,skeletonClothNames[i].length()-5);
 			tMesh->loadMesh(mSceneMgr,clothNode,baseName+"_skel",skeletonClothNames[i]);
 			tMesh->setVisible(false);
+			
 			skeletalMeshes.push_back(tMesh);
 		}
 		else	
@@ -757,6 +757,11 @@ void InturlamDressingRoom::loadClothes()
 		lowerCloth->setVisible(true);
 		createCloth(initializePhysics());
 	}
+
+	//Extra
+	Ogre::MaterialPtr jMat=Ogre::MaterialManager::getSingleton().getByName("Jeans");
+	jMat->getTechnique(0)->getPass(0)->setCullingMode(CULL_NONE);
+
 
 	//Tunic-Vest
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
@@ -1196,8 +1201,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	help->setParamValue("Elapsed MS",StringConverter::toString(((float)(GetTickCount()-start_time))/1000));
 	return BaseApplication::frameRenderingQueued(evt);
 }
-
-
 
 #ifdef __cplusplus
 extern "C" {
