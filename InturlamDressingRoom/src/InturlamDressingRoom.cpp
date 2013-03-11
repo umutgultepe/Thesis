@@ -21,7 +21,7 @@ http://code.google.com/p/ogreappwizards/
 #define SCALING_FACTOR 5
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
-#define COLLISION_SPHERE_COUNT 26
+#define COLLISION_SPHERE_COUNT 27
 #define COLLISION_CAPSULE_COUNT 25
 
 #define MODIFY_RADII 20
@@ -724,7 +724,7 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		//	cloth->setClothFlag(physx::PxClothFlag::eGPU,true); 
 		cloth->setDampingCoefficient(0.2f);	   
 		cloth->setFrictionCoefficient(0.2f); 
-		cloth->setCollisionMassScale(20.0f);
+		cloth->setCollisionMassScale(80.0f);
 		cloth->setInertiaScale(0.5);
 		cloth->setClothFlag(PxClothFlag::eGPU,usingGPU);
 		
@@ -1193,8 +1193,6 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}
 	}
 	#endif
-
-	
 	#if USE_NUI
 	updateDepthTexture();
 	if (mNui->mSkeletonUpdated)
