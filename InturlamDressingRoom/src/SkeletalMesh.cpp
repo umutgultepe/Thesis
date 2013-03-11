@@ -77,10 +77,8 @@ void SkeletalMesh::resetBonesToInitialState()
 		
 }
 
-void SkeletalMesh::setVisible(bool visibleOrNot)
-{
-	Mesh->setVisible(visibleOrNot);
-}
+
+
 
 //#if USE_KINECT
 

@@ -22,7 +22,9 @@ http://code.google.com/p/ogreappwizards/
 #define MODEL_TORSO_HEIGHT 1180 //mm
 #define MODEL_SHOULDER_WIDTH 450 //mm
 #define COLLISION_SPHERE_COUNT 26
-#define COLLISION_CAPSULE_COUNT 27
+#define COLLISION_CAPSULE_COUNT 25
+
+#define MODIFY_RADII 20
 
 
 float userWidthScale=1;
@@ -60,6 +62,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	lowerCloth=0;
 	mNui=0;
 	bodyRotation=Ogre::Quaternion::IDENTITY;
+	targetRadii=20;
 }
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
@@ -451,16 +454,14 @@ const physx::PxU32 pairInd[]={
 	0,5, //Stomach-To-Right-Humerus
 	16,18,//LexExtension Left 1-2
 	18,20,//LexExtension Left 2-3
-	20,22,//LexExtension Left 3-4
 	17,19,//LexExtension Right 1-2
 	19,21,//LexExtension Right 2-3
-	21,23,//LexExtension Right 3-4
-	10,22,//Knee-to-Hip-Extend Left
- 	11,23,//Knee-to-Hip-Extend Right
 	10,11,//Knee-to-Knee
 	20,21,//Leg Extension 3 Left-Right
 	24,25,//Waist Extent Left - Right
-
+	24,22,//Waist Extent -Hip Extent L 3-4
+	25,23,//Waist Extent -Hip Extent R 3-4
+	
 };
 
 float radius_modifier=1;
@@ -865,10 +866,13 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Passed Frames");
 	items.push_back("Calibration Time");
 	items.push_back("Body Height");
-	items.push_back("Shoulder Width");
+	items.push_back("Target Spheres");
+	items.push_back("Radius");
 	items.push_back("Elapsed MS");
 	mTrayMgr->hideLogo();
-	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 200, items);
+	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 350, items);
+	help->setParamValue("Target Spheres",boneStrings[targetRadii]);
+	help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
     help->hide();
 	start_time=GetTickCount();
 	latest_update=GetTickCount();
@@ -990,21 +994,52 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		vq=vq;
 	}
 	else if (arg.key==OIS::KC_H)
-	{
 		femaleNode->flipVisibility();
+	else if (arg.key==OIS::KC_C)
+		rootColliderNode->flipVisibility();
+	else if (arg.key==OIS::KC_V)
+	{
+		if (upperCloth)
+			upperCloth->flipVisibility();
+	}
+	else if (arg.key==OIS::KC_B)
+	{	
+		if (lowerCloth)
+			lowerCloth->flipVisibility();
 	}
 	else if (arg.key==OIS::KC_ADD)
 	{
-		PxReal scale=cloth->getInertiaScale();
-		if (scale<=0.9)
-			cloth->setInertiaScale(scale+0.1);
+		//PxReal scale=cloth->getInertiaScale();
+		//if (scale<=0.9)
+		//	cloth->setInertiaScale(scale+0.1);
+		box_collider[targetRadii].radius+=0.1;
+		box_collider[targetRadii+1].radius+=0.1;
+		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
+		updateCollisionSpheres();
 	}
 	else if (arg.key==OIS::KC_SUBTRACT)
 	{
-		PxReal scale=cloth->getInertiaScale();
-		if (scale>=0.1)
-			cloth->setInertiaScale(scale-0.1);
+		//PxReal scale=cloth->getInertiaScale();
+		//if (scale>=0.1)
+		//	cloth->setInertiaScale(scale-0.1);
+		box_collider[targetRadii].radius-=0.1;
+		box_collider[targetRadii+1].radius-=0.1;
+		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
+		updateCollisionSpheres();
 	}
+	else if (arg.key==OIS::KC_M)
+	{
+		targetRadii+=2;
+		help->setParamValue("Target Spheres",boneStrings[targetRadii]);
+		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
+	}
+	else if (arg.key==OIS::KC_N)
+	{	
+		targetRadii-=2;
+		help->setParamValue("Target Spheres",boneStrings[targetRadii]);
+		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
+	}
+	
 	else if (arg.key==OIS::KC_J)
 	{
 		if (help->getTrayLocation() == OgreBites::TL_NONE)

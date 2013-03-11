@@ -76,7 +76,18 @@ public:
 	void updateWithPhysics(PxScene* gScene);
 	Ogre::Entity* entity;
 	void analyzeFixedVertices();
-	void setVisible(bool visible);
+	inline void setVisible(bool visibleOrNot)
+	{
+		if (entity)
+			entity->setVisible(visibleOrNot);
+	}
+	inline void flipVisibility()
+	{
+		if (entity)
+			entity->setVisible(!entity->getVisible());
+	}
+
+	
 	PxCloth* cloth; 
 private:
 	void loadMaterial(int index);

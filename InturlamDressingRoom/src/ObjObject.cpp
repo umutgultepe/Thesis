@@ -683,11 +683,7 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 	}
 }
 
-void ObjObject::setVisible(bool visible)
-{
-	if (entity)
-		entity->setVisible(visible);
-}
+
 
 
 void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)

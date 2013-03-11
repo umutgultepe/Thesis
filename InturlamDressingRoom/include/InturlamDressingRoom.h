@@ -155,7 +155,8 @@ protected:
 	SkeletalMesh* femaleBody;
 	SkeletalMesh* upperCloth;
 	
-
+	
+	int targetRadii;
 	int currentClothIndex;
 	bool usingGPU;
 	bool simulationCreated;

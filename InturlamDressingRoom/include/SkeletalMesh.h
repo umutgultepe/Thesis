@@ -53,8 +53,8 @@ static Ogre::String boneStrings[] =
 	"LegExtensionHip2.R",
 	"Dummy.L",
 	"Dummy.R",
-	"WaistExtent_L",
-	"WaistExtent_R",
+	"WaistExtent.L",
+	"WaistExtent.R",
 	"unknown"};
 
 static Ogre::String jointStrings[] = 
@@ -173,7 +173,17 @@ public:
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
 	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=true,Quaternion factor=Quaternion::IDENTITY);
 	void setOriginalTorsoPosition();
-	void setVisible(bool visibleOrNot);
+
+
+	inline void setVisible(bool visibleOrNot)
+	{	
+		Mesh->setVisible(visibleOrNot);
+	}
+	inline void flipVisibility()
+	{
+		Mesh->setVisible(!Mesh->getVisible());
+	}
+
 
 	Ogre::Quaternion getBoneOrientation(boneID bone);
 	inline Ogre::Skeleton* getSkeleton()

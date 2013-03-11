@@ -27,16 +27,16 @@ float sphereRadii[] =
 	0.42,//BONE_RIGHT_HAND
 	0.6,//BONE_LEFT_FOOT
 	0.6,//BONE_RIGHT_FOOT
-	2.025,//BONE_LE1.L
-	2.025,//BONE_LE1.R
-	2.2275,//BONE_LE2.L
-	2.2275,//BONE_LE2.R
-	2,//BONE_LEH.L
-	2,//BONE_LEH.R
-	2,//BONE_LEH2.L
-	2,//BONE_LEH2.R
-	2.5,//BONE_WaistExtent.L
-	2.5,//BONE_WaistExtent.R
+	2.125,//BONE_LE1.L
+	2.125,//BONE_LE1.R
+	2.3275,//BONE_LE2.L
+	2.3275,//BONE_LE2.R
+	2.3,//BONE_LEH.L
+	2.3,//BONE_LEH.R
+	2.5,//BONE_LEH2.L
+	2.5,//BONE_LEH2.R
+	2.6,//BONE_WaistExtent.L
+	2.6,//BONE_WaistExtent.R
 	0.01
 };
 	
