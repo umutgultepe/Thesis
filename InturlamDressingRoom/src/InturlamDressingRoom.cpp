@@ -687,51 +687,20 @@ void InturlamDressingRoom::createCloth(PxSceneDesc sceneDesc)
 		lowerCloth->cloth=0;
 		lowerCloth->Reset();
 	}
-	PxClothMeshDesc meshDesc;
-	meshDesc.setToDefault();
-	clothPos.x=0;
-	clothPos.y=0;
-	clothPos.z=0;
-	wind.x=0;
-	wind.y=0;
-	wind.z=0;
-	PxClothFabric* fabric;
-	PxClothParticle* points;
-	PxTransform tr;
-
-	meshDesc=*lowerCloth->loadPhysxCloth(&sceneDesc,fabric,points,&tr,gPhysicsSDK);
 	bool withHanger=true;
+
 	if (!collider_set_up)
 		setupHumanCollider();	
+	if (col_data.isValid())
+		cloth=lowerCloth->loadPhysxCloth(col_data,&sceneDesc,gPhysicsSDK);
+	if (cloth)
+		gScene->addActor(*cloth);
+	
+
+	//meshDesc=*lowerCloth->loadPhysxCloth(&sceneDesc,fabric,points,&tr,gPhysicsSDK);
+
 	//col_data.setToDefault();
 	
-	if (col_data.isValid())
-		cloth = gPhysicsSDK->createCloth(tr,*fabric,points,col_data, PxClothFlag::eSWEPT_CONTACT |  PxClothFlag::eGPU );
-	
-
-	if(cloth) {	
-		PxClothPhaseSolverConfig bendCfg;	 
-		bendCfg.solverType= PxClothPhaseSolverConfig::eSTIFF;
-		bendCfg.stiffness = 1;
-		bendCfg.stretchStiffness = 0.50;
-		bendCfg.stretchLimit=0.60;
-		cloth->setSolverFrequency(120);
-
-		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
-		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
-		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING,		bendCfg) ;	
-		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg) ;
-		//	cloth->setClothFlag(physx::PxClothFlag::eGPU,true); 
-		cloth->setDampingCoefficient(0.2f);	   
-		cloth->setFrictionCoefficient(0.2f); 
-		cloth->setCollisionMassScale(80.0f);
-		cloth->setInertiaScale(0.5);
-		cloth->setClothFlag(PxClothFlag::eGPU,usingGPU);
-		
-		gScene->addActor(*cloth); 
-	}
-
-	lowerCloth->cloth=cloth;
 	//clothDirection=still;
 	clothRotation=none;
 	guyMoves=standing;

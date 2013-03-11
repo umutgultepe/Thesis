@@ -69,6 +69,7 @@ public:
 	float* placeOnXZ(bool aboveOrBelow);
 	float unitize();
 	PxClothMeshDesc* loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric* &fabric,PxClothParticle* &points,PxTransform* tr,PxPhysics* gPhysicsSDK);
+	PxCloth* loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* SceneDesc,PxPhysics* gPhysicsSDK);
 	void updateWithPhysics(PxScene* gScene,PxReal timeStep);
 	float getScaleFactor();
 	void loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name);

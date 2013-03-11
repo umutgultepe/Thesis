@@ -211,6 +211,17 @@ ObjObject::ObjObject(void)
 {
 }
 
+static PxVec3 virtualWeights[] =
+{
+        // Center point
+        PxVec3(1.0f / 3, 1.0f / 3, 1.0f / 3),
+
+        // Center of sub triangles
+        PxVec3(2.0f / 3, 1.0f / 6, 1.0f / 6),
+        PxVec3(1.0f / 6, 2.0f / 3, 1.0f / 6),
+        PxVec3(1.0f / 6, 1.0f / 6, 2.0f / 3),
+};
+
 
 
 PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric* &fabric,PxClothParticle* &points,PxTransform* tr,PxPhysics* gPhysicsSDK)
@@ -257,6 +268,8 @@ PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric*
 	
 	memcpy(&indices[0], meshDesc->triangles.data, sizeof(PxU32)*meshDesc->triangles.count*3);
 
+
+
 	//Make sure everything is fine so far
 	if(!(meshDesc->isValid()))
 	   cerr<<"Mesh invalid."<<endl;
@@ -298,6 +311,125 @@ PxClothMeshDesc* ObjObject::loadPhysxCloth(PxSceneDesc* SceneDesc,PxClothFabric*
 	cooking->release();
 	return meshDesc;
 }
+
+PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* SceneDesc,PxPhysics* gPhysicsSDK)
+{
+
+
+
+
+	PxClothMeshDesc* meshDesc=new PxClothMeshDesc;
+	meshDesc->setToDefault();
+	PxClothFabric* fabric;
+	PxClothParticle* points;
+	std::vector<PxVec3> pos;
+	PxTransform tr;
+	//Fill the geometry
+	meshDesc->points.count= vertexCount;        
+	meshDesc->triangles.count= faceCount;    
+	meshDesc->points.stride= sizeof(PxVec3);  
+	meshDesc->triangles.stride= 3*sizeof(PxU32);  
+	meshDesc->points.data= (PxVec3*)malloc(sizeof(PxVec3)*meshDesc->points.count);    
+	meshDesc->triangles.data= (PxU32*)malloc(sizeof(PxU32)*meshDesc->triangles.count*3);    
+	meshDesc->edgeFlags = 0;
+	
+	//Fill the geometry
+	int i;    
+	PxVec3 *p = (PxVec3*)meshDesc->points.data;   
+
+
+	pos.resize(meshDesc->points.count);
+ 	normal.resize(meshDesc->points.count);
+	indices.resize(meshDesc->triangles.count*3);
+	for (i = 0; i < vertexCount; i++) {                
+		   p->x = verticeCoordinates.at(i)[0];
+		  p->y = verticeCoordinates.at(i)[1];
+		  p->z = verticeCoordinates.at(i)[2];   
+		  p++;     
+	}   
+
+	memcpy(&pos[0].x, (meshDesc->points.data), sizeof(PxVec3)*meshDesc->points.count);
+	
+
+	//Fill the topology
+	PxU32 *id = (PxU32*)meshDesc->triangles.data;  
+	for (i = 0; i < faceCount; i++) {                                  
+		*id++ = faceIndices.at(i)[0]; *id++ = faceIndices.at(i)[3]; *id++ = faceIndices.at(i)[6];  
+		
+	}
+	
+	memcpy(&indices[0], meshDesc->triangles.data, sizeof(PxU32)*meshDesc->triangles.count*3);
+
+	
+
+
+	//Make sure everything is fine so far
+	if(!(meshDesc->isValid()))
+	   cerr<<"Mesh invalid."<<endl;
+
+	//Start cooking of fibres
+	PxCookingParams cp; 
+	
+	PxCooking* cooking = PxCreateCooking(PX_PHYSICS_VERSION, (gPhysicsSDK->getFoundation()), cp);
+	MemoryWriteBuffer buf;
+
+	
+
+	bool status = cooking->cookClothFabric(*meshDesc,SceneDesc->gravity, buf);
+	if(!status) {
+	   cerr<<"Problem cooking mesh.\nExiting ..."<<endl;
+	   exit(1);
+	}
+	    
+	fabric=gPhysicsSDK->createClothFabric(MemoryReadBuffer(buf.data));
+	analyzeFixedVertices();
+	tr.p = PxVec3(0,10,0); tr.q = PxQuat::createIdentity();
+
+	points=(PxClothParticle*)malloc(sizeof(PxClothParticle)*meshDesc->points.count);
+	p = (PxVec3*)meshDesc->points.data;  
+
+	
+	for(size_t i=0;i<meshDesc->points.count;i++) {
+	   points[i].pos = *p;
+	   float yS=verticeCoordinates.at(i)[1];
+	  // Fixing the top corner points
+	   if(fixedVertices.at(i)) 
+		  points[i].invWeight =0;
+	   else 
+		  points[i].invWeight = 0.5f;
+	   p++;
+	}
+
+	
+	cooking->release();
+	if (col_data.isValid())
+		cloth = gPhysicsSDK->createCloth(tr,*fabric,points,col_data, PxClothFlag::eSWEPT_CONTACT |  PxClothFlag::eGPU );
+	
+
+	if(cloth) {	
+		PxClothPhaseSolverConfig bendCfg;	 
+		bendCfg.solverType= PxClothPhaseSolverConfig::eSTIFF;
+		bendCfg.stiffness = 1;
+		bendCfg.stretchStiffness = 0.50;
+		bendCfg.stretchLimit=0.60;
+		cloth->setSolverFrequency(120);
+
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING,		bendCfg) ;	
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg) ;
+		//	cloth->setClothFlag(physx::PxClothFlag::eGPU,true); 
+		cloth->setDampingCoefficient(0.2f);	   
+		cloth->setFrictionCoefficient(0.2f); 
+		cloth->setCollisionMassScale(80.0f);
+		cloth->setInertiaScale(0.5);
+		cloth->setClothFlag(PxClothFlag::eGPU,true);
+		return cloth;
+	}
+	else
+		return 0;
+}
+
 
 void ObjObject::saveInitial()
 {
