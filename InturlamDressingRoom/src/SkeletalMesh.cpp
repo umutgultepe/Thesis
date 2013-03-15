@@ -141,6 +141,23 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			setupBone(tBone->getName(),q);
 			continue;
 		}
+		else if (tBone->getName()=="Hand.R" )
+		{
+			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,1,0));
+			q2.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));
+			boneExists.at(BONE_RIGHT_HAND)=true;
+			setupBone(tBone->getName(),q2*q);
+			continue;
+		}
+		else if (tBone->getName()=="Hand.L")
+		{
+			q.FromAngleAxis(Ogre::Degree(-90),Vector3(0,1,0));
+			q2.FromAngleAxis(Ogre::Degree(-90),Vector3(0,0,1));
+			boneExists.at(BONE_LEFT_HAND)=true;
+			setupBone(tBone->getName(),q2*q);
+			continue;
+		}
+
 		else 
 		{
 			q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
@@ -153,6 +170,11 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 						boneExists.at(BONE_LEFT_CALF)=true;
 			else if (tBone->getName()=="Calf.R")
 						boneExists.at(BONE_RIGHT_CALF)=true;
+			else if (tBone->getName()=="Foot.R")
+						boneExists.at(BONE_RIGHT_FOOT)=true;
+			else if (tBone->getName()=="Foot.L")
+						boneExists.at(BONE_LEFT_FOOT)=true;
+
 			else if (tBone->getName()=="Root")
 			{
 				boneExists.at(BONE_ROOT)=true;

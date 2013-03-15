@@ -5,7 +5,7 @@
 #include "NUI_Controller.h"
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
-#define ACTIVE_BONE_COUNT 12
+#define ACTIVE_BONE_COUNT 16
 class KinectController;
 
 enum boneID
