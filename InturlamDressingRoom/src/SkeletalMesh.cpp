@@ -77,11 +77,6 @@ void SkeletalMesh::resetBonesToInitialState()
 		
 }
 
-
-
-
-//#if USE_KINECT
-
 Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::SceneNode* parentNode,Ogre::String entityName,Ogre::String meshName)
 {
 	Mesh=g_SceneManager->createEntity(entityName,meshName);
@@ -179,109 +174,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 
 	return Mesh;
 }
-//
-//#elif USE_NUI
-//
-//Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::SceneNode* parentNode,Ogre::String entityName,Ogre::String meshName)
-//{
-//	Mesh=g_SceneManager->createEntity(entityName,meshName);
-//	parentNode->attachObject(Mesh);
-//	Skeleton=Mesh->getSkeleton();
-//	Skeleton->setBlendMode(ANIMBLEND_CUMULATIVE);	
-//
-//	Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
-//	while (bIter.hasMoreElements())
-//	{
-//		Ogre::Bone* tBone=bIter.getNext();
-//		Ogre::String tName=tBone->getName();
-//
-//
-//		Ogre::Quaternion q = Quaternion::IDENTITY;
-//		Quaternion q2= Quaternion::IDENTITY;
-//		Vector3 xAxis,yAxis,zAxis;
-//
-//		Ogre::String name=tBone->getName();
-//		if (tBone->getName()=="Humerus.L")
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,-1));
-//			//q.ToAxes(xAxis,yAxis,zAxis);
-//			//q2.FromAngleAxis(Ogre::Degree(90),xAxis);
-//			boneExists.at(BONE_LEFT_HUMERUS)=true;
-//	
-//		}
-//		else if  (tBone->getName()=="Humerus.R")
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));
-//			//q.ToAxes(xAxis,yAxis,zAxis);
-//			//q2.FromAngleAxis(Ogre::Degree(90),xAxis);
-//			boneExists.at(BONE_RIGHT_HUMERUS)=true;
-//	
-//		}
-//		else if  (tBone->getName()=="Ulna.L")
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,-1));		 
-//			//q2.FromAngleAxis(Ogre::Degree(45),Vector3(0,-1,0));			
-//			boneExists.at(BONE_LEFT_ULNA)=true;
-//
-//		}
-//		else if  (tBone->getName()=="Ulna.R")
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));		 
-//			//q2.FromAngleAxis(Ogre::Degree(45),Vector3(0,-1,0));	
-//			//q2=q2.Inverse();
-//			boneExists.at(BONE_RIGHT_ULNA)=true;
-//		}
-//		
-//		else if (tBone->getName()=="Chest" )
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-//			boneExists.at(BONE_CHEST)=true;
-//			setupBone(tBone->getName(),q);
-//			continue;
-//		}
-//		else if (tBone->getName()=="Stomach")
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-//			boneExists.at(BONE_STOMACH)=true;
-//			setupBone(tBone->getName(),q);
-//			continue;
-//		}
-//		else 
-//		{
-//			//q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
-//			//q2.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
-//			if (tBone->getName()=="Thigh.L")
-//						boneExists.at(BONE_LEFT_THIGH)=true;
-//			else if (tBone->getName()=="Thigh.R")
-//						boneExists.at(BONE_RIGHT_THIGH)=true;
-//			else if (tBone->getName()=="Calf.L")
-//						boneExists.at(BONE_LEFT_CALF)=true;
-//			else if (tBone->getName()=="Calf.R")
-//						boneExists.at(BONE_RIGHT_CALF)=true;
-//			else if (tBone->getName()=="Root")
-//			{
-//				boneExists.at(BONE_ROOT)=true;
-//				continue;
-//			}
-//			else
-//			{
-//				//bones.push_back(BONE_UNKNOWN);
-//				continue;
-//			}
-//
-//		}
-//		setupBone(tBone->getName(),q*q2);
-//
-//	}
-//	setupBone("Root",Degree(0),Degree(0),Degree(0));
-//	//setupBone("Waist",Degree(0),Degree(0),Degree(0));
-//
-//
-//	return Mesh;
-//}
-//
-//
-//#endif
+
 void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip)
 {
 	// Get the model skeleton bone info
@@ -502,7 +395,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 		newPos.y = torsoPos.y*1000;
 		newPos.z = -torsoPos.z*1000;
 
-		newPos2 = (newPos - origTorsoPos)/100;
+		newPos2 = (newPos - origTorsoPos)/250;
 
 		newPos2.y -= 0.3;
 
