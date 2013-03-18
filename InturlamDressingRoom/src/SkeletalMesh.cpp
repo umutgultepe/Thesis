@@ -477,6 +477,21 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	q.w=hip.hierarchicalRotation.rotationQuaternion.w;*/
 	rootBone->setOrientation(rootOrientation);
 
+
+	//Arm Fixes
+	if (boneExists[BONE_LEFT_HUMERUS])
+	{
+		Ogre::Bone* lHumerus=skel->getBone("Humerus.L");
+		lHumerus->rotate(Quaternion(Radian(Math::PI/2),Vector3(0,1,0)));
+	}
+
+	if (boneExists[BONE_RIGHT_HUMERUS])
+	{
+		Ogre::Bone* rHumerus=skel->getBone("Humerus.R");
+		rHumerus->rotate(Quaternion(Radian(Math::PI/2),Vector3(0,-1,0)));
+	}
+
+
 	
 	return newPos2;
 }
