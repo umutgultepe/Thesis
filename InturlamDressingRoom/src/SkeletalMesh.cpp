@@ -50,8 +50,7 @@ void SkeletalMesh::setupBone(const String& name,const Ogre::Quaternion& q)
 {
 	Ogre::Bone* bone = Mesh->getSkeleton()->getBone(name);
 	bone->setManuallyControlled(true);
-	bone->setInheritOrientation(false);
-		
+	bone->setInheritOrientation(false);	
 	bone->resetOrientation();
 	bone->setOrientation(q);
 	
@@ -246,7 +245,7 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 	} 
 }
 
-Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip=true)
+Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip)
 {
 	Quaternion q;
 	q.x=sj.absoluteRotation.rotationQuaternion.x;

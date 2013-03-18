@@ -5,6 +5,7 @@
 #include "NUI_Controller.h"
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
+#define TOTAL_BONE_COUNT 28
 #define ACTIVE_BONE_COUNT 17
 class KinectController;
 
@@ -189,7 +190,7 @@ public:
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
 	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=true,Quaternion factor=Quaternion::IDENTITY);
 	void setOriginalTorsoPosition();
-
+	static Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip=true);
 
 	inline void setVisible(bool visibleOrNot)
 	{	

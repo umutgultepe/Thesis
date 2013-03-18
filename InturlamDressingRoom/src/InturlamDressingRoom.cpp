@@ -1066,6 +1066,20 @@ bool InturlamDressingRoom::keyReleased( const OIS::KeyEvent &arg )
 	return BaseApplication::keyReleased(arg);
 }
 
+Ogre::AnimationState* leftArm,*rightArm;
+
+void assignWeightsToBones(Ogre::Bone* bone,Ogre::AnimationState* anim)
+{
+	Ogre::Node::ChildNodeIterator c=bone->getChildIterator();
+	while(c.hasMoreElements())
+	{
+		Ogre::Bone* cBone=(Ogre::Bone*)c.getNext();
+		anim->setBlendMaskEntry(cBone->getHandle(),1);
+		assignWeightsToBones(cBone,anim);
+	}
+}
+
+
 void InturlamDressingRoom::createSimulation()
 {
 	#if USE_USER_SCALING
@@ -1085,6 +1099,24 @@ void InturlamDressingRoom::createSimulation()
 
 	femaleBody=new SkeletalMesh(mKinect);
 	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+
+	//Animation
+	//Ogre::AnimationStateSet* ass=femaleBody->Mesh->getAllAnimationStates();
+	//Ogre::AnimationStateIterator s=ass->getAnimationStateIterator();
+	leftArm=femaleBody->Mesh->getAnimationState("LeftArm");
+	leftArm->setLoop(true);
+	leftArm->setEnabled(true);
+	rightArm=femaleBody->Mesh->getAnimationState("RightArm");
+	rightArm->setLoop(true);
+	rightArm->setEnabled(true);
+	
+	Ogre::SkeletonInstance* fSkel=femaleBody->Mesh->getSkeleton();
+	leftArm->createBlendMask(fSkel->getNumBones(),0);
+	rightArm->createBlendMask(fSkel->getNumBones(),0);
+	assignWeightsToBones(fSkel->getBone("Hand.L"),leftArm);
+	assignWeightsToBones(fSkel->getBone("Hand.R"),rightArm);
+	//End-Animation
+
 	createVisualHuman();
 	loadClothes();
 	
@@ -1184,6 +1216,31 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 			updateCloth();
 		}
 		mNui->mSkeletonUpdated=false;
+
+		//	Hand animation
+		Quaternion q;
+		Ogre::Matrix3 tMat;Radian yaw,pitch,roll;
+		NUI_SKELETON_BONE_ORIENTATION rightUlna=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
+		q.x=rightUlna.hierarchicalRotation.rotationQuaternion.x;
+		q.y=rightUlna.hierarchicalRotation.rotationQuaternion.y;
+		q.z=rightUlna.hierarchicalRotation.rotationQuaternion.z;
+		q.w=rightUlna.hierarchicalRotation.rotationQuaternion.w;
+		q.ToRotationMatrix(tMat);	
+		tMat.ToEulerAnglesYZX(yaw,pitch,roll);
+		float rUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
+		rightArm->setTimePosition(rUlnaCurl);
+
+		NUI_SKELETON_BONE_ORIENTATION leftUlna=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_LEFT];
+		q.x=leftUlna.hierarchicalRotation.rotationQuaternion.x;
+		q.y=leftUlna.hierarchicalRotation.rotationQuaternion.y;
+		q.z=leftUlna.hierarchicalRotation.rotationQuaternion.z;
+		q.w=leftUlna.hierarchicalRotation.rotationQuaternion.w;
+		q.ToRotationMatrix(tMat);	
+		tMat.ToEulerAnglesYZX(yaw,pitch,roll);
+		float lUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
+		leftArm->setTimePosition(lUlnaCurl);
+
+
 	}
 	#endif 
 	if (simulating && lowerCloth)
@@ -1199,6 +1256,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	}
 
 	help->setParamValue("Elapsed MS",StringConverter::toString(((float)(GetTickCount()-start_time))/1000));
+
 	return BaseApplication::frameRenderingQueued(evt);
 }
 
