@@ -436,31 +436,31 @@ int getBoneIndex(Ogre::String boneName)
 }
 
 const physx::PxU32 pairInd[]={	
-	0,1, //Stomach-To-Waist
-	0,3, //Stomach-To-Chest
-	3,4, //Chest-To-Left-Humerus
-	4,6, //Left-Humerus-to-Left-Ulna
-	6,12,//Left-Ulna-to-Left-Hand
-	3,5, //Chest-To-Right-Humerus
-	5,7, //Right-Humerus-to-Right-Ulna
-	7,13,//Right-Ulna-to-Right-Hand
-	1,9, //Waist-to-Right-Thigh
-	9,11,//Right-Thigh-To-Right-Calf
-	11,15,//Right-Calf-To-Right-Foot
-	1,8, //Waist-to-Left-Thigh
-	8,10, //Left-Thigh-To-Left-Calf
-	10,14,//Left-Calf-To-Left-Foot
-	0,4, //Stomach-To-Left-Humerus
-	0,5, //Stomach-To-Right-Humerus
-	16,18,//LexExtension Left 1-2
-	18,20,//LexExtension Left 2-3
-	17,19,//LexExtension Right 1-2
-	19,21,//LexExtension Right 2-3
-	10,11,//Knee-to-Knee
-	20,21,//Leg Extension 3 Left-Right
-	24,25,//Waist Extent Left - Right
-	24,22,//Waist Extent -Hip Extent L 3-4
-	25,23,//Waist Extent -Hip Extent R 3-4
+	BONE_STOMACH,BONE_WAIST, //Stomach-To-Waist
+	BONE_STOMACH,BONE_CHEST, //Stomach-To-Chest
+	BONE_CHEST,BONE_LEFT_HUMERUS, //Chest-To-Left-Humerus
+	BONE_LEFT_HUMERUS,BONE_LEFT_ULNA, //Left-Humerus-to-Left-Ulna
+	BONE_LEFT_ULNA,BONE_LEFT_HAND,//Left-Ulna-to-Left-Hand
+	BONE_CHEST,BONE_RIGHT_HUMERUS, //Chest-To-Right-Humerus
+	BONE_RIGHT_HUMERUS,BONE_RIGHT_ULNA, //Right-Humerus-to-Right-Ulna
+	BONE_RIGHT_ULNA,BONE_RIGHT_HAND,//Right-Ulna-to-Right-Hand
+	BONE_WAIST,BONE_RIGHT_THIGH, //Waist-to-Right-Thigh
+	BONE_RIGHT_THIGH,BONE_RIGHT_CALF,//Right-Thigh-To-Right-Calf
+	BONE_RIGHT_CALF,BONE_RIGHT_FOOT,//Right-Calf-To-Right-Foot
+	BONE_WAIST,BONE_LEFT_THIGH, //Waist-to-Left-Thigh
+	BONE_LEFT_THIGH,BONE_LEFT_CALF, //Left-Thigh-To-Left-Calf
+	BONE_LEFT_CALF,BONE_LEFT_FOOT,//Left-Calf-To-Left-Foot
+	BONE_STOMACH,BONE_LEFT_HUMERUS, //Stomach-To-Left-Humerus
+	BONE_STOMACH,BONE_RIGHT_HUMERUS, //Stomach-To-Right-Humerus
+	BONE_LEG_EXTENSION_UP_L,BONE_LEG_EXTENSION_HIP_L,//LexExtension Left 1-2
+	BONE_LEG_EXTENSION_HIP_L,BONE_LEG_EXTENSION_HIP2_L,//LexExtension Left 2-3
+	BONE_LEG_EXTENSION_UP_R,BONE_LEG_EXTENSION_HIP_R,//LexExtension Right 1-2
+	BONE_LEG_EXTENSION_HIP_R,BONE_LEG_EXTENSION_HIP2_R,//LexExtension Right 2-3
+	BONE_LEFT_CALF,BONE_RIGHT_CALF,//Knee-to-Knee
+	BONE_LEG_EXTENSION_HIP2_L,BONE_LEG_EXTENSION_HIP2_R,//Leg Extension 3 Left-Right
+	BONE_WAIST_EXTENTION_L,BONE_WAIST_EXTENTION_R,//Waist Extent Left - Right
+	BONE_WAIST_EXTENTION_L,BONE_LEG_EXTENSION_DUMMY_L,//Waist Extent -Hip Extent L 3-4
+	BONE_WAIST_EXTENTION_R,BONE_LEG_EXTENSION_DUMMY_R,//Waist Extent -Hip Extent R 3-4
 	
 };
 
