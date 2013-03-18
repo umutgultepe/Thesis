@@ -141,6 +141,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			setupBone(tBone->getName(),q);
 			continue;
 		}
+		#if USE_NUI
 		else if (tBone->getName()=="Hand.R" )
 		{
 			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,1,0));
@@ -157,11 +158,18 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			setupBone(tBone->getName(),q2*q);
 			continue;
 		}
-
+		else if (tBone->getName()=="Neck")
+		{
+			//q.FromAngleAxis(Ogre::Degree(-180),Vector3(1,0,0));
+			//q2.FromAngleAxis(Ogre::Degree(180),Vector3(0,1,0));
+			boneExists.at(BONE_NECK)=true;
+			setupBone(tBone->getName(),q2*q);
+			continue;
+		}
+		#endif
 		else 
 		{
 			q.FromAngleAxis(Ogre::Degree(180),Vector3(1,0,0));	 	
-			q2.FromAngleAxis(Ogre::Degree(0),Vector3(0,1,0));
 			if (tBone->getName()=="Thigh.L")
 						boneExists.at(BONE_LEFT_THIGH)=true;
 			else if (tBone->getName()=="Thigh.R")
@@ -170,11 +178,18 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 						boneExists.at(BONE_LEFT_CALF)=true;
 			else if (tBone->getName()=="Calf.R")
 						boneExists.at(BONE_RIGHT_CALF)=true;
+			#if USE_NUI
 			else if (tBone->getName()=="Foot.R")
-						boneExists.at(BONE_RIGHT_FOOT)=true;
+			{
+				q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
+				boneExists.at(BONE_RIGHT_FOOT)=true;
+			}
 			else if (tBone->getName()=="Foot.L")
-						boneExists.at(BONE_LEFT_FOOT)=true;
-
+			{	
+				q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
+				boneExists.at(BONE_LEFT_FOOT)=true;
+			}
+			#endif
 			else if (tBone->getName()=="Root")
 			{
 				boneExists.at(BONE_ROOT)=true;
@@ -398,7 +413,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	{
 		if (boneExists.at(i))
 		{
-			if (i==BONE_CHEST)
+			if (i==BONE_CHEST || i==BONE_NECK)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(180),Ogre::Vector3(0,1,0)));
 			else if (i==BONE_STOMACH)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
