@@ -482,13 +482,23 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	if (boneExists[BONE_LEFT_HUMERUS])
 	{
 		Ogre::Bone* lHumerus=skel->getBone("Humerus.L");
-		lHumerus->rotate(Quaternion(Radian(Math::PI/2),Vector3(0,1,0)));
+		Ogre::Radian yq=lHumerus->getOrientation().getYaw();
+		//while (yq.valueDegrees()>-135 && yq.valueDegrees()<135)
+		//{
+		//	lHumerus->yaw(-Degree(90));
+		//	yq=lHumerus->getOrientation().getYaw();
+		//}
 	}
 
 	if (boneExists[BONE_RIGHT_HUMERUS])
 	{
 		Ogre::Bone* rHumerus=skel->getBone("Humerus.R");
-		rHumerus->rotate(Quaternion(Radian(Math::PI/2),Vector3(0,-1,0)));
+		Ogre::Radian yq=rHumerus->getOrientation().getYaw();
+		//while (yq.valueDegrees()>-45 || yq.valueDegrees()<-135)
+		//{
+			//rHumerus->yaw(-Degree(90));
+			//yq=rHumerus->getOrientation().getYaw();
+		//}
 	}
 
 
