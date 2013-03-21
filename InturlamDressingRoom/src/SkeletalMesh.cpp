@@ -279,64 +279,153 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
-	if ( sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_RIGHT)
-	{
-		Ogre::Matrix3 rotM;
-		Radian yaw,pitch,roll;
-		q.ToRotationMatrix(rotM);
-		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
 
-		Ogre::Matrix3 rotMM;
-		Radian yawM,pitchM,rollM;
-		oldQ.ToRotationMatrix(rotMM);
-		rotMM.ToEulerAnglesZXY(yawM,pitchM,rollM);
-		if (roll.valueDegrees()<30)
-			roll=rollM;
+	if ( sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT)
+	{
+
+		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
+		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
+		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;
+				
+		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
+		initialHierarchicalMatrix.ToEulerAnglesYXZ(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
+
+		if (yawInitialHierarchical.valueDegrees()<45)
+		{
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-135)),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
+			modifier=modifiedHierarchical*initialHierarchical.Inverse();
+			q=q*modifier;
+		}
+		else if (yawInitialHierarchical.valueDegrees()>90)
+		{
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-90)),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
+			modifier=modifiedHierarchical*initialHierarchical.Inverse();
+			q=q*modifier;
+		}
 		else
 		{
-			Real jump=abs(roll.valueDegrees() - rollM.valueDegrees());
-			if (jump >7 && jump<90)
-				roll=rollM-(rollM-roll)/10;
-			else if (jump < 353 && jump>270)
-				roll=rollM+(rollM+roll)/10;
-			else if (jump<270 && jump > 180)
-				roll=rollM+(rollM+roll)/180;
-			else if (jump<180 && jump > 90)
-				roll=rollM-(rollM-roll)/180;
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical-Radian(Math::PI),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
+			modifier=modifiedHierarchical*initialHierarchical.Inverse();
+			q=q*modifier;
 		}
-		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
-
-		q.FromRotationMatrix(rotM);
-	}
-	else if (sj.endJoint==NUI_SKELETON_POSITION_ELBOW_LEFT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_LEFT)
-	{
-		Ogre::Matrix3 rotM;
-		Radian yaw,pitch,roll;
+		
+		Ogre::Matrix3 rotM,rotPrevious;
+		Radian yaw,pitch,roll,yawPrevious,pitchPrevious,rollPrevious;
 		q.ToRotationMatrix(rotM);
+		oldQ.ToRotationMatrix(rotPrevious);
 		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-
-		Ogre::Matrix3 rotMM;
-		Radian yawM,pitchM,rollM;
-		oldQ.ToRotationMatrix(rotMM);
-		rotMM.ToEulerAnglesZXY(yawM,pitchM,rollM);
-		if (roll.valueDegrees()>-30)
-			roll=rollM;
-		else
-		{
-			Real jump=abs(roll.valueDegrees() - rollM.valueDegrees());
-			if (jump >7 && jump<90)
-				roll=rollM-(rollM-roll)/10;
-			else if (jump < 353 && jump>270)
-				roll=rollM+(rollM+roll)/10;
-			else if (jump<270 && jump > 180)
-				roll=rollM+(rollM+roll)/180;
-			else if (jump<180 && jump > 90)
-				roll=rollM-(rollM-roll)/180;
-		}
+		rotPrevious.ToEulerAnglesZXY(yawPrevious,pitchPrevious,rollPrevious);
+		Real jump=abs(roll.valueDegrees() - rollPrevious.valueDegrees());
+		if (jump >7 && jump<90)
+			roll=rollPrevious-(rollPrevious-roll)/10;
+		else if (jump < 353 && jump>270)
+			roll=rollPrevious+(rollPrevious+roll)/10;
+		else if (jump<270 && jump > 180)
+			roll=rollPrevious+(rollPrevious+roll)/180;
+		else if (jump<180 && jump > 90)
+			roll=rollPrevious-(rollPrevious-roll)/180;
 		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+		q.FromRotationMatrix(rotM);
+	}	 
+	else if (sj.endJoint==NUI_SKELETON_POSITION_WRIST_RIGHT)
+	{	
+		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
+		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
+		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;
+		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
+		initialHierarchicalMatrix.ToEulerAnglesYXZ(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
+		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical+Radian(-Math::PI/2),pitchInitialHierarchical,rollInitialHierarchical);
+		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
+		modifier=modifiedHierarchical*initialHierarchical.Inverse();
+		q=q*modifier;
 
+		Ogre::Matrix3 rotM,rotPrevious;
+		Radian yaw,pitch,roll,yawPrevious,pitchPrevious,rollPrevious;
+		q.ToRotationMatrix(rotM);
+		oldQ.ToRotationMatrix(rotPrevious);
+		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+		rotPrevious.ToEulerAnglesZXY(yawPrevious,pitchPrevious,rollPrevious);
+		Real jump=abs(roll.valueDegrees() - rollPrevious.valueDegrees());
+		if (jump >7 && jump<90)
+			roll=rollPrevious-(rollPrevious-roll)/10;
+		else if (jump < 353 && jump>270)
+			roll=rollPrevious+(rollPrevious+roll)/10;
+		else if (jump<270 && jump > 180)
+			roll=rollPrevious+(rollPrevious+roll)/180;
+		else if (jump<180 && jump > 90)
+			roll=rollPrevious-(rollPrevious-roll)/180;
+		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
+	//if ( sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_RIGHT)
+	//{
+	//	Ogre::Matrix3 rotM;
+	//	Radian yaw,pitch,roll;
+	//	q.ToRotationMatrix(rotM);
+	//	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+
+	//	Ogre::Matrix3 rotMM;
+	//	Radian yawM,pitchM,rollM;
+	//	oldQ.ToRotationMatrix(rotMM);
+	//	rotMM.ToEulerAnglesZXY(yawM,pitchM,rollM);
+	//	if (roll.valueDegrees()<30)
+	//		roll=rollM;
+	//	else
+	//	{
+	//		Real jump=abs(roll.valueDegrees() - rollM.valueDegrees());
+	//		if (jump >7 && jump<90)
+	//			roll=rollM-(rollM-roll)/10;
+	//		else if (jump < 353 && jump>270)
+	//			roll=rollM+(rollM+roll)/10;
+	//		else if (jump<270 && jump > 180)
+	//			roll=rollM+(rollM+roll)/180;
+	//		else if (jump<180 && jump > 90)
+	//			roll=rollM-(rollM-roll)/180;
+	//	}
+	//	rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+
+	//	q.FromRotationMatrix(rotM);
+	//}
+	//else if (sj.endJoint==NUI_SKELETON_POSITION_ELBOW_LEFT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_LEFT)
+	//{
+	//	Ogre::Matrix3 rotM;
+	//	Radian yaw,pitch,roll;
+	//	q.ToRotationMatrix(rotM);
+	//	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+
+	//	Ogre::Matrix3 rotMM;
+	//	Radian yawM,pitchM,rollM;
+	//	oldQ.ToRotationMatrix(rotMM);
+	//	rotMM.ToEulerAnglesZXY(yawM,pitchM,rollM);
+	//	if (roll.valueDegrees()>-30)
+	//		roll=rollM;
+	//	else
+	//	{
+	//		Real jump=abs(roll.valueDegrees() - rollM.valueDegrees());
+	//		if (jump >7 && jump<90)
+	//			roll=rollM-(rollM-roll)/10;
+	//		else if (jump < 353 && jump>270)
+	//			roll=rollM+(rollM+roll)/10;
+	//		else if (jump<270 && jump > 180)
+	//			roll=rollM+(rollM+roll)/180;
+	//		else if (jump<180 && jump > 90)
+	//			roll=rollM-(rollM-roll)/180;
+	//	}
+	//	rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+
+	//	q.FromRotationMatrix(rotM);
+	//}
 	return q;
 
 }

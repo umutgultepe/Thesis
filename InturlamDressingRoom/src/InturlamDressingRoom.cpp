@@ -1259,11 +1259,11 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 
 		//Arm Testing
-		NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_RIGHT];
-		q.x=rightHumerus.absoluteRotation.rotationQuaternion.x;
-		q.y=rightHumerus.absoluteRotation.rotationQuaternion.y;
-		q.z=rightHumerus.absoluteRotation.rotationQuaternion.z;
-		q.w=rightHumerus.absoluteRotation.rotationQuaternion.w;
+		NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
+		q.x=rightHumerus.hierarchicalRotation.rotationQuaternion.x;
+		q.y=rightHumerus.hierarchicalRotation.rotationQuaternion.y;
+		q.z=rightHumerus.hierarchicalRotation.rotationQuaternion.z;
+		q.w=rightHumerus.hierarchicalRotation.rotationQuaternion.w;
 		Ogre::Matrix3 rotM;
 		q.ToRotationMatrix(rotM);
 		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
@@ -1271,13 +1271,12 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
 		help->setParamValue("Right humerus roll",StringConverter::toString(roll));
 
-		q=femaleBody->getSkeleton()->getBone("Humerus.R")->getOrientation();
-		/*NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
-		q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
-		q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
-		q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
-		q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
-		*/
+
+		//NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
+		//q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
+		//q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
+		//q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
+		//q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
 		q.ToRotationMatrix(rotM);
 		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
 		help->setParamValue("Left humerus yaw",StringConverter::toString(yaw));
