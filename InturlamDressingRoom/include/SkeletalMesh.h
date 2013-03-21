@@ -182,7 +182,7 @@ public:
 	Ogre::Vector3 updateMesh();
 	Ogre::Vector3 updateMesh(NUI_Controller* nui);
 	
-
+	Real rollManually(const Ogre::String& modelBoneName, Real modifier);
 	void setupBone(const String& name,const Degree& yaw,const Degree& pitch,const Degree& roll);
 	void setupBone(const String& name,const Ogre::Quaternion& q);
 	void setupBone(const String& name,const Ogre::Radian& angle, const Vector3 axis);

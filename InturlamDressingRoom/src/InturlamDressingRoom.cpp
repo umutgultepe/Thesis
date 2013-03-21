@@ -986,7 +986,16 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		if (lowerCloth)
 			lowerCloth->flipVisibility();
 	}
-
+	else if (arg.key==OIS::KC_P)
+	{
+		help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+	}
+	else if (arg.key==OIS::KC_O)
+	{	
+		
+		help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",-5)));
+	}
+	
 	else if (arg.key==OIS::KC_ADD)
 	{
 		//PxReal scale=cloth->getInertiaScale();
@@ -1257,19 +1266,23 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		q.w=rightHumerus.absoluteRotation.rotationQuaternion.w;
 		Ogre::Matrix3 rotM;
 		q.ToRotationMatrix(rotM);
-		rotM.ToEulerAnglesZYX(yaw,pitch,roll);
+		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
 		help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
 		help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
 		help->setParamValue("Right humerus roll",StringConverter::toString(roll));
 
-		NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
+		q=femaleBody->getSkeleton()->getBone("Humerus.R")->getOrientation();
+		/*NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
 		q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
 		q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
 		q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
 		q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
-		help->setParamValue("Left humerus yaw",StringConverter::toString(q.getYaw()));
-		help->setParamValue("Left humerus pitch",StringConverter::toString(q.getPitch()));
-		help->setParamValue("Left humerus roll",StringConverter::toString(q.getRoll()));
+		*/
+		q.ToRotationMatrix(rotM);
+		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+		help->setParamValue("Left humerus yaw",StringConverter::toString(yaw));
+		help->setParamValue("Left humerus pitch",StringConverter::toString(pitch));
+		help->setParamValue("Left humerus roll",StringConverter::toString(roll));
 		
 		
 

@@ -141,22 +141,22 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			continue;
 		}
 		#if USE_NUI
-		else if (tBone->getName()=="Hand.R" )
-		{
-			q.FromAngleAxis(Ogre::Degree(90),Vector3(0,1,0));
-			q2.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));
-			boneExists.at(BONE_RIGHT_HAND)=true;
-			setupBone(tBone->getName(),q2*q);
-			continue;
-		}
-		else if (tBone->getName()=="Hand.L")
-		{
-			q.FromAngleAxis(Ogre::Degree(-90),Vector3(0,1,0));
-			q2.FromAngleAxis(Ogre::Degree(-90),Vector3(0,0,1));
-			boneExists.at(BONE_LEFT_HAND)=true;
-			setupBone(tBone->getName(),q2*q);
-			continue;
-		}
+		//else if (tBone->getName()=="Hand.R" )
+		//{
+		//	q.FromAngleAxis(Ogre::Degree(90),Vector3(0,1,0));
+		//	q2.FromAngleAxis(Ogre::Degree(90),Vector3(0,0,1));
+		//	boneExists.at(BONE_RIGHT_HAND)=true;
+		//	setupBone(tBone->getName(),q2*q);
+		//	continue;
+		//}
+		//else if (tBone->getName()=="Hand.L")
+		//{
+		//	q.FromAngleAxis(Ogre::Degree(-90),Vector3(0,1,0));
+		//	q2.FromAngleAxis(Ogre::Degree(-90),Vector3(0,0,1));
+		//	boneExists.at(BONE_LEFT_HAND)=true;
+		//	setupBone(tBone->getName(),q2*q);
+		//	continue;
+		//}
 		else if (tBone->getName()=="Neck")
 		{
 			//q.FromAngleAxis(Ogre::Degree(-180),Vector3(1,0,0));
@@ -211,6 +211,22 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 	return Mesh;
 }
 
+Real SkeletalMesh::rollManually(const Ogre::String& modelBoneName, Real modifier)
+{
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* bone = skel->getBone(modelBoneName);
+	Quaternion q=bone->getOrientation();
+	Ogre::Matrix3 rotM;
+	q.ToRotationMatrix(rotM);
+	Radian yaw,pitch,roll;
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	roll=Radian(Degree(roll.valueDegrees()+modifier));
+	rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+	q.FromRotationMatrix(rotM);
+	bone->setOrientation(q);
+	return roll.valueDegrees();
+}
+
 void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip)
 {
 	// Get the model skeleton bone info
@@ -246,7 +262,7 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 }
 
 int xxmodifier=45;
-
+Quaternion oldQ;
 Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip)
 {
 	Quaternion q;
@@ -263,18 +279,61 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
-	if (sj.endJoint==NUI_SKELETON_POSITION_ELBOW_LEFT || sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_LEFT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_HAND_LEFT || sj.endJoint==NUI_SKELETON_POSITION_HAND_RIGHT)
+	if ( sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_RIGHT)
 	{
 		Ogre::Matrix3 rotM;
 		Radian yaw,pitch,roll;
 		q.ToRotationMatrix(rotM);
 		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-		//if (pitch.valueDegrees()<0)
-		//{
-		//	pitch=Radian(Degree(45));
-		//}
-		
-		rotM.FromEulerAnglesZXY(yaw,pitch,Radian(Degree(180)));
+
+		Ogre::Matrix3 rotMM;
+		Radian yawM,pitchM,rollM;
+		oldQ.ToRotationMatrix(rotMM);
+		rotMM.ToEulerAnglesZXY(yawM,pitchM,rollM);
+		if (roll.valueDegrees()<30)
+			roll=rollM;
+		else
+		{
+			Real jump=abs(roll.valueDegrees() - rollM.valueDegrees());
+			if (jump >7 && jump<90)
+				roll=rollM-(rollM-roll)/10;
+			else if (jump < 353 && jump>270)
+				roll=rollM+(rollM+roll)/10;
+			else if (jump<270 && jump > 180)
+				roll=rollM+(rollM+roll)/180;
+			else if (jump<180 && jump > 90)
+				roll=rollM-(rollM-roll)/180;
+		}
+		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+
+		q.FromRotationMatrix(rotM);
+	}
+	else if (sj.endJoint==NUI_SKELETON_POSITION_ELBOW_LEFT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_LEFT)
+	{
+		Ogre::Matrix3 rotM;
+		Radian yaw,pitch,roll;
+		q.ToRotationMatrix(rotM);
+		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+
+		Ogre::Matrix3 rotMM;
+		Radian yawM,pitchM,rollM;
+		oldQ.ToRotationMatrix(rotMM);
+		rotMM.ToEulerAnglesZXY(yawM,pitchM,rollM);
+		if (roll.valueDegrees()>-30)
+			roll=rollM;
+		else
+		{
+			Real jump=abs(roll.valueDegrees() - rollM.valueDegrees());
+			if (jump >7 && jump<90)
+				roll=rollM-(rollM-roll)/10;
+			else if (jump < 353 && jump>270)
+				roll=rollM+(rollM+roll)/10;
+			else if (jump<270 && jump > 180)
+				roll=rollM+(rollM+roll)/180;
+			else if (jump<180 && jump > 90)
+				roll=rollM-(rollM-roll)/180;
+		}
+		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
 
 		q.FromRotationMatrix(rotM);
 	}
@@ -288,6 +347,7 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON
 	// Get the model skeleton bone info
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
+	oldQ=bone->getOrientation();
 	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint,flip);
 	bone->setOrientation(newQ*factor);			
 }
