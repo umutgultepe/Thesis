@@ -962,7 +962,6 @@ void InturlamDressingRoom::updateAcceleration(PxVec3 add)
 	acceleration+=add;
 	cloth->setExternalAcceleration(acceleration);
 }
-
 bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 {
 	if (arg.key==OIS::KC_SPACE)
@@ -987,6 +986,7 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		if (lowerCloth)
 			lowerCloth->flipVisibility();
 	}
+
 	else if (arg.key==OIS::KC_ADD)
 	{
 		//PxReal scale=cloth->getInertiaScale();
@@ -1255,9 +1255,12 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		q.y=rightHumerus.absoluteRotation.rotationQuaternion.y;
 		q.z=rightHumerus.absoluteRotation.rotationQuaternion.z;
 		q.w=rightHumerus.absoluteRotation.rotationQuaternion.w;
-		help->setParamValue("Right humerus yaw",StringConverter::toString(q.getYaw()));
-		help->setParamValue("Right humerus pitch",StringConverter::toString(q.getPitch()));
-		help->setParamValue("Right humerus roll",StringConverter::toString(q.getRoll()));
+		Ogre::Matrix3 rotM;
+		q.ToRotationMatrix(rotM);
+		rotM.ToEulerAnglesZYX(yaw,pitch,roll);
+		help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
+		help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
+		help->setParamValue("Right humerus roll",StringConverter::toString(roll));
 
 		NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
 		q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;

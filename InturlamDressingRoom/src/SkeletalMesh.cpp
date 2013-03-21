@@ -245,6 +245,8 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 	} 
 }
 
+int xxmodifier=45;
+
 Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip)
 {
 	Quaternion q;
@@ -259,6 +261,21 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		q.ToRotationMatrix(rotM);
 		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
 		rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
+		q.FromRotationMatrix(rotM);
+	}
+	if (sj.endJoint==NUI_SKELETON_POSITION_ELBOW_LEFT || sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_LEFT || sj.endJoint==NUI_SKELETON_POSITION_WRIST_RIGHT || sj.endJoint==NUI_SKELETON_POSITION_HAND_LEFT || sj.endJoint==NUI_SKELETON_POSITION_HAND_RIGHT)
+	{
+		Ogre::Matrix3 rotM;
+		Radian yaw,pitch,roll;
+		q.ToRotationMatrix(rotM);
+		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+		//if (pitch.valueDegrees()<0)
+		//{
+		//	pitch=Radian(Degree(45));
+		//}
+		
+		rotM.FromEulerAnglesZXY(yaw,pitch,Radian(Degree(180)));
+
 		q.FromRotationMatrix(rotM);
 	}
 	return q;
@@ -478,28 +495,41 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	rootBone->setOrientation(rootOrientation);
 
 
-	//Arm Fixes
-	if (boneExists[BONE_LEFT_HUMERUS])
-	{
-		Ogre::Bone* lHumerus=skel->getBone("Humerus.L");
-		Ogre::Radian yq=lHumerus->getOrientation().getYaw();
-		//while (yq.valueDegrees()>-135 && yq.valueDegrees()<135)
-		//{
-		//	lHumerus->yaw(-Degree(90));
-		//	yq=lHumerus->getOrientation().getYaw();
-		//}
-	}
+	////Arm Fixes
+	//if (boneExists[BONE_LEFT_HUMERUS])
+	//{
+	//	Ogre::Bone* lHumerus=skel->getBone("Humerus.L");
+	//	//Ogre::Radian yq=lHumerus->getOrientation().getYaw();
+	//	
+	//	NUI_SKELETON_BONE_ORIENTATION lElbow=nui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
+	//	Ogre::Quaternion q=convertNUItoOgre(lElbow);
+	//	//Ogre::Quaternion q2(Ogre::Degree(180),Ogre::Vector3(0,1,0));
+	//	Ogre::Quaternion lOrientation=q;
+	//	Ogre::Matrix3 tMat;
+	//	Radian yaw,pitch,roll;
+	//	lOrientation.ToRotationMatrix(tMat);
+	//	tMat.ToEulerAnglesZXY(yaw,pitch,roll);
+	//	tMat.FromEulerAnglesZXY(yaw,pitch,Radian(0));
+	//	lOrientation.FromRotationMatrix(tMat);
+	//	lHumerus->setOrientation(lOrientation);
+	//	//while (yq.valueDegrees()>-135 && yq.valueDegrees()<135)
+	//	//{
+	//	//	lHumerus->yaw(-Degree(90));
+	//	//	yq=lHumerus->getOrientation().getYaw();
+	//	//}
+	//}
 
-	if (boneExists[BONE_RIGHT_HUMERUS])
-	{
-		Ogre::Bone* rHumerus=skel->getBone("Humerus.R");
-		Ogre::Radian yq=rHumerus->getOrientation().getYaw();
-		//while (yq.valueDegrees()>-45 || yq.valueDegrees()<-135)
-		//{
-			//rHumerus->yaw(-Degree(90));
-			//yq=rHumerus->getOrientation().getYaw();
-		//}
-	}
+	//if (boneExists[BONE_RIGHT_HUMERUS])
+	//{
+	//	Ogre::Bone* rHumerus=skel->getBone("Humerus.R");
+	//	Ogre::Radian yq=rHumerus->getOrientation().getYaw();
+	//	//rHumerus->yaw(-yq);
+	//	//while (yq.valueDegrees()>-45 || yq.valueDegrees()<-135)
+	//	//{
+	//		//rHumerus->yaw(-Degree(90));
+	//		//yq=rHumerus->getOrientation().getYaw();
+	//	//}
+	//}
 
 
 	
