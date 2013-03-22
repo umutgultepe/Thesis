@@ -1260,10 +1260,10 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 		//Arm Testing
 		NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
-		q.x=rightHumerus.hierarchicalRotation.rotationQuaternion.x;
-		q.y=rightHumerus.hierarchicalRotation.rotationQuaternion.y;
-		q.z=rightHumerus.hierarchicalRotation.rotationQuaternion.z;
-		q.w=rightHumerus.hierarchicalRotation.rotationQuaternion.w;
+		q.x=rightHumerus.absoluteRotation.rotationQuaternion.x;
+		q.y=rightHumerus.absoluteRotation.rotationQuaternion.y;
+		q.z=rightHumerus.absoluteRotation.rotationQuaternion.z;
+		q.w=rightHumerus.absoluteRotation.rotationQuaternion.w;
 		Ogre::Matrix3 rotM;
 		q.ToRotationMatrix(rotM);
 		rotM.ToEulerAnglesZXY(yaw,pitch,roll);

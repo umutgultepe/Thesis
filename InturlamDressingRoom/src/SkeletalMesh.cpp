@@ -301,9 +301,9 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
 		}
-		else if (yawInitialHierarchical.valueDegrees()>90)
+		else if (yawInitialHierarchical.valueDegrees()>135)
 		{
-			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-90)),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-45)),pitchInitialHierarchical,rollInitialHierarchical);
 			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
@@ -343,9 +343,9 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
 		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;
-		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
+		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);/**/
 		initialHierarchicalMatrix.ToEulerAnglesYXZ(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
-		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical+Radian(-Math::PI/2),pitchInitialHierarchical,rollInitialHierarchical);
+		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical -Radian(Math::PI/2) ,pitchInitialHierarchical,rollInitialHierarchical);
 		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 		modifier=modifiedHierarchical*initialHierarchical.Inverse();
 		q=q*modifier;
@@ -360,11 +360,23 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		if (jump >7 && jump<90)
 			roll=rollPrevious-(rollPrevious-roll)/10;
 		else if (jump < 353 && jump>270)
-			roll=rollPrevious+(rollPrevious+roll)/10;
+		{
+			if (rollPrevious.valueDegrees() > 0)
+				roll=rollPrevious+Radian(Degree((360-jump)/10));
+			else
+				roll=rollPrevious-Radian(Degree((360-jump)/10));
+		}
 		else if (jump<270 && jump > 180)
-			roll=rollPrevious+(rollPrevious+roll)/180;
+		{
+			if (rollPrevious.valueDegrees() > 0)
+				roll=rollPrevious+Radian(Degree((360-jump)/20));
+			else
+				roll=rollPrevious-Radian(Degree((360-jump)/20));
+		}
 		else if (jump<180 && jump > 90)
-			roll=rollPrevious-(rollPrevious-roll)/180;
+			roll=rollPrevious-(rollPrevious-roll)/20;
+		else
+			roll=rollPrevious;
 		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
