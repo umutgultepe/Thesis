@@ -177,6 +177,16 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 						boneExists.at(BONE_LEFT_CALF)=true;
 			else if (tBone->getName()=="Calf.R")
 						boneExists.at(BONE_RIGHT_CALF)=true;
+			else if (tBone->getName()=="UlnaExtent.R")
+			{
+				tBone->setManuallyControlled(true);
+				Quaternion twist;
+				Matrix3 twistMatrix;	
+				twistMatrix.FromEulerAnglesYXZ(Radian(Math::PI/4),Radian(0),Radian(0));
+				twist.FromRotationMatrix(twistMatrix);
+				tBone->setOrientation(twist);
+				continue;
+			}
 			#if USE_NUI
 			else if (tBone->getName()=="Foot.R")
 			{
@@ -345,10 +355,64 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;
 		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);/**/
 		initialHierarchicalMatrix.ToEulerAnglesYXZ(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
-		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical -Radian(Math::PI/2) ,pitchInitialHierarchical,rollInitialHierarchical);
+		if (rollInitialHierarchical.valueDegrees()>90 || rollInitialHierarchical.valueDegrees()<-90)
+		{
+			rollInitialHierarchical=Radian(0);
+			pitchInitialHierarchical=Radian(Math::PI)-pitchInitialHierarchical;
+		}
+		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(-3*Radian(Math::PI/4) ,pitchInitialHierarchical,rollInitialHierarchical);
 		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 		modifier=modifiedHierarchical*initialHierarchical.Inverse();
 		q=q*modifier;
+
+		//Rotate the extent bone
+		if (yawInitialHierarchical.valueDegrees()<90 && yawInitialHierarchical.valueDegrees()>-90)
+		{
+			Quaternion twist;
+			Matrix3 twistMatrix;	
+			twistMatrix.FromEulerAnglesYXZ(yawInitialHierarchical+Radian(Math::PI/4),Radian(0),Radian(0));
+			twist.FromRotationMatrix(twistMatrix);
+			Mesh->getSkeleton()->getBone("UlnaExtent.R")->setOrientation(twist);
+		}
+		//Quaternion twist,oldTwist;
+		//Matrix3 twistMatrix,oldTwistMatrix;
+		//Radian tYaw,tPitch,tRoll,newYaw;
+		//Ogre::Bone* extentBone=Mesh->getSkeleton()->getBone("UlnaExtent.R");
+		//oldTwist=extentBone->getOrientation();
+		//oldTwist.ToRotationMatrix(oldTwistMatrix);
+		//oldTwistMatrix.ToEulerAnglesYXZ(tYaw,tPitch,tRoll);
+		//newYaw=yawInitialHierarchical+Radian(Math::PI/2);
+		//Real tJump=abs(newYaw.valueDegrees() - tYaw.valueDegrees());
+		//if (tJump >7 && tJump<90)
+		//	newYaw=tYaw-(tYaw-newYaw)/2;
+		//else if (tJump < 353 && tJump>270)
+		//{
+		//	if (tYaw.valueDegrees() > 0)
+		//		newYaw=tYaw+Radian(Degree((360-tJump)/2));
+		//	else
+		//		newYaw=tYaw-Radian(Degree((360-tJump)/2));
+		//}
+		//else if (tJump<270 && tJump > 180)
+		//{
+		//	if (tYaw.valueDegrees() > 0)
+		//		newYaw=tYaw+Radian(Degree((360-tJump)/5));
+		//	else
+		//		newYaw=tYaw-Radian(Degree((360-tJump)/5));
+		//}
+		//else if (tJump<180 && tJump > 90)
+		//	newYaw=tYaw-(tYaw-newYaw)/5;
+		//else
+		//	newYaw=tYaw;
+
+
+
+		//twistMatrix.FromEulerAnglesYXZ(newYaw,Radian(0),Radian(0));
+		//twist.FromRotationMatrix(twistMatrix);
+		//extentBone->setOrientation(twist);
+
+		//End extent
+
+
 
 		Ogre::Matrix3 rotM,rotPrevious;
 		Radian yaw,pitch,
