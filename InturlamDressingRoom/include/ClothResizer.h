@@ -8,14 +8,9 @@
 #define USE_USER_SCALING 0
 #endif
 
-
-#if USE_NUI
-const uint m_Width = 320;
-const uint m_Height = 240;
-#else
 const uint m_Width = 640;
 const uint m_Height = 480;
-#endif
+
 const CvSize dSize=cvSize(m_Width,m_Height);
 
 enum 

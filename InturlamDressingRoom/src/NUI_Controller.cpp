@@ -59,7 +59,7 @@ bool NUI_Controller::Nui_Init()
     m_hNextSkeletonEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
 
 	//Initialize NUI
-	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX | NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
+	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX| NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
 	HRESULT hr=m_pNuiInstance->NuiInitialize(nuiFlags);
 	if( FAILED( hr ) )
     {
@@ -95,7 +95,7 @@ bool NUI_Controller::Nui_Init()
 	//Initialize Depth
 	hr = m_pNuiInstance->NuiImageStreamOpen(
         HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX : NUI_IMAGE_TYPE_DEPTH,
-        NUI_IMAGE_RESOLUTION_320x240,
+        NUI_IMAGE_RESOLUTION_640x480,
         0,
         2,
         m_hNextDepthFrameEvent,
@@ -379,9 +379,9 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			}
 		}
 
-		#if USE_USER_SCALING
+		//#if USE_USER_SCALING
 		convertMetaDataToIpl(pBuffer);
-		#endif
+		//#endif
 		textureUpdated=true;
     }
     else
