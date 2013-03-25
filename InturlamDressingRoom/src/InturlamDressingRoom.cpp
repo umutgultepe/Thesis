@@ -610,69 +610,6 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 }
 
 bool collider_set_up=false;
-
-const physx::PxU32 pairIndHang[]={1,3,
-	0,1,
-	0,4,
-	0,7,
-	0,10,
-	0,13,
-	1,4,
-	1,7,
-	4,5,
-	5,6,
-	7,8,
-	8,9,
-	10,11,
-	11,12,
-	13,14,
-	14,16,
-	15,17};
-
-void InturlamDressingRoom::setupHumanCollider()
-{
-	//PxClothCollisionData* cd= new PxClothCollisionData;
-	col_data.setToDefault();
-
-	box_collider=new physx::PxClothCollisionSphere[COLLISION_SPHERE_COUNT];
-
-	Ogre::String NodeAppend="Node";
-	for (int i=0;i<COLLISION_SPHERE_COUNT;i++)
-	{
-		//	Ogre::Bone* tBone=skeleton->getBone(boneStrings[i]);
-		Ogre::String nodeName=boneStrings[i]+NodeAppend;
-		Ogre::SceneNode* gNode=mSceneMgr->getSceneNode(nodeName);
-		Vector3 localPosition=gNode->_getDerivedPosition()*Vector3(SCALING_FACTOR,SCALING_FACTOR,SCALING_FACTOR)+Vector3(0,Y_OFFSET,0);
-		if (boneStrings[i]=="Root")
-		{
-			box_collider[i].pos.x=localPosition.x;
-			box_collider[i].pos.y=localPosition.y;
-			box_collider[i].pos.z=localPosition.z;
-			box_collider[i].radius=0.01;
-		}
-		else
-		{
-			box_collider[i].pos.x=localPosition.x;
-			box_collider[i].pos.y=localPosition.y;
-			box_collider[i].pos.z=localPosition.z;
-			//box_collider[i].radius=2.1;
-#if USE_USER_SCALING
-			box_collider[i].radius=sphereRadii[i] /40;
-#else
-			box_collider[i].radius=sphereRadii[i];
-#endif
-		}
-	}
-
-
-	col_data.spheres=box_collider;
-	col_data.numSpheres=COLLISION_SPHERE_COUNT;
-	col_data.numPairs=COLLISION_CAPSULE_COUNT;
-	col_data.pairIndexBuffer=pairInd;
-
-	collider_set_up=true;
-
-}
 PxVec3 clothPos;
 PxVec3 wind;
 float curScale=1;
