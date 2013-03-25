@@ -620,7 +620,7 @@ void getSphereSizes(NUI_Controller* mNui)
 			Vector2 endOfJoint;
 			LONG x,y;
 			USHORT depth;				
-			NuiTransformSkeletonToDepthImage( realPosition, &x, &y, &depth );
+			NuiTransformSkeletonToDepthImage( realPosition, &x, &y, &depth ,mNui->m_DepthResolution);
 			x_init=x;
 			y_init=y;
 			step=0;
@@ -642,7 +642,7 @@ void getSphereSizes(NUI_Controller* mNui)
 					if( tValue!=0 )
 					{
 						endOfJoint.x-=(step-1);
-						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)));
+						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)),mNui->m_DepthResolution);
 						radius=abs(realPosition.x-trueEnd.x);
 						break;
 					}
@@ -654,7 +654,7 @@ void getSphereSizes(NUI_Controller* mNui)
 					{
 
 						endOfJoint.x+=(step-1);
-						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)));
+						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)),mNui->m_DepthResolution);
 						radius=abs(realPosition.x-trueEnd.x);
 						break;
 					}
@@ -667,7 +667,7 @@ void getSphereSizes(NUI_Controller* mNui)
 						if(  tValue!=0 )
 						{
 							endOfJoint.y-=(step-1);
-							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)*dImage->widthStep/2));
+							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)*dImage->widthStep/2),mNui->m_DepthResolution);
 							radius=abs(realPosition.y-trueEnd.y);
 							break;
 						}
@@ -678,7 +678,7 @@ void getSphereSizes(NUI_Controller* mNui)
 						if( tValue!=0)
 						{
 							endOfJoint.y+=(step-1);
-							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)*dImage->widthStep/2));
+							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)*dImage->widthStep/2),mNui->m_DepthResolution);
 							radius=abs(realPosition.y-trueEnd.y);
 							break;
 						}
@@ -706,7 +706,7 @@ void measureBody(NUI_Controller* mNui)
 	head=mNui->m_Points[NUI_SKELETON_POSITION_HEAD];
 	LONG projHeadX,projHeadY;
 	USHORT depth;
-	NuiTransformSkeletonToDepthImage( head, &projHeadX, &projHeadY, &depth );
+	NuiTransformSkeletonToDepthImage( head, &projHeadX, &projHeadY, &depth ,mNui->m_DepthResolution);
 
 	UCHAR* headPtr=(UCHAR*)( uImage->imageData+projHeadY*uImage->widthStep+projHeadX);
 	USHORT* headDepthPtr=(USHORT*) (dImage->imageData+projHeadY*dImage->widthStep+projHeadX*2);
@@ -727,8 +727,8 @@ void measureBody(NUI_Controller* mNui)
 		rightStep++;
 	}
 
-	NUI_Vector4 leftHead=NuiTransformDepthImageToSkeleton(leftX,projHeadY,*(headDepthPtr-leftStep));
-	NUI_Vector4 rightHead=NuiTransformDepthImageToSkeleton(rightX,projHeadY,*(headDepthPtr+leftStep));
+	NUI_Vector4 leftHead=NuiTransformDepthImageToSkeleton(leftX,projHeadY,*(headDepthPtr-leftStep),mNui->m_DepthResolution);
+	NUI_Vector4 rightHead=NuiTransformDepthImageToSkeleton(rightX,projHeadY,*(headDepthPtr+leftStep),mNui->m_DepthResolution);
 
 	bodyMeasurements[HEAD_WIDTH]=abs(rightHead.x-leftHead.y);
 
@@ -752,7 +752,7 @@ void measureBody(NUI_Controller* mNui)
 		topY--;
 		topStep++;
 	}
-	NUI_Vector4 topPoint=NuiTransformDepthImageToSkeleton(projHeadX,topY,*(headDepthPtr - topStep*dImage->widthStep/2));
+	NUI_Vector4 topPoint=NuiTransformDepthImageToSkeleton(projHeadX,topY,*(headDepthPtr - topStep*dImage->widthStep/2),mNui->m_DepthResolution);
 	bodyMeasurements[BODY_HEIGHT]=abs(topPoint.y-lowPointY);
 
 	//Hip Height Measurement
@@ -769,10 +769,10 @@ void measureBody(NUI_Controller* mNui)
 
 
 	LONG lHandUpX,rHandUpX,lHandDownX,rHandDownX,lHandUpY,lHandDownY,rHandUpY,rHandDownY;
-	NuiTransformSkeletonToDepthImage( lHand, &lHandUpX, &lHandUpY, &depth );
-	NuiTransformSkeletonToDepthImage( rHand, &rHandUpX, &rHandUpY, &depth );
-	NuiTransformSkeletonToDepthImage( lElbow, &lHandDownX, &lHandDownY, &depth );
-	NuiTransformSkeletonToDepthImage( rElbow, &rHandDownX, &rHandDownY, &depth );
+	NuiTransformSkeletonToDepthImage( lHand, &lHandUpX, &lHandUpY, &depth ,mNui->m_DepthResolution);
+	NuiTransformSkeletonToDepthImage( rHand, &rHandUpX, &rHandUpY, &depth ,mNui->m_DepthResolution);
+	NuiTransformSkeletonToDepthImage( lElbow, &lHandDownX, &lHandDownY, &depth ,mNui->m_DepthResolution);
+	NuiTransformSkeletonToDepthImage( rElbow, &rHandDownX, &rHandDownY, &depth ,mNui->m_DepthResolution);
 
 	UCHAR* lHandPtr=(UCHAR*)( uImage->imageData+(int)(lHandUpY-1)*uImage->widthStep+(int)lHandUpX);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	while(*lHandPtr>0  && (lHandUpY>0))
@@ -804,10 +804,10 @@ void measureBody(NUI_Controller* mNui)
 	}	//Extend the line vertically until it reaches the borders of the arm.
 
 	USHORT* depthPtr=(USHORT*) (dImage->imageData);
-	NUI_Vector4 leftArmDown=NuiTransformDepthImageToSkeleton(lHandDownX,lHandDownY,*(depthPtr+lHandDownY*dImage->widthStep/2+lHandDownX));
-	NUI_Vector4 leftArmUp=NuiTransformDepthImageToSkeleton(lHandUpX,lHandUpY,*(depthPtr+lHandUpY*dImage->widthStep/2+lHandUpX));
-	NUI_Vector4 rightArmDown=NuiTransformDepthImageToSkeleton(rHandDownX,rHandDownY,*(depthPtr+rHandDownY*dImage->widthStep/2+rHandDownX));
-	NUI_Vector4 rightArmUp=NuiTransformDepthImageToSkeleton(rHandUpX,rHandUpY,*(depthPtr+rHandUpY*dImage->widthStep/2+rHandUpX));
+	NUI_Vector4 leftArmDown=NuiTransformDepthImageToSkeleton(lHandDownX,lHandDownY,*(depthPtr+lHandDownY*dImage->widthStep/2+lHandDownX),mNui->m_DepthResolution);
+	NUI_Vector4 leftArmUp=NuiTransformDepthImageToSkeleton(lHandUpX,lHandUpY,*(depthPtr+lHandUpY*dImage->widthStep/2+lHandUpX),mNui->m_DepthResolution);
+	NUI_Vector4 rightArmDown=NuiTransformDepthImageToSkeleton(rHandDownX,rHandDownY,*(depthPtr+rHandDownY*dImage->widthStep/2+rHandDownX),mNui->m_DepthResolution);
+	NUI_Vector4 rightArmUp=NuiTransformDepthImageToSkeleton(rHandUpX,rHandUpY,*(depthPtr+rHandUpY*dImage->widthStep/2+rHandUpX),mNui->m_DepthResolution);
 	bodyMeasurements[ELBOW_FINGERTIP]=(abs(rightArmUp.y-rightArmDown.y)+abs(leftArmUp.y-leftArmDown.y))/2;
 	//Wrist to Fingertip Measurement
 	bodyMeasurements[WRIST_FINGERTIP]=abs(leftArmUp.y-mNui->m_Points[NUI_SKELETON_POSITION_WRIST_LEFT].y)+abs(rightArmUp.y-mNui->m_Points[NUI_SKELETON_POSITION_WRIST_RIGHT].y)/2;
@@ -819,8 +819,8 @@ void measureBody(NUI_Controller* mNui)
 
 	//Hip Width Measurement
 	LONG lHipX,lHipY,rHipX,rHipY;
-	NuiTransformSkeletonToDepthImage(lHip,&lHipX,&lHipY,&depth);
-	NuiTransformSkeletonToDepthImage(rHip,&rHipX,&rHipY,&depth);
+	NuiTransformSkeletonToDepthImage(lHip,&lHipX,&lHipY,&depth,mNui->m_DepthResolution);
+	NuiTransformSkeletonToDepthImage(rHip,&rHipX,&rHipY,&depth,mNui->m_DepthResolution);
 
 	UCHAR* lEndPtr=(UCHAR*)(uImage->imageData+(int)lHipY*uImage->widthStep+(int)lHipX);
 	leftX=lHipX;
@@ -830,7 +830,7 @@ void measureBody(NUI_Controller* mNui)
 		leftX--;	//Extend the line horizontally until it reaches the borders of the head.
 		leftStep++;
 	}
-	NUI_Vector4 leftHipEnd=NuiTransformDepthImageToSkeleton(leftX,lHipY,*((USHORT*)(dImage->imageData+(int)lHipY*dImage->widthStep+(int)leftX*2)));
+	NUI_Vector4 leftHipEnd=NuiTransformDepthImageToSkeleton(leftX,lHipY,*((USHORT*)(dImage->imageData+(int)lHipY*dImage->widthStep+(int)leftX*2)),mNui->m_DepthResolution);
 
 	UCHAR* rEndPtr=(UCHAR*) (uImage->imageData+(int)rHipY*uImage->widthStep+(int)rHipX);
 	rightX=rHipX;
@@ -840,7 +840,7 @@ void measureBody(NUI_Controller* mNui)
 		rightX++;	//Extend the line horizontally until it reaches the borders of the head.
 		rightStep++;
 	}
-	NUI_Vector4 rightHipEnd=NuiTransformDepthImageToSkeleton(rightX,rHipY,*((USHORT*)(dImage->imageData+(int)rHipY*dImage->widthStep+(int)rightX*2)));
+	NUI_Vector4 rightHipEnd=NuiTransformDepthImageToSkeleton(rightX,rHipY,*((USHORT*)(dImage->imageData+(int)rHipY*dImage->widthStep+(int)rightX*2)),mNui->m_DepthResolution);
 	bodyMeasurements[HIP_WIDTH]=abs(rightHipEnd.x-leftHipEnd.x);
 
 	//Torso Height Measurement

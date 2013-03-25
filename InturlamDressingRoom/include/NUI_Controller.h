@@ -36,6 +36,8 @@ public:
     INuiSensor*           m_pNuiInstance;
     BSTR                    m_instanceId;
 	bool	mSkeletonUpdated;
+
+	NUI_IMAGE_RESOLUTION m_DepthResolution;
 //
 //    // thread handling
     HANDLE        m_hThNuiProcess;

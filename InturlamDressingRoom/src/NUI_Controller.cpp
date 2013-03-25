@@ -41,7 +41,7 @@ void NUI_Controller::Nui_Zero()
 
 bool NUI_Controller::Nui_Init()
 {
-
+	m_DepthResolution=NUI_IMAGE_RESOLUTION_640x480;
 	if (!m_pNuiInstance)
     {
         HRESULT hr = NuiCreateSensorByIndex(0, &m_pNuiInstance);
@@ -95,7 +95,7 @@ bool NUI_Controller::Nui_Init()
 	//Initialize Depth
 	hr = m_pNuiInstance->NuiImageStreamOpen(
         HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX : NUI_IMAGE_TYPE_DEPTH,
-        NUI_IMAGE_RESOLUTION_640x480,
+        m_DepthResolution,
         0,
         2,
         m_hNextDepthFrameEvent,
