@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "NUI_Controller.h"
+#include "ClothResizer.h"
 NUI_Controller::NUI_Controller()
 {
     Nui_Zero();
@@ -241,14 +242,14 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
             Nui_GotSkeletonAlert( );
 			NewSkeleton=true;
         }
-#if USE_USER_SCALING
+//#if USE_USER_SCALING
 		if (NewSkeleton && NewDepth)
 		{
 			NewSkeleton=false;
 			NewDepth=false;
-			addFrame(this);
+			processFrame(this);
 		}
-#endif
+//#endif
     }
 #pragma warning(pop)
 

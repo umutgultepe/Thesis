@@ -639,7 +639,7 @@ void getSphereSizes(NUI_Controller* mNui)
 				if (x_init-step>-1)
 				{
 					UCHAR tValue=*(iPtr-step);
-					if( tValue!=0 )
+					if( tValue==0 )
 					{
 						endOfJoint.x-=(step-1);
 						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)),mNui->m_DepthResolution);
@@ -650,7 +650,7 @@ void getSphereSizes(NUI_Controller* mNui)
 				if (x_init+step<m_Width)
 				{
 					UCHAR tValue=*(iPtr+step);
-					if( tValue!=0)
+					if( tValue==0)
 					{
 
 						endOfJoint.x+=(step-1);
@@ -664,7 +664,7 @@ void getSphereSizes(NUI_Controller* mNui)
 					if (y_init-step>-1)
 					{
 						UCHAR tValue=*(iPtr-step*uImage->widthStep);
-						if(  tValue!=0 )
+						if(  tValue==0 )
 						{
 							endOfJoint.y-=(step-1);
 							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)*dImage->widthStep/2),mNui->m_DepthResolution);
@@ -675,7 +675,7 @@ void getSphereSizes(NUI_Controller* mNui)
 					if (y_init+step<m_Height)
 					{
 						UCHAR tValue=*(iPtr+step*uImage->widthStep);
-						if( tValue!=0)
+						if( tValue==0)
 						{
 							endOfJoint.y+=(step-1);
 							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)*dImage->widthStep/2),mNui->m_DepthResolution);
@@ -855,8 +855,8 @@ bool processFrame(NUI_Controller* mNui)
 {
 	optimizeDepthMap();
 	getSphereSizes(mNui);
-	measureBody(mNui);
-	estimateParameters();
+	//measureBody(mNui);
+//	estimateParameters();
 	return true;
 }
 bool addFrame(NUI_Controller* mNui) //Data Collection for temporal Temporal Optimization
