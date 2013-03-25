@@ -138,6 +138,7 @@ protected:
 	void updateVisualHuman();  
 	void createSimulation();
 	void setupHumanCollider();
+	void filtersAndAnimations();
 	void updateCollisionSpheres();
 	void updateVisualHumanOrientation();
 	Ogre::Quaternion bodyRotation;

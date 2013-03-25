@@ -1127,6 +1127,54 @@ void InturlamDressingRoom::createSimulation()
 	simulationCreated=true;
 }
 
+
+void InturlamDressingRoom::filtersAndAnimations()
+{
+	//	Hand animation
+	Quaternion q;
+	Ogre::Matrix3 tMat;Radian yaw,pitch,roll;
+	NUI_SKELETON_BONE_ORIENTATION rightUlna=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
+	q.x=rightUlna.hierarchicalRotation.rotationQuaternion.x;
+	q.y=rightUlna.hierarchicalRotation.rotationQuaternion.y;
+	q.z=rightUlna.hierarchicalRotation.rotationQuaternion.z;
+	q.w=rightUlna.hierarchicalRotation.rotationQuaternion.w;
+	q.ToRotationMatrix(tMat);	
+	tMat.ToEulerAnglesYZX(yaw,pitch,roll);
+	float rUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
+	rightArm->setTimePosition(rUlnaCurl);
+	NUI_SKELETON_BONE_ORIENTATION leftUlna=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_LEFT];
+	q.x=leftUlna.hierarchicalRotation.rotationQuaternion.x;
+	q.y=leftUlna.hierarchicalRotation.rotationQuaternion.y;
+	q.z=leftUlna.hierarchicalRotation.rotationQuaternion.z;
+	q.w=leftUlna.hierarchicalRotation.rotationQuaternion.w;
+	q.ToRotationMatrix(tMat);	
+	tMat.ToEulerAnglesYZX(yaw,pitch,roll);
+	float lUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
+	leftArm->setTimePosition(lUlnaCurl);
+	//Arm Testing
+	NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
+	q.x=rightHumerus.hierarchicalRotation.rotationQuaternion.x;
+	q.y=rightHumerus.hierarchicalRotation.rotationQuaternion.y;
+	q.z=rightHumerus.hierarchicalRotation.rotationQuaternion.z;
+	q.w=rightHumerus.hierarchicalRotation.rotationQuaternion.w;
+	Ogre::Matrix3 rotM;
+	q.ToRotationMatrix(rotM);
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
+	help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
+	help->setParamValue("Right humerus roll",StringConverter::toString(roll));
+	//NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
+	//q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
+	//q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
+	//q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
+	//q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
+	q.ToRotationMatrix(rotM);
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	help->setParamValue("Left humerus yaw",StringConverter::toString(yaw));
+	help->setParamValue("Left humerus pitch",StringConverter::toString(pitch));
+	help->setParamValue("Left humerus roll",StringConverter::toString(roll));
+}
+
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
 	#if USE_KINECT
@@ -1214,59 +1262,7 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		}
 		mNui->mSkeletonUpdated=false;
 
-		//	Hand animation
-		Quaternion q;
-		Ogre::Matrix3 tMat;Radian yaw,pitch,roll;
-		NUI_SKELETON_BONE_ORIENTATION rightUlna=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
-		q.x=rightUlna.hierarchicalRotation.rotationQuaternion.x;
-		q.y=rightUlna.hierarchicalRotation.rotationQuaternion.y;
-		q.z=rightUlna.hierarchicalRotation.rotationQuaternion.z;
-		q.w=rightUlna.hierarchicalRotation.rotationQuaternion.w;
-		q.ToRotationMatrix(tMat);	
-		tMat.ToEulerAnglesYZX(yaw,pitch,roll);
-		float rUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
-		rightArm->setTimePosition(rUlnaCurl);
-
-		NUI_SKELETON_BONE_ORIENTATION leftUlna=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_LEFT];
-		q.x=leftUlna.hierarchicalRotation.rotationQuaternion.x;
-		q.y=leftUlna.hierarchicalRotation.rotationQuaternion.y;
-		q.z=leftUlna.hierarchicalRotation.rotationQuaternion.z;
-		q.w=leftUlna.hierarchicalRotation.rotationQuaternion.w;
-		q.ToRotationMatrix(tMat);	
-		tMat.ToEulerAnglesYZX(yaw,pitch,roll);
-		float lUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
-		leftArm->setTimePosition(lUlnaCurl);
-
-
-
-
-		//Arm Testing
-		NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
-		q.x=rightHumerus.hierarchicalRotation.rotationQuaternion.x;
-		q.y=rightHumerus.hierarchicalRotation.rotationQuaternion.y;
-		q.z=rightHumerus.hierarchicalRotation.rotationQuaternion.z;
-		q.w=rightHumerus.hierarchicalRotation.rotationQuaternion.w;
-		Ogre::Matrix3 rotM;
-		q.ToRotationMatrix(rotM);
-		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-		help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
-		help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
-		help->setParamValue("Right humerus roll",StringConverter::toString(roll));
-
-
-		//NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
-		//q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
-		//q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
-		//q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
-		//q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
-		q.ToRotationMatrix(rotM);
-		rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-		help->setParamValue("Left humerus yaw",StringConverter::toString(yaw));
-		help->setParamValue("Left humerus pitch",StringConverter::toString(pitch));
-		help->setParamValue("Left humerus roll",StringConverter::toString(roll));
-		
-		
-
+		filtersAndAnimations();
 	}
 	#endif 
 	if (simulating && lowerCloth)
