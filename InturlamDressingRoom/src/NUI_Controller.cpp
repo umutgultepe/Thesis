@@ -379,9 +379,9 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			}
 		}
 
-		//#if USE_USER_SCALING
+		#if USE_USER_SCALING
 		convertMetaDataToIpl(pBuffer);
-		//#endif
+		#endif
 		textureUpdated=true;
     }
     else
