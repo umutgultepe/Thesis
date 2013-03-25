@@ -678,7 +678,7 @@ void getSphereSizes(NUI_Controller* mNui)
 
 			USHORT* iPtr=(USHORT*)(uImage->imageData+y_init*uImage->widthStep+x_init*2);
 			USHORT* dPtr=(USHORT*)(dImage->imageData+y_init*dImage->widthStep+x_init*2);//Multipy x_init by 2, since dImage is 16 bits- 2bytes
-			while( step<640)					//Slowly enlarge the joint sphere until it reaches the end of a bone in one direction.
+			while( step<m_Width)					//Slowly enlarge the joint sphere until it reaches the end of a bone in one direction.
 			{			
 				if (x_init-step>-1)
 				{
@@ -691,7 +691,7 @@ void getSphereSizes(NUI_Controller* mNui)
 						break;
 					}
 				}
-				if (x_init+step<640)
+				if (x_init+step<m_Width)
 				{
 					UCHAR tValue=*(iPtr+step);
 					if( tValue!=0)
@@ -703,7 +703,7 @@ void getSphereSizes(NUI_Controller* mNui)
 						break;
 					}
 				}
-				if (step<480)
+				if (step<m_Height)
 				{
 					if (y_init-step>-1)
 					{
@@ -716,7 +716,7 @@ void getSphereSizes(NUI_Controller* mNui)
 							break;
 						}
 					}
-					if (y_init+step<480)
+					if (y_init+step<m_Height)
 					{
 						UCHAR tValue=*(iPtr+step*uImage->widthStep/2);
 						if( tValue!=0)
@@ -765,7 +765,7 @@ void measureBody(NUI_Controller* mNui)
 		leftStep++;
 	}
 	iPtr=headPtr;
-	while(*(++iPtr)>0 && rightX<639)
+	while(*(++iPtr)>0 && rightX<(m_Width-1))
 	{
 		rightX++;
 		rightStep++;
@@ -827,7 +827,7 @@ void measureBody(NUI_Controller* mNui)
 
 
 	USHORT* lElbowPtr=(USHORT*) (uImage->imageData+(int)(lHandDownY+1)*uImage->widthStep+(int)lHandDownX*2);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
-	while(*lElbowPtr>0  && (lHandDownX<639))
+	while(*lElbowPtr>0  && (lHandDownY<(m_Width-1)))
 	{
 		lElbowPtr+=uImage->widthStep;
 		lHandDownY++;	
@@ -841,7 +841,7 @@ void measureBody(NUI_Controller* mNui)
 	}	//Extend the line vertically until it reaches the borders of the arm.
 
 	USHORT* rElbowPtr=(USHORT*)(uImage->imageData+(int)(rHandDownY+1)*uImage->widthStep+(int)rHandDownX*2);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
-	while(*rElbowPtr>0  && (rHandDownY<639))
+	while(*rElbowPtr>0  && (rHandDownY<(m_Height-1)))
 	{
 		rElbowPtr+=uImage->widthStep;
 		rHandDownY++;	
@@ -879,7 +879,7 @@ void measureBody(NUI_Controller* mNui)
 	USHORT* rEndPtr=(USHORT*) (uImage->imageData+(int)rHipY*uImage->widthStep+(int)rHipX*2);
 	rightX=rHipX;
 	rightStep=0;
-	while(*(++rEndPtr)>0 && rightX<639)
+	while(*(++rEndPtr)>0 && rightX<(m_Width-1))
 	{
 		rightX++;	//Extend the line horizontally until it reaches the borders of the head.
 		rightStep++;
