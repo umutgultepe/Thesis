@@ -44,13 +44,18 @@ enum
 static int processedFrameCount=0;
 static float bodyMeasurements[]={0,0,0,0,0,0,0,0,0};
 static float sleevelessProportions[]={3.1, 5.3 , 0.63, 1.26 , 3.3 , 16.9 };
-
+#if USE_KINECT
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
-bool convertMetaDataToIpl(NUI_IMAGE_FRAME pImageFrame);
-
-
 bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
 void estimateParameters();
 bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID);
+#elif USE_NUI
+
+void getSphereSizes(NUI_Controller* mNui);
+void measureBody(NUI_Controller* mNui);
+bool processFrame(NUI_Controller* mNui);
+bool addFrame(NUI_Controller* mNui);
+
+#endif

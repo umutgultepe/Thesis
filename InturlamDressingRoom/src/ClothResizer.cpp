@@ -117,6 +117,49 @@ void mouseEvent(int evt, int x, int y, int flags, void* param){
 	SetWindowText(hw,(LPCTSTR)windowName.c_str());
 }
 
+
+void outputDataToCSV()
+{
+	std::ofstream*myfile=new std::ofstream("..\\measurements.csv");
+
+	
+	if (myfile->is_open())
+	{
+			*myfile<<"sep=\t\n";
+			*myfile<<"Spheres\t";
+			for (int i=0;i<16;i++)
+				*myfile<< jointStrings[i] +"\t";
+			*myfile<<"\n";
+			for (int j=0;j<29;j++)
+			{
+				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
+				for (int i=0;i<16;i++)
+					*myfile<< Ogre::StringConverter::toString(radiiBuffer[j][i]) +"\t";
+				*myfile<<"\n";
+			}
+			*myfile<<"\n";
+			*myfile<< "Average\t";
+			for (int i=0;i<16;i++)
+					*myfile<< Ogre::StringConverter::toString(sphereRadii[i]) +"\t";
+			*myfile<<"\n";
+			*myfile<<"Body Sizes\t Shoulder Width\t Torso Height\t Body Height\n";
+			for (int j=0;j<29;j++)
+			{
+				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
+				for (int i=0;i<3;i++)
+					*myfile<< Ogre::StringConverter::toString(bodySizeBuffer[j][i]) +"\t";
+				*myfile<<"\n";
+			}
+			*myfile<<"\n";
+			*myfile<< "Average\t";
+			*myfile<< Ogre::StringConverter::toString(estimatedShoulderWidth)+"\t";
+			*myfile<< Ogre::StringConverter::toString(estimatedTorsoHeight)+"\t";
+			*myfile<< Ogre::StringConverter::toString(estimatedBodyHeight)+"\t";
+			*myfile<<"\n";
+			myfile->close();
+	}
+}
+
 #if USE_KINECT
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
@@ -497,49 +540,6 @@ bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	estimateParameters();
 	return true;
 }
-
-void outputDataToCSV()
-{
-	std::ofstream*myfile=new std::ofstream("..\\measurements.csv");
-
-	
-	if (myfile->is_open())
-	{
-			*myfile<<"sep=\t\n";
-			*myfile<<"Spheres\t";
-			for (int i=0;i<16;i++)
-				*myfile<< jointStrings[i] +"\t";
-			*myfile<<"\n";
-			for (int j=0;j<29;j++)
-			{
-				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
-				for (int i=0;i<16;i++)
-					*myfile<< Ogre::StringConverter::toString(radiiBuffer[j][i]) +"\t";
-				*myfile<<"\n";
-			}
-			*myfile<<"\n";
-			*myfile<< "Average\t";
-			for (int i=0;i<16;i++)
-					*myfile<< Ogre::StringConverter::toString(sphereRadii[i]) +"\t";
-			*myfile<<"\n";
-			*myfile<<"Body Sizes\t Shoulder Width\t Torso Height\t Body Height\n";
-			for (int j=0;j<29;j++)
-			{
-				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
-				for (int i=0;i<3;i++)
-					*myfile<< Ogre::StringConverter::toString(bodySizeBuffer[j][i]) +"\t";
-				*myfile<<"\n";
-			}
-			*myfile<<"\n";
-			*myfile<< "Average\t";
-			*myfile<< Ogre::StringConverter::toString(estimatedShoulderWidth)+"\t";
-			*myfile<< Ogre::StringConverter::toString(estimatedTorsoHeight)+"\t";
-			*myfile<< Ogre::StringConverter::toString(estimatedBodyHeight)+"\t";
-			*myfile<<"\n";
-			myfile->close();
-	}
-}
-
 bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //Data Collection for temporal Temporal Optimization
 {
 	if (processedFrameCount>29)
@@ -598,43 +598,6 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 }
 	
 #elif USE_NUI
-
-bool convertMetaDataToIpl(BYTE* pBuffer)
-{
-	size_t x,y;
-	try 
-	{
-		//Show Result
-		if (!dImage)
-		{
-			dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
-			uImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
-			showImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
-		}
-		// draw the bits to the bitmap
-		USHORT * pBufferRun = (USHORT*) pBuffer;
-		for( y = 0 ; y < m_Height ; y++ )
-		{
-			USHORT* dPtr=(USHORT*)(dImage->imageData+y*dImage->widthStep);
-			USHORT* uPtr=(USHORT*)(uImage->imageData+y*uImage->widthStep);
-			for( x = 0 ; x < m_Width ; x++ )
-			{
-				USHORT depth     = *pBufferRun++;
-				USHORT realDepth = NuiDepthPixelToDepth(depth);
-				USHORT player    = NuiDepthPixelToPlayerIndex(depth);
-				*uPtr++=player;	
-				*dPtr++=realDepth;
-			}
-		}
-	}
-	catch (cv::Exception e)
-	{
-			ErrorDialog dlg;
-			dlg.display(e.err + "\ni:" +  Ogre::StringConverter::toString(x) +  "\nj:" +  Ogre::StringConverter::toString(y));
-			exit(0);
-	}
-	return true;
-}
 
 void getSphereSizes(NUI_Controller* mNui)
 {
@@ -887,5 +850,70 @@ void measureBody(NUI_Controller* mNui)
 
 }
 
+bool processFrame(NUI_Controller* mNui)
+{
+	//optimizeDepthMap(dpg,ug,userID);
+	getSphereSizes(mNui);
+	measureBody(mNui);
+	estimateParameters();
+	return true;
+}
+bool addFrame(NUI_Controller* mNui) //Data Collection for temporal Temporal Optimization
+{
+	if (processedFrameCount>29)
+		return true;
+	else if (processedFrameCount==29)
+	{
+		for (int i=0;i<29;i++) //last frame data is already in the actual registers
+		{
+			for (int j=0;j<16;j++)
+				sphereRadii[j]+=radiiBuffer[i][j];
+			estimatedShoulderWidth+=bodySizeBuffer[i][0];
+			estimatedTorsoHeight+=bodySizeBuffer[i][1];
+			estimatedBodyHeight+=bodySizeBuffer[i][2];
+		}
+		for (int i=0;i<16;i++)
+				sphereRadii[i]/=30;
+		for (int i=10;i<12;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
+				sphereRadii[i]*=1.4;
+		for (int i=8;i<10;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
+				sphereRadii[i]*=1.2;
+		for (int i=0;i<4;i++)		//Correct Torso, as they are measured by the same bone, and can cause errors.
+				sphereRadii[i]*=0.75;
+		estimatedShoulderWidth/=30;
+		estimatedTorsoHeight/=30;
+		estimatedBodyHeight/=30;
+		outputDataToCSV();
+		for (int i=0;i<29;i++) //free the buffers
+		{
+			delete[] radiiBuffer[i];
+			delete[] bodySizeBuffer[i];
+		}
 
+
+
+		//Do not forget to release Images to prevent memory leak
+		cvReleaseImage(&dImage);
+		cvReleaseImage(&uImage);
+		cvReleaseImage(&dImage);
+		processedFrameCount++;
+		return true;
+	}
+	else
+	{
+		if (processFrame(mNui))
+		{	
+			radiiBuffer[processedFrameCount]=new float[16];
+			memcpy(radiiBuffer[processedFrameCount],sphereRadii,16*sizeof(float));
+			bodySizeBuffer[processedFrameCount]=new float[3];
+			bodySizeBuffer[processedFrameCount][0]=estimatedShoulderWidth;
+			bodySizeBuffer[processedFrameCount][1]=estimatedTorsoHeight;
+			bodySizeBuffer[processedFrameCount][2]=estimatedBodyHeight;
+			processedFrameCount++;
+		}
+		return false;
+	}
+}
 #endif 
+
+

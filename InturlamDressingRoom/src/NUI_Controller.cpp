@@ -199,6 +199,8 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
 #pragma warning(push)
 #pragma warning(disable: 4127) // conditional expression is constant
 
+
+	bool NewSkeleton=false,NewDepth=false;
     // Main thread loop
     while(1)
     {
@@ -226,6 +228,7 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
 		if ( WAIT_OBJECT_0 == WaitForSingleObject( m_hNextDepthFrameEvent, 0 ) )
         {
 			Nui_GotDepthAlert();
+			NewDepth=true;
         }
 
         if ( WAIT_OBJECT_0 == WaitForSingleObject( m_hNextVideoFrameEvent, 0 ) )
@@ -236,9 +239,16 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
         if (  WAIT_OBJECT_0 == WaitForSingleObject( m_hNextSkeletonEvent, 0 ) )
         {
             Nui_GotSkeletonAlert( );
+			NewSkeleton=true;
         }
-
-
+#if USE_USER_SCALING
+		if (NewSkeleton && NewDepth)
+		{
+			NewSkeleton=false;
+			NewDepth=false;
+			addFrame(this);
+		}
+#endif
     }
 #pragma warning(pop)
 
@@ -283,6 +293,46 @@ static const int g_IntensityShiftByPlayerR[] = { 1, 2, 0, 2, 0, 0, 2, 0 };
 static const int g_IntensityShiftByPlayerG[] = { 1, 2, 2, 0, 2, 0, 0, 1 };
 static const int g_IntensityShiftByPlayerB[] = { 1, 0, 2, 2, 0, 2, 0, 2 };
 
+extern IplImage *uImage,*dImage,*showImage;
+bool convertMetaDataToIpl(BYTE* pBuffer)
+{
+	size_t x,y;
+	try 
+	{
+		//Show Result
+		if (!dImage)
+		{
+			dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
+			uImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
+			showImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+		}
+		cvSetZero(dImage);
+		cvSetZero(uImage);
+		// draw the bits to the bitmap
+		USHORT * pBufferRun = (USHORT*) pBuffer;
+		for( y = 0 ; y < m_Height ; y++ )
+		{
+			USHORT* dPtr=(USHORT*)(dImage->imageData+y*dImage->widthStep);
+			USHORT* uPtr=(USHORT*)(uImage->imageData+y*uImage->widthStep);
+			for( x = 0 ; x < m_Width ; x++ )
+			{
+				USHORT depth     = *pBufferRun++;
+				USHORT realDepth = NuiDepthPixelToDepth(depth);
+				USHORT player    = NuiDepthPixelToPlayerIndex(depth);
+				*uPtr++=player;	
+				*dPtr++=realDepth;
+			}
+		}
+	}
+	catch (cv::Exception e)
+	{
+			ErrorDialog dlg;
+			dlg.display(e.err + "\ni:" +  Ogre::StringConverter::toString(x) +  "\nj:" +  Ogre::StringConverter::toString(y));
+			exit(0);
+	}
+	return true;
+}
+
 void NUI_Controller::Nui_GotDepthAlert( )
 {
     NUI_IMAGE_FRAME pImageFrame;
@@ -323,6 +373,10 @@ void NUI_Controller::Nui_GotDepthAlert( )
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerR[player];
 			}
 		}
+
+		#if USE_USER_SCALING
+		convertMetaDataToIpl(pBuffer);
+		#endif
 		textureUpdated=true;
     }
     else
