@@ -80,11 +80,44 @@ float estimatedTorsoHeight=0;
 float estimatedBodyHeight=0;
 
 IplImage *uImage,*dImage,*showImage;
-
+Ogre::String windowName="Image";
 short minD=65535,maxD=0;
 
 
 extern OgreBites::ParamsPanel* help;
+
+void viewImage(IplImage* img)
+{
+	if (img->depth == IPL_DEPTH_16U)
+	{
+		cvConvertImage(img,showImage);
+		cvShowImage("Image", showImage);
+	}
+	else
+	{
+		cvShowImage("Image",img);
+	}
+	cvWaitKey();
+	cvDestroyAllWindows();
+}
+
+//Code is prepared for sleeveless dress for now
+void estimateParameters()
+{
+	estimatedShoulderWidth=(bodyMeasurements[SHOULDER_WIDTH]+bodyMeasurements[HEAD_WIDTH]*sleevelessProportions[SHOULDER_WIDTH_TO_HEAD_WIDTH])/2;
+	estimatedTorsoHeight=bodyMeasurements[TORSO_HEIGHT]+bodyMeasurements[HEAD_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_HEAD_HEIGHT]+bodyMeasurements[HIP_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_HIP_HEIGHT]+
+		+bodyMeasurements[ELBOW_FINGERTIP]*sleevelessProportions[TORSO_HEIGHT_TO_ELBOW_FINGERTIP]+bodyMeasurements[WRIST_FINGERTIP]*sleevelessProportions[TORSO_HEIGHT_TO_WRIST_FINGERTIP]+bodyMeasurements[BODY_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_BODY_HEIGHT];
+	estimatedTorsoHeight=estimatedTorsoHeight/6;
+	estimatedBodyHeight=estimatedTorsoHeight/sleevelessProportions[TORSO_HEIGHT_TO_BODY_HEIGHT];
+}
+
+void mouseEvent(int evt, int x, int y, int flags, void* param){
+	HWND hw= (HWND)cvGetWindowHandle(windowName.c_str());
+	windowName="x: "+ StringConverter::toString(x) + " , y: " + StringConverter::toString(y) ;
+	SetWindowText(hw,(LPCTSTR)windowName.c_str());
+}
+
+#if USE_KINECT
 
 bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
@@ -134,26 +167,8 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 	return true;
 }
 
-void viewImage(IplImage* img)
-{
-	if (img->depth == IPL_DEPTH_16U)
-	{
-		cvConvertImage(img,showImage);
-		cvShowImage("Image", showImage);
-	}
-	else
-	{
-		cvShowImage("Image",img);
-	}
-	cvWaitKey();
-	cvDestroyAllWindows();
-}
-
 bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {	
-
-	if (!convertMetaDataToIpl( dpg,ug,userID))	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
-		return false;
 	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
 	cvDilate(uImage,uImage,0,2);
 	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
@@ -171,13 +186,6 @@ bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID use
 	cvNot(uImage,uImage);
 	cvReleaseImage(&tempImage);
 	return true;
-}
-Ogre::String windowName="Image";
-void mouseEvent(int evt, int x, int y, int flags, void* param){
-	HWND hw= (HWND)cvGetWindowHandle(windowName.c_str());
-	windowName="x: "+ StringConverter::toString(x) + " , y: " + StringConverter::toString(y) ;
-	SetWindowText(hw,(LPCTSTR)windowName.c_str());
-
 }
 
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
@@ -471,16 +479,6 @@ void measureBody(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 
 }
 
-//Code is prepared for sleeveless dress for now
-void estimateParameters()
-{
-	estimatedShoulderWidth=(bodyMeasurements[SHOULDER_WIDTH]+bodyMeasurements[HEAD_WIDTH]*sleevelessProportions[SHOULDER_WIDTH_TO_HEAD_WIDTH])/2;
-	estimatedTorsoHeight=bodyMeasurements[TORSO_HEIGHT]+bodyMeasurements[HEAD_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_HEAD_HEIGHT]+bodyMeasurements[HIP_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_HIP_HEIGHT]+
-		+bodyMeasurements[ELBOW_FINGERTIP]*sleevelessProportions[TORSO_HEIGHT_TO_ELBOW_FINGERTIP]+bodyMeasurements[WRIST_FINGERTIP]*sleevelessProportions[TORSO_HEIGHT_TO_WRIST_FINGERTIP]+bodyMeasurements[BODY_HEIGHT]*sleevelessProportions[TORSO_HEIGHT_TO_BODY_HEIGHT];
-	estimatedTorsoHeight=estimatedTorsoHeight/6;
-	estimatedBodyHeight=estimatedTorsoHeight/sleevelessProportions[TORSO_HEIGHT_TO_BODY_HEIGHT];
-}
-
 bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
 	if (!dImage)
@@ -491,15 +489,12 @@ bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	}
 	cvSetZero(dImage);
 	cvSetZero(uImage);
-
-
-	if (!optimizeDepthMap(dpg,ug,userID))
+	if (!convertMetaDataToIpl( dpg,ug,userID))	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
 		return false;
+	optimizeDepthMap(dpg,ug,userID);
 	getSphereSizes(dpg,ug,userID);
-
 	measureBody(dpg,ug,userID);
 	estimateParameters();
-
 	return true;
 }
 
@@ -602,9 +597,7 @@ bool addFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID) //D
 	}
 }
 	
-
-
-#if USE_NUI
+#elif USE_NUI
 
 bool convertMetaDataToIpl(BYTE* pBuffer)
 {
@@ -642,7 +635,6 @@ bool convertMetaDataToIpl(BYTE* pBuffer)
 	}
 	return true;
 }
-
 
 void getSphereSizes(NUI_Controller* mNui)
 {
