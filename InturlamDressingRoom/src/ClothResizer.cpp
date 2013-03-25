@@ -117,6 +117,26 @@ void mouseEvent(int evt, int x, int y, int flags, void* param){
 	SetWindowText(hw,(LPCTSTR)windowName.c_str());
 }
 
+bool optimizeDepthMap()
+{	
+	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
+	cvDilate(uImage,uImage,0,2);
+	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
+	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth									 
+	//viewImage(dImage);
+	cvSet(dImage,depthMean,uImage);										 
+	IplImage* tempImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
+	cvConvertScale(dImage,tempImage,1.0/256);
+	cvSmooth(tempImage,tempImage,CV_GAUSSIAN,7);//Perform Gaussian Smoothing, depth map is optimized.
+	cvConvert(tempImage,dImage);
+	cvScale(dImage,dImage,256);
+	cvSet(dImage,cvScalar(0),uImage);	
+	//viewImage(dImage);
+	//cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
+	cvNot(uImage,uImage);
+	cvReleaseImage(&tempImage);
+	return true;
+}
 
 void outputDataToCSV()
 {
@@ -210,26 +230,7 @@ bool convertMetaDataToIpl(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID
 	return true;
 }
 
-bool optimizeDepthMap(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
-{	
-	cvErode(uImage,uImage,0,2);		//Smoothen the User Map as well
-	cvDilate(uImage,uImage,0,2);
-	CvScalar depthMean=cvAvg(dImage,uImage);							//Get teh Average Depth Value of the User Pixels
-	cvNot(uImage,uImage);												//Invert the user pixels to paint the rest of the image with average user depth									 
-	//viewImage(dImage);
-	cvSet(dImage,depthMean,uImage);										 
-	IplImage* tempImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
-	cvConvertScale(dImage,tempImage,1.0/256);
-	cvSmooth(tempImage,tempImage,CV_GAUSSIAN,7);//Perform Gaussian Smoothing, depth map is optimized.
-	cvConvert(tempImage,dImage);
-	cvScale(dImage,dImage,256);
-	cvSet(dImage,cvScalar(0),uImage);	
-	//viewImage(dImage);
-	//cvSmooth(dImage,dImage,CV_GAUSSIAN,gaussian_m,gaussian_n,gaussian_e);//Perform Gaussian Smoothing, depth map is optimized.
-	cvNot(uImage,uImage);
-	cvReleaseImage(&tempImage);
-	return true;
-}
+
 
 void getSphereSizes(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 {
@@ -534,7 +535,7 @@ bool processFrame(xn::DepthGenerator* dpg,xn::UserGenerator* ug,XnUserID userID)
 	cvSetZero(uImage);
 	if (!convertMetaDataToIpl( dpg,ug,userID))	//Convert Xn Matrices to OpenCV Matrices for easier calculation.
 		return false;
-	optimizeDepthMap(dpg,ug,userID);
+	optimizeDepthMap();
 	getSphereSizes(dpg,ug,userID);
 	measureBody(dpg,ug,userID);
 	estimateParameters();
@@ -631,7 +632,7 @@ void getSphereSizes(NUI_Controller* mNui)
 			endOfJoint.x=x;
 			endOfJoint.y=x;
 
-			USHORT* iPtr=(USHORT*)(uImage->imageData+y_init*uImage->widthStep+x_init*2);
+			UCHAR* iPtr=(UCHAR*)(uImage->imageData+y_init*uImage->widthStep+x_init);
 			USHORT* dPtr=(USHORT*)(dImage->imageData+y_init*dImage->widthStep+x_init*2);//Multipy x_init by 2, since dImage is 16 bits- 2bytes
 			while( step<m_Width)					//Slowly enlarge the joint sphere until it reaches the end of a bone in one direction.
 			{			
@@ -662,7 +663,7 @@ void getSphereSizes(NUI_Controller* mNui)
 				{
 					if (y_init-step>-1)
 					{
-						UCHAR tValue=*(iPtr-step*uImage->widthStep/2);
+						UCHAR tValue=*(iPtr-step*uImage->widthStep);
 						if(  tValue!=0 )
 						{
 							endOfJoint.y-=(step-1);
@@ -673,7 +674,7 @@ void getSphereSizes(NUI_Controller* mNui)
 					}
 					if (y_init+step<m_Height)
 					{
-						UCHAR tValue=*(iPtr+step*uImage->widthStep/2);
+						UCHAR tValue=*(iPtr+step*uImage->widthStep);
 						if( tValue!=0)
 						{
 							endOfJoint.y+=(step-1);
@@ -707,9 +708,9 @@ void measureBody(NUI_Controller* mNui)
 	USHORT depth;
 	NuiTransformSkeletonToDepthImage( head, &projHeadX, &projHeadY, &depth );
 
-	USHORT* headPtr=(USHORT*)( uImage->imageData+projHeadY*uImage->widthStep+projHeadX*2);
+	UCHAR* headPtr=(UCHAR*)( uImage->imageData+projHeadY*uImage->widthStep+projHeadX);
 	USHORT* headDepthPtr=(USHORT*) (dImage->imageData+projHeadY*dImage->widthStep+projHeadX*2);
-	USHORT* iPtr=headPtr;
+	UCHAR* iPtr=headPtr;
 	LONG leftX=projHeadX;
 	LONG rightX=projHeadX;
 	LONG leftStep=0;
@@ -742,12 +743,12 @@ void measureBody(NUI_Controller* mNui)
 	rFoot=mNui->m_Points[NUI_SKELETON_POSITION_FOOT_RIGHT];
 	float lowPointY=(lFoot.y+rFoot.y)/2;
 	
-	iPtr=headPtr-uImage->widthStep/2;	//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	iPtr=headPtr-uImage->widthStep;	//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	LONG topY;
 	int topStep=0;
 	while(*iPtr>0 && (topY>0))
 	{
-		iPtr-=uImage->widthStep/2;
+		iPtr-=uImage->widthStep;
 		topY--;
 		topStep++;
 	}
@@ -773,29 +774,29 @@ void measureBody(NUI_Controller* mNui)
 	NuiTransformSkeletonToDepthImage( lElbow, &lHandDownX, &lHandDownY, &depth );
 	NuiTransformSkeletonToDepthImage( rElbow, &rHandDownX, &rHandDownY, &depth );
 
-	USHORT* lHandPtr=(USHORT*)( uImage->imageData+(int)(lHandUpY-1)*uImage->widthStep+(int)lHandUpX*2);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	UCHAR* lHandPtr=(UCHAR*)( uImage->imageData+(int)(lHandUpY-1)*uImage->widthStep+(int)lHandUpX);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	while(*lHandPtr>0  && (lHandUpY>0))
 	{
-		lHandPtr-=uImage->widthStep/2;
+		lHandPtr-=uImage->widthStep;
 		lHandUpY--;	
 	}	//Extend the line vertically until it reaches the borders of the arm.
 
 
-	USHORT* lElbowPtr=(USHORT*) (uImage->imageData+(int)(lHandDownY+1)*uImage->widthStep+(int)lHandDownX*2);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	UCHAR* lElbowPtr=(UCHAR*) (uImage->imageData+(int)(lHandDownY+1)*uImage->widthStep+(int)lHandDownX);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	while(*lElbowPtr>0  && (lHandDownY<(m_Width-1)))
 	{
 		lElbowPtr+=uImage->widthStep;
 		lHandDownY++;	
 	}	//Extend the line vertically until it reaches the borders of the arm.
 
-	USHORT* rHandPtr=(USHORT*) (uImage->imageData+(int)(rHandUpY-1)*uImage->widthStep+(int)rHandUpX);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	UCHAR* rHandPtr=(UCHAR*) (uImage->imageData+(int)(rHandUpY-1)*uImage->widthStep+(int)rHandUpX);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	while(*rHandPtr>0  && (rHandUpY>0))
 	{
 		rHandPtr-=uImage->widthStep;
 		rHandUpY--;	
 	}	//Extend the line vertically until it reaches the borders of the arm.
 
-	USHORT* rElbowPtr=(USHORT*)(uImage->imageData+(int)(rHandDownY+1)*uImage->widthStep+(int)rHandDownX*2);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
+	UCHAR* rElbowPtr=(UCHAR*)(uImage->imageData+(int)(rHandDownY+1)*uImage->widthStep+(int)rHandDownX);//Initialize the pointer 1 pixel above, since decrement will take place after comparison.
 	while(*rElbowPtr>0  && (rHandDownY<(m_Height-1)))
 	{
 		rElbowPtr+=uImage->widthStep;
@@ -821,7 +822,7 @@ void measureBody(NUI_Controller* mNui)
 	NuiTransformSkeletonToDepthImage(lHip,&lHipX,&lHipY,&depth);
 	NuiTransformSkeletonToDepthImage(rHip,&rHipX,&rHipY,&depth);
 
-	USHORT* lEndPtr=(USHORT*)(uImage->imageData+(int)lHipY*uImage->widthStep+(int)lHipX*2);
+	UCHAR* lEndPtr=(UCHAR*)(uImage->imageData+(int)lHipY*uImage->widthStep+(int)lHipX);
 	leftX=lHipX;
 	leftStep=0;
 	while(*(--lEndPtr)>0 && leftX>0)
@@ -831,7 +832,7 @@ void measureBody(NUI_Controller* mNui)
 	}
 	NUI_Vector4 leftHipEnd=NuiTransformDepthImageToSkeleton(leftX,lHipY,*((USHORT*)(dImage->imageData+(int)lHipY*dImage->widthStep+(int)leftX*2)));
 
-	USHORT* rEndPtr=(USHORT*) (uImage->imageData+(int)rHipY*uImage->widthStep+(int)rHipX*2);
+	UCHAR* rEndPtr=(UCHAR*) (uImage->imageData+(int)rHipY*uImage->widthStep+(int)rHipX);
 	rightX=rHipX;
 	rightStep=0;
 	while(*(++rEndPtr)>0 && rightX<(m_Width-1))
@@ -852,7 +853,7 @@ void measureBody(NUI_Controller* mNui)
 
 bool processFrame(NUI_Controller* mNui)
 {
-	//optimizeDepthMap(dpg,ug,userID);
+	optimizeDepthMap();
 	getSphereSizes(mNui);
 	measureBody(mNui);
 	estimateParameters();

@@ -303,7 +303,7 @@ bool convertMetaDataToIpl(BYTE* pBuffer)
 		if (!dImage)
 		{
 			dImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
-			uImage=cvCreateImage(dSize,IPL_DEPTH_16U,1);
+			uImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
 			showImage=cvCreateImage(dSize,IPL_DEPTH_8U,1);
 		}
 		cvSetZero(dImage);
@@ -313,13 +313,16 @@ bool convertMetaDataToIpl(BYTE* pBuffer)
 		for( y = 0 ; y < m_Height ; y++ )
 		{
 			USHORT* dPtr=(USHORT*)(dImage->imageData+y*dImage->widthStep);
-			USHORT* uPtr=(USHORT*)(uImage->imageData+y*uImage->widthStep);
+			UCHAR* uPtr=(UCHAR*)(uImage->imageData+y*uImage->widthStep);
 			for( x = 0 ; x < m_Width ; x++ )
 			{
 				USHORT depth     = *pBufferRun++;
 				USHORT realDepth = NuiDepthPixelToDepth(depth);
 				USHORT player    = NuiDepthPixelToPlayerIndex(depth);
-				*uPtr++=player;	
+				if (player>0)
+					*uPtr++=255;	
+				else
+					*uPtr++=0;	
 				*dPtr++=realDepth;
 			}
 		}
@@ -367,6 +370,8 @@ void NUI_Controller::Nui_GotDepthAlert( )
 				USHORT depth     = *pBufferRun++;
 				USHORT realDepth = NuiDepthPixelToDepth(depth);
 				USHORT player    = NuiDepthPixelToPlayerIndex(depth);
+				if (player>0)
+					player=player;
 				BYTE intensity = static_cast<BYTE>(~(realDepth >> 4));
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerB[player];;
 				*dPtr++ = intensity >> g_IntensityShiftByPlayerG[player];
@@ -374,9 +379,9 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			}
 		}
 
-		#if USE_USER_SCALING
+		//#if USE_USER_SCALING
 		convertMetaDataToIpl(pBuffer);
-		#endif
+		//#endif
 		textureUpdated=true;
     }
     else
