@@ -607,6 +607,8 @@ void getSphereSizes(NUI_Controller* mNui)
 	int step=0;
 	try 
 	{
+		INuiCoordinateMapper* pMapper;
+		mNui->m_pNuiInstance->NuiGetCoordinateMapper(&pMapper);
 		for (int i=0;i<16;i++)
 		{
 			NUI_SKELETON_POSITION_INDEX sJoint=nuiIDs[i];
@@ -616,21 +618,19 @@ void getSphereSizes(NUI_Controller* mNui)
 					sphereRadii[i]=sphereRadii[j];
 			}
 
-			NUI_Vector4 realPosition=mNui->m_Points[sJoint];
-			Vector2 endOfJoint;
-			LONG x,y;
-			USHORT depth;				
-			NuiTransformSkeletonToDepthImage( realPosition, &x, &y, &depth ,mNui->m_DepthResolution);
-			x_init=x;
-			y_init=y;
+			NUI_Vector4 realPosition=mNui->m_Points[sJoint],trueEnd;
+			NUI_DEPTH_IMAGE_POINT tProj,endOfJoint;
+			pMapper->MapSkeletonPointToDepthPoint(&realPosition,mNui->m_DepthResolution,&tProj);	
+			if (tProj.x<0 || tProj.y<0)
+				return;
+			endOfJoint=tProj;
+			x_init=tProj.x;
+			y_init=tProj.y;
 			step=0;
 			float radius=0;
 			//cvShowImage(windowName.c_str(),uImage);
 			//cvSetMouseCallback(windowName.c_str(), mouseEvent, 0);
 			//cvWaitKey();
-		
-			endOfJoint.x=x;
-			endOfJoint.y=x;
 
 			UCHAR* iPtr=(UCHAR*)(uImage->imageData+y_init*uImage->widthStep+x_init);
 			USHORT* dPtr=(USHORT*)(dImage->imageData+y_init*dImage->widthStep+x_init*2);//Multipy x_init by 2, since dImage is 16 bits- 2bytes
@@ -642,7 +642,8 @@ void getSphereSizes(NUI_Controller* mNui)
 					if( tValue==0 )
 					{
 						endOfJoint.x-=(step-1);
-						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)),mNui->m_DepthResolution);
+						endOfJoint.depth=*(dPtr-(step-1));
+						pMapper->MapDepthPointToSkeletonPoint(mNui->m_DepthResolution,&endOfJoint,&trueEnd);
 						radius=abs(realPosition.x-trueEnd.x);
 						break;
 					}
@@ -654,7 +655,8 @@ void getSphereSizes(NUI_Controller* mNui)
 					{
 
 						endOfJoint.x+=(step-1);
-						NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)),mNui->m_DepthResolution);
+						endOfJoint.depth=*(dPtr+(step-1));
+						pMapper->MapDepthPointToSkeletonPoint(mNui->m_DepthResolution,&endOfJoint,&trueEnd);
 						radius=abs(realPosition.x-trueEnd.x);
 						break;
 					}
@@ -667,7 +669,8 @@ void getSphereSizes(NUI_Controller* mNui)
 						if(  tValue==0 )
 						{
 							endOfJoint.y-=(step-1);
-							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr-(step-1)*dImage->widthStep/2),mNui->m_DepthResolution);
+							endOfJoint.depth=*(dPtr-(step-1)*dImage->widthStep/2);
+							pMapper->MapDepthPointToSkeletonPoint(mNui->m_DepthResolution,&endOfJoint,&trueEnd);
 							radius=abs(realPosition.y-trueEnd.y);
 							break;
 						}
@@ -678,7 +681,8 @@ void getSphereSizes(NUI_Controller* mNui)
 						if( tValue==0)
 						{
 							endOfJoint.y+=(step-1);
-							NUI_Vector4 trueEnd=NuiTransformDepthImageToSkeleton(endOfJoint.x,endOfJoint.y,*(dPtr+(step-1)*dImage->widthStep/2),mNui->m_DepthResolution);
+							endOfJoint.depth=*(dPtr+(step-1)*dImage->widthStep/2);
+							pMapper->MapDepthPointToSkeletonPoint(mNui->m_DepthResolution,&endOfJoint,&trueEnd);
 							radius=abs(realPosition.y-trueEnd.y);
 							break;
 						}
@@ -810,9 +814,9 @@ void measureBody(NUI_Controller* mNui)
 	}	//Extend the line vertically until it reaches the borders of the arm.
 
 	USHORT* depthPtr=(USHORT*) (dImage->imageData);
-	rArmTop.depth=*(depthPtr+rArmTop.y*dImage->widthStep/2+rArmTop.x);
+	//rArmTop.depth=*(depthPtr+rArmTop.y*dImage->widthStep/2+rArmTop.x);
 	rArmDown.depth=*(depthPtr+rArmDown.y*dImage->widthStep/2+rArmDown.x);
-	lArmTop.depth=*(depthPtr+lArmTop.y*dImage->widthStep/2+lArmTop.x);
+	//lArmTop.depth=*(depthPtr+lArmTop.y*dImage->widthStep/2+lArmTop.x);
 	lArmDown.depth=*(depthPtr+lArmDown.y*dImage->widthStep/2+lArmDown.x);
 	NUI_Vector4 leftArmDown,leftArmUp,rightArmUp,rightArmDown;
 
