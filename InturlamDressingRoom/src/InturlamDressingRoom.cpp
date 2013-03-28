@@ -46,6 +46,27 @@ PxClothCollisionData col_data;
 physx::PxClothCollisionSphere* box_collider;
 std::vector<float> radii;
 std::vector<Ogre::SceneNode*> ListedNodes;
+
+//extern std::vector<float> raw_roll;
+//extern std::vector<float> filtered_roll;
+//void outputToCSV()
+//{
+//	std::ofstream*myfile=new std::ofstream("..\\rollData.csv");
+//	if (myfile->is_open())
+//	{
+//			*myfile<<"sep=\t\n";
+//			*myfile<<"Raw\tFiltered\n";			
+//			for (int j=0;j<raw_roll.size();j++)
+//			{
+//				*myfile<< Ogre::StringConverter::toString(j+1) +"\t";
+//				*myfile<< Ogre::StringConverter::toString(raw_roll.at(j)) +"\t";
+//				*myfile<< Ogre::StringConverter::toString(filtered_roll.at(j)) +"\t";
+//				*myfile<<"\n";
+//			}
+//			myfile->close();
+//	}
+//}
+
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::InturlamDressingRoom(void)
 {
@@ -67,6 +88,7 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
 {
+	//outputToCSV();
 	if (mNui)
 		delete mNui;
 	if (box_collider)
