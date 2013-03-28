@@ -578,7 +578,7 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 		
 
 		PxSceneDesc	sceneDesc(gPhysicsSDK->getTolerancesScale());
-		sceneDesc.gravity=PxVec3(0.0f, -9.8f, 0.0f);
+		sceneDesc.gravity=PxVec3(0.0f, -98.0f, 0.0f);
 
 		if(!sceneDesc.cpuDispatcher) {
 			mCpuDispatcher = PxDefaultCpuDispatcherCreate(1);

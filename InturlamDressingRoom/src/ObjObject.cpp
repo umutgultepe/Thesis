@@ -487,7 +487,7 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 		cloth->setDampingCoefficient(0.1f);	   
 		cloth->setDragCoefficient(0.1f);
 		cloth->setFrictionCoefficient(0.2f); 
-		cloth->setCollisionMassScale(20.0f);
+		cloth->setCollisionMassScale(40.0f);
 		cloth->setInertiaScale(0.5);
 		cloth->setClothFlag(PxClothFlag::eGPU,true);
 		return cloth;

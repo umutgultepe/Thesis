@@ -44,7 +44,10 @@ void NUI_Controller::Nui_Zero()
 
 bool NUI_Controller::Nui_Init()
 {
-	m_DepthResolution=NUI_IMAGE_RESOLUTION_640x480;
+	if (m_Width == 640)
+		m_DepthResolution=NUI_IMAGE_RESOLUTION_640x480;
+	else
+		m_DepthResolution=NUI_IMAGE_RESOLUTION_320x240;
 	if (!m_pNuiInstance)
     {
         HRESULT hr = NuiCreateSensorByIndex(0, &m_pNuiInstance);
