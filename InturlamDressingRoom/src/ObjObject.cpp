@@ -451,13 +451,14 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 		cloth->setSolverFrequency(120);
 
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING,		bendCfg) ;	
-		//cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
-		//cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING,		bendCfg) ;	
-		//cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg) ;
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING,		bendCfg) ;	
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg) ;
+		//cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE, bendCfg) ;
 
 
 
-		PxClothPhaseSolverConfig config;
+	/*	PxClothPhaseSolverConfig config;
 		config = cloth->getPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING);
 		config.solverType = PxClothPhaseSolverConfig::eSTIFF;
 		config.stiffness = 1.0f;
@@ -476,7 +477,7 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 		config = cloth->getPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE);
 		config.solverType = PxClothPhaseSolverConfig::eBENDING;
 		config.stiffness = 0.5f;
-		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE, config);
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE, config);*/
 
 
 
