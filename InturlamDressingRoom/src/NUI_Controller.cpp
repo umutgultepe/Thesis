@@ -41,6 +41,7 @@ void NUI_Controller::Nui_Zero()
 
 
 #define USE_VIDEO 0
+#define RUN_MEASUREMENTS 1
 
 bool NUI_Controller::Nui_Init()
 {
@@ -249,7 +250,7 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
             Nui_GotSkeletonAlert( );
 			NewSkeleton=true;
         }
-#if USE_USER_SCALING
+#if RUN_MEASUREMENTS
 		if (NewSkeleton && NewDepth)
 		{
 			NewSkeleton=false;
@@ -387,7 +388,7 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			}
 		}
 
-		#if USE_USER_SCALING
+		#if RUN_MEASUREMENTS
 		convertMetaDataToIpl(pBuffer);
 		#endif
 		textureUpdated=true;
