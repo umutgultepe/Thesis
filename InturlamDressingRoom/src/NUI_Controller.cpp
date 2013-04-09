@@ -40,9 +40,15 @@ void NUI_Controller::Nui_Zero()
 }
 
 
+#define USE_VIDEO 0
+#define RUN_MEASUREMENTS 1
+
 bool NUI_Controller::Nui_Init()
 {
-	m_DepthResolution=NUI_IMAGE_RESOLUTION_640x480;
+	if (m_Width == 640)
+		m_DepthResolution=NUI_IMAGE_RESOLUTION_640x480;
+	else
+		m_DepthResolution=NUI_IMAGE_RESOLUTION_320x240;
 	if (!m_pNuiInstance)
     {
         HRESULT hr = NuiCreateSensorByIndex(0, &m_pNuiInstance);
@@ -60,7 +66,11 @@ bool NUI_Controller::Nui_Init()
     m_hNextSkeletonEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
 
 	//Initialize NUI
-	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX| NUI_INITIALIZE_FLAG_USES_SKELETON |  NUI_INITIALIZE_FLAG_USES_COLOR;
+	DWORD nuiFlags = NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX| NUI_INITIALIZE_FLAG_USES_SKELETON ;
+	#if USE_VIDEO
+		nuiFlags=nuiFlags|  NUI_INITIALIZE_FLAG_USES_COLOR ;
+	#endif 
+		
 	HRESULT hr=m_pNuiInstance->NuiInitialize(nuiFlags);
 	if( FAILED( hr ) )
     {
@@ -78,7 +88,7 @@ bool NUI_Controller::Nui_Init()
             return FAILED(hr);
         }
     }
-
+	#if USE_VIDEO
 	//Initialize Video
 	hr = m_pNuiInstance->NuiImageStreamOpen(
         NUI_IMAGE_TYPE_COLOR,
@@ -92,7 +102,7 @@ bool NUI_Controller::Nui_Init()
         MessageBox( NULL, "Failed to Init Video", "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
         return FAILED(hr);
     }
-
+	#endif
 	//Initialize Depth
 	hr = m_pNuiInstance->NuiImageStreamOpen(
         HasSkeletalEngine(m_pNuiInstance) ? NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX : NUI_IMAGE_TYPE_DEPTH,
@@ -231,25 +241,23 @@ DWORD WINAPI NUI_Controller::Nui_ProcessThread()
 			Nui_GotDepthAlert();
 			NewDepth=true;
         }
-
         if ( WAIT_OBJECT_0 == WaitForSingleObject( m_hNextVideoFrameEvent, 0 ) )
         {
             Nui_GotVideoAlert();
         }
-
         if (  WAIT_OBJECT_0 == WaitForSingleObject( m_hNextSkeletonEvent, 0 ) )
         {
             Nui_GotSkeletonAlert( );
 			NewSkeleton=true;
         }
-//#if USE_USER_SCALING
+#if RUN_MEASUREMENTS
 		if (NewSkeleton && NewDepth)
 		{
 			NewSkeleton=false;
 			NewDepth=false;
 			processFrame(this);
 		}
-//#endif
+#endif
     }
 #pragma warning(pop)
 
@@ -380,9 +388,9 @@ void NUI_Controller::Nui_GotDepthAlert( )
 			}
 		}
 
-		//#if USE_USER_SCALING
+		#if RUN_MEASUREMENTS
 		convertMetaDataToIpl(pBuffer);
-		//#endif
+		#endif
 		textureUpdated=true;
     }
     else

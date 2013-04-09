@@ -430,7 +430,7 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 	   if(fixedVertices.at(i)) 
 		  points[i].invWeight =0;
 	   else 
-		  points[i].invWeight = 0.5f;
+		  points[i].invWeight = 1.0f;
 	   p++;
 	}
 
@@ -454,10 +454,41 @@ PxCloth* ObjObject::loadPhysxCloth(PxClothCollisionData &col_data,PxSceneDesc* S
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING,	bendCfg) ;	
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING,		bendCfg) ;	
 		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg) ;
+		//cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE, bendCfg) ;
+
+
+
+	/*	PxClothPhaseSolverConfig config;
+		config = cloth->getPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING);
+		config.solverType = PxClothPhaseSolverConfig::eSTIFF;
+		config.stiffness = 1.0f;
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING, config);
+
+		config = cloth->getPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL);
+		config.solverType = PxClothPhaseSolverConfig::eFAST;
+		config.stiffness = 1.0f;
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, config);
+
+		config = cloth->getPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING);
+		config.solverType = PxClothPhaseSolverConfig::eFAST;
+		config.stiffness = 0.75f;
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eSHEARING, config);
+
+		config = cloth->getPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE);
+		config.solverType = PxClothPhaseSolverConfig::eBENDING;
+		config.stiffness = 0.5f;
+		cloth->setPhaseSolverConfig(PxClothFabricPhaseType::eBENDING_ANGLE, config);*/
+
+
+
+
+
+
 		//	cloth->setClothFlag(physx::PxClothFlag::eGPU,true); 
-		cloth->setDampingCoefficient(0.2f);	   
+		cloth->setDampingCoefficient(0.1f);	   
+		cloth->setDragCoefficient(0.1f);
 		cloth->setFrictionCoefficient(0.2f); 
-		cloth->setCollisionMassScale(80.0f);
+		cloth->setCollisionMassScale(40.0f);
 		cloth->setInertiaScale(0.5);
 		cloth->setClothFlag(PxClothFlag::eGPU,true);
 		return cloth;

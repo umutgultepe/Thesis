@@ -1,0 +1,43 @@
+*.pch
+*.opensdf
+*.ipch
+#ignore thumbnails created by windows
+Thumbs.db
+#Ignore files build by Visual Studio
+*.pdb
+*.user
+*.aps
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.sdf
+*.ilk
+*.log
+[Bb]in
+InturlamDressingRoom/Debug*/
+*.lib
+*.sbr
+*.csv
+*.exe
+obj/
+InturlamDressingRoom/Release*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+InturlamDressingRoom.sdf
+build/release/InturlamDressingRoom.exe
+build/release/InturlamDressingRoom.exe
+build/debug/InturlamDressingRoom.exe
+<<<<<<< HEAD
+build/release/*.jpg
+=======
+media/mesh/FlightSuidBackUp/BlueJeans.mesh
+media/mesh/FlightSuidBackUp/BlueJeans.skeleton
+media/mesh/FlightSuidBackUp/FlightSuit.mesh
+media/mesh/FlightSuidBackUp/FlightSuit.skeleton
+>>>>>>> 99ea4cb538cbf0d63135bffe238d9dc7538bde8f

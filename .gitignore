@@ -34,3 +34,7 @@ build/release/InturlamDressingRoom.exe
 build/release/InturlamDressingRoom.exe
 build/debug/InturlamDressingRoom.exe
 build/release/*.jpg
+media/mesh/FlightSuidBackUp/BlueJeans.mesh
+media/mesh/FlightSuidBackUp/BlueJeans.skeleton
+media/mesh/FlightSuidBackUp/FlightSuit.mesh
+media/mesh/FlightSuidBackUp/FlightSuit.skeleton
