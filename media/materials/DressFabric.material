@@ -13,7 +13,7 @@ material DressFabric
             emissive 0.0 0.0 0.0 1.0
             alpha_to_coverage off
             colour_write on
-            cull_hardware clockwise
+            cull_hardware none
             depth_check on
             depth_func less_equal
             depth_write on
