@@ -82,7 +82,7 @@
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalLibraryDirectories>$(OPEN_CV_HOME)\install\lib;$(PHYSX_LIB_3_2);$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;$(OGRE_HOME)\lib\$(Configuration);C:\Program Files (x86)\boost\boost_1_51\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OgreMain_d.lib;OIS_d.lib;XnVNITE_1_4_0.lib;openNI.lib;PhysX3_x86.lib;PhysX3Cooking_x86.lib;PhysX3Common_x86.lib;PhysX3Extensions.lib;PhysXProfileSDK.lib;PxTask.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;Kinect10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OgreMain_d.lib;OIS_d.lib;XnVNITE_1_5_2.lib;openNI.lib;PhysX3_x86.lib;PhysX3Cooking_x86.lib;PhysX3Common_x86.lib;PhysX3Extensions.lib;PhysXProfileSDK.lib;PxTask.lib;opencv_core231d.lib;opencv_highgui231d.lib;opencv_video231d.lib;opencv_ml231d.lib;opencv_legacy231d.lib;opencv_imgproc231d.lib;Kinect10.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Copying exe to build directory ...</Message>
@@ -118,7 +118,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>$(OPEN_CV_HOME)\install\lib;$(PHYSX_LIB_3_2);$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;$(OGRE_HOME)\lib\$(Configuration);C:\Program Files (x86)\boost\boost_1_51\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OgreMain.lib;OIS.lib;XnVNITE_1_4_0.lib;openNI.lib;opencv_core231.lib;opencv_highgui231.lib;opencv_video231.lib;opencv_ml231.lib;opencv_legacy231.lib;opencv_imgproc231.lib;PhysX3_x86.lib;PhysX3Cooking_x86.lib;PhysX3Common_x86.lib;PhysX3Extensions.lib;PhysXProfileSDK.lib;PxTask.lib;Kinect10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OgreMain.lib;OIS.lib;XnVNITE_1_5_2.lib;openNI.lib;opencv_core231.lib;opencv_highgui231.lib;opencv_video231.lib;opencv_ml231.lib;opencv_legacy231.lib;opencv_imgproc231.lib;PhysX3_x86.lib;PhysX3Cooking_x86.lib;PhysX3Common_x86.lib;PhysX3Extensions.lib;PhysXProfileSDK.lib;PxTask.lib;Kinect10.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Message>Copying exe to build directory ...</Message>
