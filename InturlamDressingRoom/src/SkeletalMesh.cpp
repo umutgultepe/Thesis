@@ -198,16 +198,16 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				continue;
 			}
 			#if USE_NUI
-			else if (tBone->getName()=="Foot.R")
-			{
-				q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
-				boneExists.at(BONE_RIGHT_FOOT)=true;
-			}
-			else if (tBone->getName()=="Foot.L")
-			{	
-				q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
-				boneExists.at(BONE_LEFT_FOOT)=true;
-			}
+			//else if (tBone->getName()=="Foot.R")
+			//{
+			//	q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
+			//	boneExists.at(BONE_RIGHT_FOOT)=true;
+			//}
+			//else if (tBone->getName()=="Foot.L")
+			//{	
+			//	q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
+			//	boneExists.at(BONE_LEFT_FOOT)=true;
+			//}
 			#endif
 			else if (tBone->getName()=="Root")
 			{
@@ -577,6 +577,46 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
+	//Leg filters
+	else if ( sj.endJoint==NUI_SKELETON_POSITION_ANKLE_RIGHT )
+	{
+
+		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
+		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
+		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;	
+		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
+		initialHierarchicalMatrix.ToEulerAnglesYZX(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
+		if (pitchInitialHierarchical.valueDegrees() > 0)
+			pitchInitialHierarchical=Radian(0);
+		modifiedHierarchicalMatrix.FromEulerAnglesYZX(Radian(0),Radian(0),Radian(0));
+		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
+		modifier=initialHierarchical.Inverse();
+		q=modifier*q;
+	}
+	else if ( sj.endJoint==NUI_SKELETON_POSITION_ANKLE_LEFT )
+	{
+
+		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
+		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
+		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;	
+		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
+		initialHierarchicalMatrix.ToEulerAnglesYZX(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
+		if (pitchInitialHierarchical.valueDegrees() > 0)
+			pitchInitialHierarchical=Radian(0);
+		modifiedHierarchicalMatrix.FromEulerAnglesYZX(Radian(0),Radian(0),Radian(0));
+		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
+		modifier=initialHierarchical.Inverse();
+		q=modifier*q;
+	}
+
 	return q;
 
 }
