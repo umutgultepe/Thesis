@@ -41,7 +41,7 @@ void NUI_Controller::Nui_Zero()
 
 
 #define USE_VIDEO 0
-#define RUN_MEASUREMENTS 1
+#define RUN_MEASUREMENTS 0
 
 bool NUI_Controller::Nui_Init()
 {

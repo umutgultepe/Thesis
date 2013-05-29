@@ -497,7 +497,7 @@ float radius_modifier=1;
 
 void InturlamDressingRoom::createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNode* parentNode,int level)
 {
-	if (bone->numChildren()>0 && level<8)
+	if (bone->numChildren()>0 && level<9)
 	{
 		parentNode->setInheritOrientation(bone->getInheritOrientation());
 		parentNode->setOrientation(bone->getOrientation());
@@ -766,7 +766,6 @@ void InturlamDressingRoom::loadClothes()
 	Ogre::MaterialPtr jMat=Ogre::MaterialManager::getSingleton().getByName("Jeans");
 	jMat->getTechnique(0)->getPass(0)->setCullingMode(CULL_NONE);
 
-
 	//Tunic-Vest
 	//upperCloth->loadMesh(mSceneMgr,clothNode,"UpperCloth","Layer_12za.mesh");
 	//lowerCloth=new ObjObject("../../media/wavefront/lowerTunic.obj");
@@ -835,8 +834,8 @@ void InturlamDressingRoom::createScene(void)
 	#if USE_USER_SCALING == 0
 	createSimulation();
 	#endif
-
-	buildAxes();
+	createFloor();
+	//buildAxes();
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.7, 0.7, 0.7));
 	Ogre::Light* l = mSceneMgr->createLight("MainLight");
 	l->setPosition(0,30,0);
@@ -999,7 +998,18 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		
 		help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",-5)));
 	}
-	
+	else if (arg.key==OIS::KC_M)
+	{
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+		mPlaneNode->translate(0,1,0);
+		help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
+	}
+	else if (arg.key==OIS::KC_N)
+	{	
+		mPlaneNode->translate(0,-1,0);
+		help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",-5)));
+	}
 	else if (arg.key==OIS::KC_ADD)
 	{
 		//PxReal scale=cloth->getInertiaScale();
@@ -1020,19 +1030,6 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
 		updateCollisionSpheres();
 	}
-	else if (arg.key==OIS::KC_M)
-	{
-		targetRadii+=2;
-		help->setParamValue("Target Spheres",boneStrings[targetRadii]);
-		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
-	}
-	else if (arg.key==OIS::KC_N)
-	{	
-		targetRadii-=2;
-		help->setParamValue("Target Spheres",boneStrings[targetRadii]);
-		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
-	}
-	
 	else if (arg.key==OIS::KC_J)
 	{
 		if (help->getTrayLocation() == OgreBites::TL_NONE)
@@ -1098,6 +1095,22 @@ void assignWeightsToBones(Ogre::Bone* bone,Ogre::AnimationState* anim)
 	}
 }
 
+void InturlamDressingRoom::createFloor()
+{
+	Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create("FloorMat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+	Ogre::TextureUnitState* tuisTexture = mat->getTechnique(0)->getPass(0)->createTextureUnitState("checkerboard.jpg");
+ 
+	Ogre::MovablePlane* mPlane = new Ogre::MovablePlane("Plane");
+	mPlane->d = 0;
+	mPlane->normal = Ogre::Vector3::UNIT_Y;
+ 
+	Ogre::MeshManager::getSingleton().createPlane("PlaneMesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *mPlane, 120, 120, 1, 1, true, 1, 1, 1, Ogre::Vector3::UNIT_Z);
+	Ogre::Entity* mPlaneEnt = mSceneMgr->createEntity("PlaneEntity", "PlaneMesh");
+	mPlaneEnt->setMaterialName("FloorMat");
+ 
+	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-26,0));
+	mPlaneNode->attachObject(mPlaneEnt);
+}
 
 void InturlamDressingRoom::createSimulation()
 {
@@ -1174,7 +1187,7 @@ void InturlamDressingRoom::filtersAndAnimations()
 	float lUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
 	leftArm->setTimePosition(lUlnaCurl);
 	//Arm Testing
-	NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_WRIST_RIGHT];
+	NUI_SKELETON_BONE_ORIENTATION rightHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_RIGHT];
 	q.x=rightHumerus.hierarchicalRotation.rotationQuaternion.x;
 	q.y=rightHumerus.hierarchicalRotation.rotationQuaternion.y;
 	q.z=rightHumerus.hierarchicalRotation.rotationQuaternion.z;
@@ -1185,11 +1198,12 @@ void InturlamDressingRoom::filtersAndAnimations()
 	help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
 	help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
 	help->setParamValue("Right humerus roll",StringConverter::toString(roll));
-	//NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
-	//q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
-	//q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
-	//q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
-	//q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
+	NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_LEFT];
+	//q.x=leftHumerus.hierarchicalRotation.rotationQuaternion.x;
+	//q.y=leftHumerus.hierarchicalRotation.rotationQuaternion.y;
+	//q.z=leftHumerus.hierarchicalRotation.rotationQuaternion.z;
+	//q.w=leftHumerus.hierarchicalRotation.rotationQuaternion.w;
+	q=q.Inverse();
 	q.ToRotationMatrix(rotM);
 	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
 	help->setParamValue("Left humerus yaw",StringConverter::toString(yaw));

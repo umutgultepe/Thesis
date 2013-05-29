@@ -15,7 +15,7 @@ material Leather  sv brow
 
             alpha_to_coverage off
             colour_write on
-            cull_hardware clockwise
+            cull_hardware none
             depth_check on
             depth_func less_equal
             depth_write on

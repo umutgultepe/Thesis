@@ -136,6 +136,7 @@ protected:
 	void createSphereAndCapsule(Ogre::Bone* bone,Ogre::SceneNode* parentNode,int level=0);
 	void updateJoints(Ogre::Bone* bone,int level=0);
 	void updateVisualHuman();  
+	void createFloor();
 	void createSimulation();
 	void setupHumanCollider();
 	void filtersAndAnimations();
@@ -174,6 +175,7 @@ protected:
 	PxSceneDesc* gSceneDesc;
 	PxScene* gScene;
 	PxCloth* cloth; 
+	Ogre::SceneNode*				mPlaneNode;
 	Ogre::SceneNode*				rootColliderNode;
 	Ogre::SceneNode*				femaleNode;
 	Ogre::SceneNode* 				clothNode;
