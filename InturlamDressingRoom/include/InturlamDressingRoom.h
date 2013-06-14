@@ -181,7 +181,7 @@ protected:
 	Ogre::SceneNode* 				clothNode;
 	Ogre::SceneNode* 				clothHandle;
 	Ogre::SceneNode*				lowerClothHandle;
-
+	Ogre::Light*					mLight;
 	std::vector<SkeletalMesh*> skeletalMeshes;
 	std::vector<ObjObject*> physicsMeshes;
 

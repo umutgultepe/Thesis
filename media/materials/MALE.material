@@ -1,0 +1,35 @@
+// MALE genrated by blender2ogre 0.5.8
+
+material MALE 
+{
+    receive_shadows on 
+
+    technique
+    {
+        pass MALE
+        {
+            ambient 0.6117647290229797 0.545098066329956 0.45490196347236633 1.0
+            diffuse 0.48941179051118766 0.43607845956204017 0.36392157620074705 1.0
+            specular 0.0 0.0 0.0 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            alpha_to_coverage off
+            colour_write on
+            cull_hardware clockwise
+            depth_check on
+            depth_func less_equal
+            depth_write on
+            illumination_stage 
+            light_clip_planes off
+            light_scissor off
+            lighting on
+            normalise_normals off
+            polygon_mode solid
+            scene_blend one zero
+            scene_blend_op add
+            shading gouraud
+            transparent_sorting on
+
+        }
+    }
+}

@@ -8,9 +8,9 @@ material Leather_sv_brow
     {
         pass Leather_sv_brow
         {
-            ambient 0.8549019694328308 0.7803921699523926 0.6509804129600525 1.0
-            diffuse 0.8549019694328308 0.7803921699523926 0.6509804129600525 1.0
-            specular 0.5 0.5 0.5 1.0 12.5
+            ambient 0.6038022637367249 0.5511773228645325 0.4597760736942291 1.0
+            diffuse 0.5061283829514274 0.4620162988699228 0.38540054364566423 1.0
+            specular 1.0 1.0 1.0 1.0 12.5
             emissive 0.0 0.0 0.0 1.0
 
             alpha_to_coverage off
@@ -27,16 +27,9 @@ material Leather_sv_brow
             polygon_mode solid
             scene_blend one zero
             scene_blend_op add
-            shading gouraud
+            shading phong
             transparent_sorting on
 
-            texture_unit 
-            {
-                texture leather.jpg
-                tex_address_mode wrap
-                scale 1.0 1.0
-                colour_op modulate
-            }
         }
     }
 }

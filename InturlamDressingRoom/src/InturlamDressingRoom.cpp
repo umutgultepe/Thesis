@@ -578,7 +578,7 @@ PxSceneDesc InturlamDressingRoom::initializePhysics()
 		
 
 		PxSceneDesc	sceneDesc(gPhysicsSDK->getTolerancesScale());
-		sceneDesc.gravity=PxVec3(0.0f, -98.0f, 0.0f);
+		sceneDesc.gravity=PxVec3(0.0f, -49.0f, 0.0f);
 
 		if(!sceneDesc.cpuDispatcher) {
 			mCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
@@ -740,6 +740,7 @@ void InturlamDressingRoom::loadClothes()
 			tPhys->saveInitial();
 			tPhys->loadIntoOgre(mSceneMgr, meshName);
 			Ogre::Entity* lowerClothEntity=mSceneMgr->createEntity(entityName,meshName);
+			lowerClothEntity->setCastShadows(false);
 			lowerClothHandle->attachObject(lowerClothEntity);
 			tPhys->entity=lowerClothEntity;
 			tPhys->setVisible(false);
@@ -836,9 +837,19 @@ void InturlamDressingRoom::createScene(void)
 	#endif
 	createFloor();
 	//buildAxes();
-	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.7, 0.7, 0.7));
-	Ogre::Light* l = mSceneMgr->createLight("MainLight");
-	l->setPosition(0,30,0);
+	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.4, 0.4, 0.4));
+	mLight = mSceneMgr->createLight("MainLight");
+	Ogre::Light* mLightTwo = mSceneMgr->createLight("SecondLight");
+	mLight->setPosition(10,30,20);
+	mLightTwo->setPosition(-10,30,20);
+	mLight->setType(Ogre::Light::LT_POINT);
+	mLight->setDiffuseColour(0.7,0.7,0.7);
+	mLight->setSpecularColour(0.7,0.7,0.7);
+	mLightTwo->setType(Ogre::Light::LT_POINT);
+	mLightTwo->setDiffuseColour(0.7,0.7,0.7);
+	mLightTwo->setSpecularColour(0.7,0.7,0.7);
+
+	//mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_ADDITIVE);
 	StringVector items;
 	items.push_back("Passed Frames");
 	items.push_back("Calibration Time");
@@ -1000,15 +1011,15 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 	}
 	else if (arg.key==OIS::KC_M)
 	{
-		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
-		mPlaneNode->translate(0,1,0);
-		help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
+		help->setParamValue("Right humerus pitch",StringConverter::toString(femaleBody->pitchManually("Ulna.R",5)));
+		//mPlaneNode->translate(0,1,0);
+		//help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
 	}
 	else if (arg.key==OIS::KC_N)
 	{	
-		mPlaneNode->translate(0,-1,0);
-		help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
-		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",-5)));
+		//mPlaneNode->translate(0,-1,0);
+		//help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
+		help->setParamValue("Right humerus pitch",StringConverter::toString(femaleBody->pitchManually("Ulna.R",-5)));
 	}
 	else if (arg.key==OIS::KC_ADD)
 	{
@@ -1097,18 +1108,15 @@ void assignWeightsToBones(Ogre::Bone* bone,Ogre::AnimationState* anim)
 
 void InturlamDressingRoom::createFloor()
 {
-	Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create("FloorMat", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-	Ogre::TextureUnitState* tuisTexture = mat->getTechnique(0)->getPass(0)->createTextureUnitState("checkerboard.jpg");
- 
 	Ogre::MovablePlane* mPlane = new Ogre::MovablePlane("Plane");
 	mPlane->d = 0;
 	mPlane->normal = Ogre::Vector3::UNIT_Y;
  
 	Ogre::MeshManager::getSingleton().createPlane("PlaneMesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *mPlane, 120, 120, 1, 1, true, 1, 1, 1, Ogre::Vector3::UNIT_Z);
 	Ogre::Entity* mPlaneEnt = mSceneMgr->createEntity("PlaneEntity", "PlaneMesh");
-	mPlaneEnt->setMaterialName("FloorMat");
+	mPlaneEnt->setMaterialName("floor");
  
-	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-26,0));
+	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-24.5,0));
 	mPlaneNode->attachObject(mPlaneEnt);
 }
 
@@ -1130,8 +1138,9 @@ void InturlamDressingRoom::createSimulation()
 	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
 
 	femaleBody=new SkeletalMesh(mKinect);
-	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","MALEY.mesh");
 
+	//femaleBody->Mesh->setCastShadows(true);
 	//Animation
 	//Ogre::AnimationStateSet* ass=femaleBody->Mesh->getAllAnimationStates();
 	//Ogre::AnimationStateIterator s=ass->getAnimationStateIterator();
@@ -1194,15 +1203,15 @@ void InturlamDressingRoom::filtersAndAnimations()
 	q.w=rightHumerus.hierarchicalRotation.rotationQuaternion.w;
 	Ogre::Matrix3 rotM;
 	q.ToRotationMatrix(rotM);
-	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	rotM.ToEulerAnglesZYX(yaw,pitch,roll);
 	help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
 	help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
 	help->setParamValue("Right humerus roll",StringConverter::toString(roll));
-	NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_LEFT];
-	//q.x=leftHumerus.hierarchicalRotation.rotationQuaternion.x;
-	//q.y=leftHumerus.hierarchicalRotation.rotationQuaternion.y;
-	//q.z=leftHumerus.hierarchicalRotation.rotationQuaternion.z;
-	//q.w=leftHumerus.hierarchicalRotation.rotationQuaternion.w;
+	NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_RIGHT];
+	q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
+	q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
+	q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
+	q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
 	q=q.Inverse();
 	q.ToRotationMatrix(rotM);
 	rotM.ToEulerAnglesZXY(yaw,pitch,roll);

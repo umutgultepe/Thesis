@@ -25,7 +25,7 @@ material DressFabric
             polygon_mode solid
             scene_blend one zero
             scene_blend_op add
-            shading gouraud
+            shading phong
             transparent_sorting on
             texture_unit 
             {

@@ -8,8 +8,8 @@ material wire_0080081
     {
         pass wire_0080081
         {
-            ambient 0.0313725508749485 0.0313725508749485 0.529411792755127 1.0
-            diffuse 0.02509804107394875 0.02509804107394875 0.42352944051518193 1.0
+            ambient 0.6681511998176575 0.5252195000648499 0.21415019035339355 1.0
+            diffuse 0.534520967819109 0.42017560631298423 0.17132015483558405 1.0
             specular 0.17450980842113495 0.17450980842113495 0.17450980842113495 1.0 12.5
             emissive 0.0 0.0 0.0 1.0
 
@@ -27,7 +27,7 @@ material wire_0080081
             polygon_mode solid
             scene_blend one zero
             scene_blend_op add
-            shading gouraud
+            shading phong
             transparent_sorting on
 
         }

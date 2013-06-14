@@ -198,16 +198,24 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				continue;
 			}
 			#if USE_NUI
-			//else if (tBone->getName()=="Foot.R")
-			//{
-			//	q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
-			//	boneExists.at(BONE_RIGHT_FOOT)=true;
-			//}
-			//else if (tBone->getName()=="Foot.L")
-			//{	
-			//	q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
-			//	boneExists.at(BONE_LEFT_FOOT)=true;
-			//}
+			else if (tBone->getName()=="Foot.R")
+			{
+				//q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
+				tBone->setManuallyControlled(true);
+				pitchManually("Foot.R",-5);
+				boneExists.at(BONE_LEFT_FOOT)=true;
+				continue;
+				//boneExists.at(BONE_RIGHT_FOOT)=true;
+			}
+			else if (tBone->getName()=="Foot.L")
+			{	
+				//q2.FromAngleAxis(Ogre::Degree(-90),Vector3(1,0,0));
+				tBone->setManuallyControlled(true);
+				boneExists.at(BONE_RIGHT_FOOT)=true;
+				pitchManually("Foot.L",-5);
+				continue;
+				//boneExists.at(BONE_LEFT_FOOT)=true;
+			}
 			#endif
 			else if (tBone->getName()=="Root")
 			{
@@ -245,6 +253,39 @@ Real SkeletalMesh::rollManually(const Ogre::String& modelBoneName, Real modifier
 	q.FromRotationMatrix(rotM);
 	bone->setOrientation(q);
 	return roll.valueDegrees();
+}
+
+Real SkeletalMesh::yawManually(const Ogre::String& modelBoneName, Real modifier)
+{
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* bone = skel->getBone(modelBoneName);
+	Quaternion q=bone->getOrientation();
+	Ogre::Matrix3 rotM;
+	q.ToRotationMatrix(rotM);
+	Radian yaw,pitch,roll;
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	yaw=Radian(Degree(yaw.valueDegrees()+modifier));
+	rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+	q.FromRotationMatrix(rotM);
+	bone->setOrientation(q);
+	return yaw.valueDegrees();
+}
+
+
+Real SkeletalMesh::pitchManually(const Ogre::String& modelBoneName, Real modifier)
+{
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* bone = skel->getBone(modelBoneName);
+	Quaternion q=bone->getOrientation();
+	Ogre::Matrix3 rotM;
+	q.ToRotationMatrix(rotM);
+	Radian yaw,pitch,roll;
+	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
+	pitch=Radian(Degree(pitch.valueDegrees()+modifier));
+	rotM.FromEulerAnglesZXY(yaw,pitch,roll);
+	q.FromRotationMatrix(rotM);
+	bone->setOrientation(q);
+	return pitch.valueDegrees();
 }
 
 void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip)
@@ -316,7 +357,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 		if (yawInitialHierarchical.valueDegrees()<45)
 		{
-			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-135)),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-45)),pitchInitialHierarchical,rollInitialHierarchical);
 			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
@@ -330,7 +371,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		}
 		else
 		{
-			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical-Radian(Math::PI),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical-Radian(Math::PI/2),pitchInitialHierarchical,rollInitialHierarchical);
 			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
@@ -370,7 +411,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 			rollInitialHierarchical=Radian(0);
 			pitchInitialHierarchical=Radian(Math::PI)-pitchInitialHierarchical;
 		}
-		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(-3*Radian(Math::PI/4) ,pitchInitialHierarchical,rollInitialHierarchical);
+		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(-2*Radian(Math::PI/4) ,pitchInitialHierarchical,rollInitialHierarchical);
 		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 		modifier=modifiedHierarchical*initialHierarchical.Inverse();
 		q=q*modifier;
@@ -452,6 +493,29 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 			roll=rollPrevious-(rollPrevious-roll)/20;
 		else
 			roll=rollPrevious;
+
+		jump=abs(yaw.valueDegrees() - yawPrevious.valueDegrees());
+		if (jump >7 && jump<90)
+			yaw=yawPrevious-(yawPrevious-yaw)/10;
+		else if (jump < 353 && jump>270)
+		{
+			if (yawPrevious.valueDegrees() > 0)
+				yaw=yawPrevious+Radian(Degree((360-jump)/10));
+			else
+				yaw=yawPrevious-Radian(Degree((360-jump)/10));
+		}
+		else if (jump<270 && jump > 180)
+		{
+			if (yawPrevious.valueDegrees() > 0)
+				yaw=yawPrevious+Radian(Degree((360-jump)/20));
+			else
+				yaw=yawPrevious-Radian(Degree((360-jump)/20));
+		}
+		else if (jump<180 && jump > 90)
+			yaw=yawPrevious-(yawPrevious-yaw)/20;
+		else
+			yaw=yawPrevious;
+
 		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
@@ -472,21 +536,21 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 		if (yawInitialHierarchical.valueDegrees()>-45)
 		{
-			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(135)),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(45)),pitchInitialHierarchical,rollInitialHierarchical);
 			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
 		}
 		else if (yawInitialHierarchical.valueDegrees()<-135)
 		{
-			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(45)),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(Radian(Degree(-45)),pitchInitialHierarchical,rollInitialHierarchical);
 			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
 		}
 		else
 		{
-			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical+Radian(Math::PI),pitchInitialHierarchical,rollInitialHierarchical);
+			modifiedHierarchicalMatrix.FromEulerAnglesYXZ(yawInitialHierarchical+Radian(Math::PI/2),pitchInitialHierarchical,rollInitialHierarchical);
 			modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 			modifier=modifiedHierarchical*initialHierarchical.Inverse();
 			q=q*modifier;
@@ -526,7 +590,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 			rollInitialHierarchical=Radian(0);
 			pitchInitialHierarchical=Radian(Math::PI)-pitchInitialHierarchical;
 		}
-		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(3*Radian(Math::PI/4) ,pitchInitialHierarchical,rollInitialHierarchical);
+		modifiedHierarchicalMatrix.FromEulerAnglesYXZ(2*Radian(Math::PI/4) ,pitchInitialHierarchical,rollInitialHierarchical);
 		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
 		modifier=modifiedHierarchical*initialHierarchical.Inverse();
 		q=q*modifier;
@@ -574,6 +638,29 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 			roll=rollPrevious-(rollPrevious-roll)/20;
 		else
 			roll=rollPrevious;
+
+		//jump=abs(yaw.valueDegrees() - yawPrevious.valueDegrees());
+		//if (jump >7 && jump<90)
+		//	yaw=yawPrevious-(yawPrevious-yaw)/10;
+		//else if (jump < 353 && jump>270)
+		//{
+		//	if (yawPrevious.valueDegrees() > 0)
+		//		yaw=yawPrevious+Radian(Degree((360-jump)/10));
+		//	else
+		//		yaw=yawPrevious-Radian(Degree((360-jump)/10));
+		//}
+		//else if (jump<270 && jump > 180)
+		//{
+		//	if (yawPrevious.valueDegrees() > 0)
+		//		yaw=yawPrevious+Radian(Degree((360-jump)/20));
+		//	else
+		//		yaw=yawPrevious-Radian(Degree((360-jump)/20));
+		//}
+		//else if (jump<180 && jump > 90)
+		//	yaw=yawPrevious-(yawPrevious-yaw)/20;
+		//else
+		//	yaw=yawPrevious;
+
 		rotM.FromEulerAnglesZXY(yaw,pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
@@ -589,13 +676,14 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
 		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;	
 		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
-		initialHierarchicalMatrix.ToEulerAnglesYZX(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
-		if (pitchInitialHierarchical.valueDegrees() > 0)
-			pitchInitialHierarchical=Radian(0);
-		modifiedHierarchicalMatrix.FromEulerAnglesYZX(Radian(0),Radian(0),Radian(0));
+		initialHierarchicalMatrix.ToEulerAnglesZXY(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
+		//if (pitchInitialHierarchical.valueDegrees() < 10)
+		pitchInitialHierarchical+=Radian(Degree(20));
+		modifiedHierarchicalMatrix.FromEulerAnglesZXY(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
 		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
-		modifier=initialHierarchical.Inverse();
-		q=modifier*q;
+		modifier=modifiedHierarchical*initialHierarchical.Inverse();
+		q=q*modifier;
+
 	}
 	else if ( sj.endJoint==NUI_SKELETON_POSITION_ANKLE_LEFT )
 	{
@@ -608,15 +696,15 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
 		initialHierarchical.w=sj.hierarchicalRotation.rotationQuaternion.w;	
 		initialHierarchical.ToRotationMatrix(initialHierarchicalMatrix);
-		initialHierarchicalMatrix.ToEulerAnglesYZX(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
-		if (pitchInitialHierarchical.valueDegrees() > 0)
-			pitchInitialHierarchical=Radian(0);
-		modifiedHierarchicalMatrix.FromEulerAnglesYZX(Radian(0),Radian(0),Radian(0));
+		initialHierarchicalMatrix.ToEulerAnglesZXY(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
+		//if (pitchInitialHierarchical.valueDegrees() > -10)
+			pitchInitialHierarchical+=Radian(Degree(20));
+		modifiedHierarchicalMatrix.FromEulerAnglesZXY(yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical);
 		modifiedHierarchical.FromRotationMatrix(modifiedHierarchicalMatrix);
-		modifier=initialHierarchical.Inverse();
-		q=modifier*q;
-	}
+		modifier=modifiedHierarchical*initialHierarchical.Inverse();
+		q=q*modifier;
 
+	}
 	return q;
 
 }
@@ -773,7 +861,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(180),Ogre::Vector3(0,1,0)));
 			else if (i==BONE_STOMACH)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
-			else if (i!=BONE_ROOT)
+			else if (i!=BONE_ROOT && i!= BONE_LEFT_FOOT &&  i!= BONE_RIGHT_FOOT )
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 		}
 	}
@@ -781,13 +869,12 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 
 
 	if(!bNewUser)
-	{			 
+	{
 		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
 		Vector3 newPos;
 		newPos.x = -torsoPos.x*1000;
 		newPos.y = torsoPos.y*1000;
 		newPos.z = -torsoPos.z*1000;
-
 		newPos2 = (newPos - origTorsoPos)/250;
 
 		newPos2.y -= 0.3;
@@ -802,6 +889,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 			}
 		}
 
+		
 		rootBone->setPosition(newPos2);
 	}
 

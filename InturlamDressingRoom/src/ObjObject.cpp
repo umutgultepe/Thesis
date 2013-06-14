@@ -958,7 +958,6 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
 			iBuf->unlock();
 			subMesh->setMaterialName(materialList.at( curFaceGroup->materialIndice)->getName());
 			subMesh->useSharedVertices = false;
-		
 		 }
 
 
@@ -968,6 +967,8 @@ void ObjObject::loadIntoOgre(Ogre::SceneManager* sceneManager,Ogre::String name)
     // object->_setBoundingSphereRadius(scaleFactor);
          // this line makes clear the mesh is loaded (avoids memory leaks)
        object->load();
+
+
 	   //if (!Ogre::MeshManager::getSingleton().resourceExists(name+".mesh"))
 	   //{
 		  //Ogre::MeshSerializer* mSerializer=new Ogre::MeshSerializer();
