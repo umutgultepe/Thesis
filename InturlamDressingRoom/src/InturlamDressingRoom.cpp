@@ -865,8 +865,9 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Right humerus roll");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 350, items);
-	help->setParamValue("Target Spheres",boneStrings[targetRadii]);
-	help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
+	help->setParamValue("Target Spheres",boneStrings[targetRadii]);	
+	if (collider_set_up)
+		help->setParamValue("Radius",StringConverter::toString(box_collider[targetRadii].radius));
     help->hide();
 	start_time=GetTickCount();
 	latest_update=GetTickCount();
@@ -1079,6 +1080,8 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		changeCloth(3);
 	else if (arg.key==OIS::KC_5)
 		changeCloth(4);
+	else if (arg.key==OIS::KC_6)
+		changeCloth(5);
 	return BaseApplication::keyPressed(arg);
 }
 
@@ -1138,6 +1141,7 @@ void InturlamDressingRoom::createSimulation()
 	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
 
 	femaleBody=new SkeletalMesh(mKinect);
+	//femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
 	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","MALEY.mesh");
 
 	//femaleBody->Mesh->setCastShadows(true);

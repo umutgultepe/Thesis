@@ -1,0 +1,11 @@
+# Blender MTL File: 'Male_Pants.blend'
+# Material Count: 1
+newmtl ShirtFree
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.768627 0.357647 0.247843
+Ks 0.076471 0.076471 0.076471
+Ni 1.000000
+illum 2
+
+

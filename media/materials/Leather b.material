@@ -1,0 +1,35 @@
+// Leather b genrated by blender2ogre 0.5.8
+
+material Leather b 
+{
+    receive_shadows on 
+
+    technique
+    {
+        pass Leather b
+        {
+            ambient 0.9960784316062927 0.95686274766922 0.8549019694328308 1.0
+            diffuse 0.7968627571592144 0.7654902095420688 0.6839215857374903 1.0
+            specular 0.03921568766236305 0.03921568766236305 0.03921568766236305 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            alpha_to_coverage off
+            colour_write on
+            cull_hardware clockwise
+            depth_check on
+            depth_func less_equal
+            depth_write on
+            illumination_stage 
+            light_clip_planes off
+            light_scissor off
+            lighting on
+            normalise_normals off
+            polygon_mode solid
+            scene_blend one zero
+            scene_blend_op add
+            shading gouraud
+            transparent_sorting on
+
+        }
+    }
+}

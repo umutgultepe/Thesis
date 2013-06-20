@@ -1,0 +1,35 @@
+// chrome08 210 genrated by blender2ogre 0.5.8
+
+material chrome08 210 
+{
+    receive_shadows on 
+
+    technique
+    {
+        pass chrome08 210
+        {
+            ambient 0.003921568859368563 0.003921568859368563 0.003921568859368563 1.0
+            diffuse 0.003137255134243594 0.003137255134243594 0.003137255134243594 1.0
+            specular 0.3450980484485626 0.3450980484485626 0.3450980484485626 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+
+            alpha_to_coverage off
+            colour_write on
+            cull_hardware clockwise
+            depth_check on
+            depth_func less_equal
+            depth_write on
+            illumination_stage 
+            light_clip_planes off
+            light_scissor off
+            lighting on
+            normalise_normals off
+            polygon_mode solid
+            scene_blend one zero
+            scene_blend_op add
+            shading gouraud
+            transparent_sorting on
+
+        }
+    }
+}
