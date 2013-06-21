@@ -1,16 +1,16 @@
-// combinaison genrated by blender2ogre 0.5.9
+// DusterInnerShirt genrated by blender2ogre 0.5.8
 
-material combinaison 
+material DusterInnerShirt 
 {
     receive_shadows on 
 
     technique
     {
-        pass combinaison
+        pass DusterInnerShirt
         {
-            ambient 0.3960784375667572 0.3960784375667572 0.3960784375667572 1.0
-            diffuse 0.3168627547750287 0.3168627547750287 0.3168627547750287 1.0
-            specular 0.4490196108818054 0.4490196108818054 0.4490196108818054 1.0 12.5
+            ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
+            diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
+            specular 0.5 0.5 0.5 1.0 12.5
             emissive 0.0 0.0 0.0 1.0
 
             alpha_to_coverage off
