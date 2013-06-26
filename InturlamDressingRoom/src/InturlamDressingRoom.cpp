@@ -840,15 +840,20 @@ void InturlamDressingRoom::createScene(void)
 	mSceneMgr->setAmbientLight(Ogre::ColourValue(0.4, 0.4, 0.4));
 	mLight = mSceneMgr->createLight("MainLight");
 	Ogre::Light* mLightTwo = mSceneMgr->createLight("SecondLight");
+	Ogre::Light* mLightThree = mSceneMgr->createLight("ThirdLight");
 	mLight->setPosition(10,30,20);
 	mLightTwo->setPosition(-10,30,20);
+	mLightThree->setPosition(0,30,-20);
 	mLight->setType(Ogre::Light::LT_POINT);
 	mLight->setDiffuseColour(0.7,0.7,0.7);
 	mLight->setSpecularColour(0.7,0.7,0.7);
 	mLightTwo->setType(Ogre::Light::LT_POINT);
 	mLightTwo->setDiffuseColour(0.7,0.7,0.7);
-	mLightTwo->setSpecularColour(0.7,0.7,0.7);
-
+	mLightThree->setSpecularColour(0.7,0.7,0.7);
+	mLightThree->setType(Ogre::Light::LT_POINT);
+	mLightThree->setDiffuseColour(0.7,0.7,0.7);
+	mLightThree->setSpecularColour(0.7,0.7,0.7);
+	
 	//mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_ADDITIVE);
 	StringVector items;
 	items.push_back("Passed Frames");
