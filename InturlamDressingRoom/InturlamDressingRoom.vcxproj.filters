@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\ikan">
+      <UniqueIdentifier>{6064ec27-f11d-4a55-b6d9-b94d4de8ac54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ikan">
+      <UniqueIdentifier>{797d8cfe-f362-47cf-bec4-1dbdfa3d8521}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\InturlamDressingRoom.h">
@@ -54,6 +60,15 @@
     <ClInclude Include="include\NUI_Controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\ikan\srs.h">
+      <Filter>Header Files\ikan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ikan\trig.h">
+      <Filter>Header Files\ikan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ikan\myvec.h">
+      <Filter>Header Files\ikan</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\InturlamDressingRoom.cpp">
@@ -88,6 +103,15 @@
     </ClCompile>
     <ClCompile Include="src\NUI_Controller.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ikan\myvec.cxx">
+      <Filter>Source Files\ikan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ikan\srs.cxx">
+      <Filter>Source Files\ikan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ikan\trig.cxx">
+      <Filter>Source Files\ikan</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

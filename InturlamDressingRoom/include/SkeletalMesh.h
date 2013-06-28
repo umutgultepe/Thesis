@@ -3,8 +3,10 @@
 #include "ClothResizer.h"
 #include "KinectController.h"
 #include "NUI_Controller.h"
+
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
+
 #define TOTAL_BONE_COUNT 28
 #define ACTIVE_BONE_COUNT 17
 class KinectController;
@@ -234,8 +236,15 @@ public:
 
 
 	NUI_Vector4 leftFootOldPosition, rightFootOldPosition;
+	bool solveIK(Vector3 goal,Bone* b1,Bone* b2,Bone* b3);
+	Ogre::Vector3 leftFootOldRenderPosition,
+				  rightFootOldRenderPosition,
+				  leftHipOldRenderPosition,
+				  rightHipOldRenderPosition,
+				  oldTorsoPosition;
 
-	Ogre::Vector3 leftFootOldRenderPosition, rightFootOldRenderPosition;
+	Ogre::Quaternion leftFootOldOrientation,
+				  rightFootOldOrientation;
 
 	bool leftFootConstrained, rightFootConstrained;
 

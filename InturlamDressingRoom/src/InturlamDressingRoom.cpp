@@ -876,6 +876,8 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Right V");
 	items.push_back("Left Y");
 	items.push_back("Right Y");
+	items.push_back("Ikan solved");
+	items.push_back("Angle");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 350, items);
 	help->setParamValue("Target Spheres",boneStrings[targetRadii]);	
@@ -1135,7 +1137,7 @@ void InturlamDressingRoom::createFloor()
 	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-24.5,0));
 	mPlaneNode->attachObject(mPlaneEnt);
 }
-
+Ogre::SceneNode* fNode;
 void InturlamDressingRoom::createSimulation()
 {
 	#if USE_USER_SCALING
@@ -1151,6 +1153,7 @@ void InturlamDressingRoom::createSimulation()
 	clothHandle=mSceneMgr->getRootSceneNode()->createChildSceneNode();
 	clothNode=clothHandle->createChildSceneNode("ClothNode");
 	femaleNode=clothHandle->createChildSceneNode("FemaleHandle");
+	fNode= femaleNode;
 	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
 
 	femaleBody=new SkeletalMesh(mKinect);

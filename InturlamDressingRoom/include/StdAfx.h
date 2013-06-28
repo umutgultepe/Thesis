@@ -56,8 +56,11 @@ typedef _Vector4 NUI_Vector4;
 #include <Cloth/PxClothReadData.h> 
 #include "Stream.h"
 
-#include "srs.h"
-
+namespace ikan{
+#include "ikan\myvec.h"
+#include "ikan\trig.h"
+#include "ikan\srs.h"
+};
 
 using namespace Ogre;
 
