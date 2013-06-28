@@ -753,7 +753,7 @@ Ogre::Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj
 
 float y_threshold= -0.85,
 	v_threshold = 0.0015,
-	epsilon = 0.1;
+	epsilon = 0.05;
 
 void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewPosition, float leftFootVelocity, float rightFootVelocity)
 {
@@ -861,7 +861,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 	}
 	else if (rightFootConstrained)
 	{
-		if (leftFootNewPosition.y -epsilon > rightFootNewPosition.y)
+		if (rightFootNewPosition.y -epsilon > leftFootNewPosition.y)
 		{
 			rightFootConstrained = false;
 			leftFootConstrained = true;
