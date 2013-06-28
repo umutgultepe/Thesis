@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN   
+
 #include <windows.h>
 #include <ole2.h>
 #include <stdio.h>
@@ -54,7 +55,9 @@ typedef _Vector4 NUI_Vector4;
 #include <PxCudaContextManager.h>
 #include <Cloth/PxClothReadData.h> 
 #include "Stream.h"
- 
+
+#include "srs.h"
+
 
 using namespace Ogre;
 

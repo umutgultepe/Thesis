@@ -3,11 +3,14 @@
 #include "SkeletalMesh.h"
 
 
+
 SkeletalMesh::SkeletalMesh(void)
 {
 
 	m_SmoothingFactor = 0.6;
 	m_SmoothingDelta = 0;
+	leftFootConstrained=false;
+	rightFootConstrained=false;
 	bNewUser=true;
 	boneExists.resize(ACTIVE_BONE_COUNT);
 	for (int i=0;i<ACTIVE_BONE_COUNT;i++)
@@ -60,7 +63,7 @@ void SkeletalMesh::setupBone(const String& name,const Ogre::Quaternion& q)
 void SkeletalMesh::setupBone(const String& name,const Ogre::Radian& angle, const Vector3 axis)
 {
 		
-	Quaternion q;
+	Ogre::Quaternion q;
 	q.FromAngleAxis(angle,axis);	 
 	setupBone(name, q);
 
@@ -180,7 +183,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			else if (tBone->getName()=="UlnaExtent.R")
 			{
 				tBone->setManuallyControlled(true);
-				Quaternion twist;
+				Ogre::Quaternion twist;
 				Matrix3 twistMatrix;	
 				twistMatrix.FromEulerAnglesYXZ(Radian(Math::PI/4),Radian(0),Radian(0));
 				twist.FromRotationMatrix(twistMatrix);
@@ -190,7 +193,7 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 			else if (tBone->getName()=="UlnaExtent.L")
 			{
 				tBone->setManuallyControlled(true);
-				Quaternion twist;
+				Ogre::Quaternion twist;
 				Matrix3 twistMatrix;	
 				twistMatrix.FromEulerAnglesYXZ(-Radian(Math::PI/4),Radian(0),Radian(0));
 				twist.FromRotationMatrix(twistMatrix);
@@ -204,8 +207,20 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				tBone->setManuallyControlled(true);
 				pitchManually("Foot.R",-5);
 				boneExists.at(BONE_LEFT_FOOT)=true;
-				continue;
 				//boneExists.at(BONE_RIGHT_FOOT)=true;
+				ikan::Matrix rightKneeToFoot, rightHipToKnee;
+				Vector3 kneeToFootVector = tBone->getPosition();
+				Vector3 hipToKneeVector = tBone->getParent()->getPosition();
+				ikan::set_translation(rightKneeToFoot,kneeToFootVector.x,kneeToFootVector.y,kneeToFootVector.z);
+				ikan::set_translation(rightHipToKnee,hipToKneeVector.x,hipToKneeVector.y,hipToKneeVector.z);
+				rightFootOldPosition.x=0;
+				rightFootOldPosition.y=0;
+				rightFootOldPosition.z=-1;
+				float a[3]={0,0,1};
+				float p[3]={1,0,0};
+				rightFootKinematicSolver = new ikan::SRS(rightHipToKnee,rightKneeToFoot, a , p);
+				rightFootKinematicSolver->ProjectOn();
+				continue;
 			}
 			else if (tBone->getName()=="Foot.L")
 			{	
@@ -213,6 +228,19 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				tBone->setManuallyControlled(true);
 				boneExists.at(BONE_RIGHT_FOOT)=true;
 				pitchManually("Foot.L",-5);
+				leftFootOldPosition.x=0;
+				leftFootOldPosition.y=0;
+				leftFootOldPosition.z=-1;
+				ikan::Matrix leftKneeToFoot, leftHipToKnee;
+				Vector3 kneeToFootVector = tBone->getPosition();
+				Vector3 hipToKneeVector = tBone->getParent()->getPosition();
+				ikan::set_translation(leftKneeToFoot,kneeToFootVector.x,kneeToFootVector.y,kneeToFootVector.z);
+				ikan::set_translation(leftHipToKnee,hipToKneeVector.x,hipToKneeVector.y,hipToKneeVector.z);
+				float a[3]={0,0,1};
+				float p[3]={1,0,0};
+				leftFootKinematicSolver = new ikan::SRS(leftHipToKnee,leftKneeToFoot, a , p);
+				leftFootKinematicSolver->ProjectOn();
+
 				continue;
 				//boneExists.at(BONE_LEFT_FOOT)=true;
 			}
@@ -233,9 +261,9 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 
 	}
 	setupBone("Root",Degree(0),Degree(0),Degree(0));
+	leftFootConstrained=false;
+	rightFootConstrained=false;
 	//setupBone("Waist",Degree(0),Degree(0),Degree(0));
-
-
 	return Mesh;
 }
 
@@ -243,7 +271,7 @@ Real SkeletalMesh::rollManually(const Ogre::String& modelBoneName, Real modifier
 {
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
-	Quaternion q=bone->getOrientation();
+	Ogre::Quaternion q=bone->getOrientation();
 	Ogre::Matrix3 rotM;
 	q.ToRotationMatrix(rotM);
 	Radian yaw,pitch,roll;
@@ -259,7 +287,7 @@ Real SkeletalMesh::yawManually(const Ogre::String& modelBoneName, Real modifier)
 {
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
-	Quaternion q=bone->getOrientation();
+	Ogre::Quaternion q=bone->getOrientation();
 	Ogre::Matrix3 rotM;
 	q.ToRotationMatrix(rotM);
 	Radian yaw,pitch,roll;
@@ -276,7 +304,7 @@ Real SkeletalMesh::pitchManually(const Ogre::String& modelBoneName, Real modifie
 {
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
 	Ogre::Bone* bone = skel->getBone(modelBoneName);
-	Quaternion q=bone->getOrientation();
+	Ogre::Quaternion q=bone->getOrientation();
 	Ogre::Matrix3 rotM;
 	q.ToRotationMatrix(rotM);
 	Radian yaw,pitch,roll;
@@ -311,7 +339,7 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 		Ogre::Matrix3 matOri(jointOri.orientation.elements[0],-jointOri.orientation.elements[1],jointOri.orientation.elements[2],
 							-jointOri.orientation.elements[3],jointOri.orientation.elements[4],-jointOri.orientation.elements[5],
 							jointOri.orientation.elements[6],-jointOri.orientation.elements[7],jointOri.orientation.elements[8]);
-		Quaternion q;
+		Ogre::Quaternion q;
 			
 		newQ.FromRotationMatrix(matOri);
 			
@@ -323,10 +351,10 @@ void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, XnSkeletonJo
 }
 
 int xxmodifier=45;
-Quaternion oldQ;
-Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip)
+Ogre::Quaternion oldQ;
+Ogre::Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip)
 {
-	Quaternion q;
+	Ogre::Quaternion q;
 	q.x=sj.absoluteRotation.rotationQuaternion.x;
 	q.y=sj.absoluteRotation.rotationQuaternion.y;
 	q.z=sj.absoluteRotation.rotationQuaternion.z;
@@ -346,7 +374,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
 		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
-		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		Ogre::Quaternion initialHierarchical,modifiedHierarchical,modifier;
 		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
@@ -399,7 +427,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 	{	
 		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
 		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
-		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		Ogre::Quaternion initialHierarchical,modifiedHierarchical,modifier;
 		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
@@ -419,7 +447,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 		//Rotate the extent bone
 		if (yawInitialHierarchical.valueDegrees()<90 && yawInitialHierarchical.valueDegrees()>-90)
 		{
-			Quaternion twist;
+			Ogre::Quaternion twist;
 			Matrix3 twistMatrix;	
 			twistMatrix.FromEulerAnglesYXZ(yawInitialHierarchical+Radian(Math::PI/4),Radian(0),Radian(0));
 			twist.FromRotationMatrix(twistMatrix);
@@ -525,7 +553,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
 		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
-		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		Ogre::Quaternion initialHierarchical,modifiedHierarchical,modifier;
 		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
@@ -578,7 +606,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 	{	
 		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
 		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
-		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		Ogre::Quaternion initialHierarchical,modifiedHierarchical,modifier;
 		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
@@ -670,7 +698,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
 		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
-		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		Ogre::Quaternion initialHierarchical,modifiedHierarchical,modifier;
 		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
@@ -690,7 +718,7 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 		Ogre::Matrix3 initialHierarchicalMatrix,modifiedHierarchicalMatrix;
 		Radian yawInitialHierarchical,pitchInitialHierarchical,rollInitialHierarchical;
-		Quaternion initialHierarchical,modifiedHierarchical,modifier;
+		Ogre::Quaternion initialHierarchical,modifiedHierarchical,modifier;
 		initialHierarchical.x=sj.hierarchicalRotation.rotationQuaternion.x;
 		initialHierarchical.y=sj.hierarchicalRotation.rotationQuaternion.y;
 		initialHierarchical.z=sj.hierarchicalRotation.rotationQuaternion.z;
@@ -709,8 +737,186 @@ Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool 
 
 }
 
+float y_threshold= -0.85,
+	v_threshold = 0.0015;
 
-void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip,Quaternion factor)
+
+void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewPosition, float leftFootVelocity, float rightFootVelocity)
+{
+	if (leftFootNewPosition.y < rightFootNewPosition.y ) 
+	{
+		y_threshold = leftFootNewPosition.y;
+		v_threshold = leftFootVelocity;
+	}
+	else
+	{
+		y_threshold = rightFootNewPosition.y;
+		v_threshold = rightFootVelocity;
+	}
+
+}
+
+
+extern OgreBites::ParamsPanel* help;
+bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
+{
+	if (rightFootOldPosition.z == -1)
+	{
+		leftFootOldPosition = nui->m_Points[NUI_SKELETON_POSITION_FOOT_LEFT];
+		rightFootOldPosition = nui->m_Points[NUI_SKELETON_POSITION_FOOT_RIGHT];
+		if (leftFootOldPosition.y < rightFootOldPosition.y ) 
+		{
+			leftFootConstrained = true;
+			leftFootOldRenderPosition = Skeleton->getBone("Foot.L")->getPosition() + Skeleton->getBone("Calf.L")->getPosition();
+			if (leftFootOldPosition.y < y_threshold)
+				y_threshold = leftFootOldPosition.y;
+		}
+		else
+		{
+			rightFootConstrained = true;
+			rightFootOldRenderPosition =  Skeleton->getBone("Foot.R")->getPosition() + Skeleton->getBone("Calf.R")->getPosition();
+			if (rightFootOldPosition.y < y_threshold)
+				y_threshold = rightFootOldPosition.y;
+		}
+		return false;
+	}
+
+	NUI_Vector4 leftFootNewPosition = nui->m_Points[NUI_SKELETON_POSITION_FOOT_LEFT];
+	NUI_Vector4 rightFootNewPosition = nui->m_Points[NUI_SKELETON_POSITION_FOOT_RIGHT];
+	Ogre::Vector3 leftFootVelocityVector,rightFootVelocityVector;
+	leftFootVelocityVector.x = leftFootNewPosition.x - leftFootOldPosition.x;
+	leftFootVelocityVector.y = leftFootNewPosition.y - leftFootOldPosition.y;
+	leftFootVelocityVector.z = leftFootNewPosition.z - leftFootOldPosition.z;
+
+	rightFootVelocityVector.x = rightFootNewPosition.x - rightFootOldPosition.x;
+	rightFootVelocityVector.y = rightFootNewPosition.y - rightFootOldPosition.y;
+	rightFootVelocityVector.z = rightFootNewPosition.z - rightFootOldPosition.z;
+
+	
+	float leftFootVelocity =  leftFootVelocityVector.length();
+	float rightFootVelocity = rightFootVelocityVector.length();
+	
+	
+	help->setParamValue("Left V",Ogre::StringConverter::toString(leftFootVelocity));
+	help->setParamValue("Right V",Ogre::StringConverter::toString(rightFootVelocity));
+	help->setParamValue("Left Y",Ogre::StringConverter::toString(leftFootNewPosition.y));
+	help->setParamValue("Right Y",Ogre::StringConverter::toString(rightFootNewPosition.y));
+
+	if (leftFootConstrained)
+	{
+		if (leftFootVelocity > v_threshold && leftFootNewPosition.y > y_threshold)
+		{
+			if (rightFootVelocity > v_threshold && rightFootNewPosition.y > y_threshold)
+			{
+				rightFootConstrained = false;
+				updateThresholds(leftFootNewPosition, rightFootNewPosition, leftFootVelocity, rightFootVelocity);
+				return checkFootConstraints(nui);
+			}
+			else //Switched constraints, update both feet's positions
+			{
+				leftFootConstrained = false;
+				rightFootConstrained = true;
+				leftFootOldPosition = leftFootNewPosition;
+				rightFootOldPosition = rightFootNewPosition;
+				rightFootOldRenderPosition =  Skeleton->getBone("Foot.R")->getPosition() + Skeleton->getBone("Calf.R")->getPosition();
+				return true;
+			}
+		}
+		else // Foot is still constrained, old position stays.
+		{
+			//leftFootOldPosition = leftFootNewPosition;
+			return true;
+		}
+	}
+	else if (rightFootConstrained)
+	{
+		if (rightFootVelocity > v_threshold && rightFootNewPosition.y > y_threshold)
+		{
+			if (leftFootVelocity > v_threshold && leftFootNewPosition.y > y_threshold)
+			{
+				leftFootConstrained = false;
+				updateThresholds(leftFootNewPosition, rightFootNewPosition, leftFootVelocity, rightFootVelocity);
+				return checkFootConstraints(nui);
+			}
+			else //Switched constraints, update both feet's positions
+			{
+				rightFootConstrained = false;
+				leftFootConstrained = true;
+				leftFootOldPosition = leftFootNewPosition;
+				rightFootOldPosition = rightFootNewPosition;
+				leftFootOldRenderPosition = Skeleton->getBone("Foot.L")->getPosition() + Skeleton->getBone("Calf.L")->getPosition();
+				return true;
+			}
+		}
+		else // Foot is still constrained, old position stays. Update other foot's position
+		{
+			//rightFootOldPosition = rightFootNewPosition;
+			leftFootOldPosition = leftFootNewPosition;
+			return true;
+		}
+	}
+}
+void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
+{
+	if (checkFootConstraints(nui))
+	{
+
+		help->setParamValue("Left Constrained",Ogre::StringConverter::toString(leftFootConstrained));
+		help->setParamValue("Right Constrained",Ogre::StringConverter::toString(rightFootConstrained));
+		help->setParamValue("V_Threshold",Ogre::StringConverter::toString(v_threshold));
+		help->setParamValue("Y_Threshold",Ogre::StringConverter::toString(y_threshold));
+
+		//if (leftFootConstrained)
+		//{
+
+		//	
+		//	////Left foot should stay at its old place
+		//	////Torso can move freely, except wandering too off
+		//	////Right foot can move frely
+		//	////Solve for IK
+		//	//float targetPos[3] = {leftFootOldRenderPosition.x, leftFootOldRenderPosition.y , leftFootOldRenderPosition.z};
+		//	//float targetAngle;
+		//	//if (leftFootKinematicSolver->SetGoalPos(targetPos,ikan_identity,targetAngle))
+		//	//{
+		//	//	Ogre::Bone* leftCalf = Skeleton->getBone("Calf.L");
+		//	//	leftCalf->setInheritOrientation(true);
+		//	//	Ogre::Matrix3 leftOrientationMatrix;
+		//	//	leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+		//	//	leftCalf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+
+		//	//	ikan::Matrix hipRotation;
+		//	//	ikan::Quaternion hipQ;
+		//	//	leftFootKinematicSolver->SolveR1(targetAngle,hipRotation);
+		//	//	ikan::matrixtoq(hipQ,hipRotation);
+		//	//	Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
+
+		//	//	Ogre::Bone* leftHip = Skeleton->getBone("Thigh.L");
+		//	//	leftHip->setInheritOrientation(true);
+		//	//	leftHip->setOrientation(hipQQ);
+		//	//	Skeleton->getBone("Calf.R")->setInheritOrientation(false);
+		//	//	Skeleton->getBone("Thigh.R")->setInheritOrientation(false);;
+		//	//	
+		//	//}
+
+
+		//	////Get the new position of left hip
+		//	////Get the old position of left foot
+		//	////Solve to find hip and foot angles
+
+		//	////
+		//}
+		//else
+		//{
+		//	/*	Skeleton->getBone("Calf.L")->setInheritOrientation(false);
+		//		Skeleton->getBone("Thigh.L")->setInheritOrientation(false);
+		//		Skeleton->getBone("Calf.R")->setInheritOrientation(false);
+		//		Skeleton->getBone("Thigh.R")->setInheritOrientation(false);*/
+		//}
+	}
+
+}
+
+void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip,Ogre::Quaternion factor)
 {
 	// Get the model skeleton bone info
 	Ogre::Skeleton* skel = Mesh->getSkeleton();
@@ -922,6 +1128,8 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	q.w=hip.hierarchicalRotation.rotationQuaternion.w;*/
 	rootBone->setOrientation(rootOrientation);
 
+
+	filterForFootSkating(nui);
 
 	////Arm Fixes
 	//if (boneExists[BONE_LEFT_HUMERUS])

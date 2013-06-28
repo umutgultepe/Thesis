@@ -152,7 +152,10 @@ static _NUI_SKELETON_POSITION_INDEX nuiIDs[]=
 //	NUI_SKELETON_POSITION_FOOT_RIGHT,
 //	(_NUI_SKELETON_POSITION_INDEX)-1
 //};
-
+static const ikan::Matrix ikan_identity = {{1,0,0,0},
+											 {0,1,0,0},
+											 {0,0,1,0},
+											 {0,0,0,1}};
 
 static NUI_Vector4* boneOrientations=0;
 class SkeletalMesh
@@ -190,9 +193,9 @@ public:
 	void setupBone(const String& name,const Ogre::Radian& angle, const Vector3 axis);
 	void resetBonesToInitialState();
 	void transformBone(const Ogre::String& modelBoneName, XnSkeletonJoint skelJoint, bool flip=false);
-	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=true,Quaternion factor=Quaternion::IDENTITY);
+	void transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip=true,Ogre::Quaternion factor=Quaternion::IDENTITY);
 	void setOriginalTorsoPosition();
-	Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip=true);
+	Ogre::Quaternion convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj,bool flip=true);
 
 	inline void setVisible(bool visibleOrNot)
 	{	
@@ -221,6 +224,21 @@ public:
 	{
 		userID=0;
 	}
+
+	bool checkFootConstraints(NUI_Controller* nui);
+	void filterForFootSkating(NUI_Controller* nui);
+
+
+	ikan::SRS *leftFootKinematicSolver,
+			  *rightFootKinematicSolver;
+
+
+	NUI_Vector4 leftFootOldPosition, rightFootOldPosition;
+
+	Ogre::Vector3 leftFootOldRenderPosition, rightFootOldRenderPosition;
+
+	bool leftFootConstrained, rightFootConstrained;
+
 
 };
 

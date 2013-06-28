@@ -862,12 +862,20 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Target Spheres");
 	items.push_back("Radius");
 	items.push_back("Elapsed MS");
-	items.push_back("Left humerus yaw");
-	items.push_back("Left humerus pitch");
-	items.push_back("Left humerus roll");
-	items.push_back("Right humerus yaw");
-	items.push_back("Right humerus pitch");
-	items.push_back("Right humerus roll");
+	items.push_back("Left knee yaw");
+	items.push_back("Left knee pitch");
+	items.push_back("Left knee roll");
+	items.push_back("Right knee yaw");
+	items.push_back("Right knee pitch");
+	items.push_back("Right knee roll");
+	items.push_back("Left Constrained");
+	items.push_back("Right Constrained");
+	items.push_back("V_Threshold");
+	items.push_back("Y_Threshold");
+	items.push_back("Left V");
+	items.push_back("Right V");
+	items.push_back("Left Y");
+	items.push_back("Right Y");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 350, items);
 	help->setParamValue("Target Spheres",boneStrings[targetRadii]);	
@@ -1201,7 +1209,7 @@ void InturlamDressingRoom::filtersAndAnimations()
 	q.z=leftUlna.hierarchicalRotation.rotationQuaternion.z;
 	q.w=leftUlna.hierarchicalRotation.rotationQuaternion.w;
 	q.ToRotationMatrix(tMat);	
-	tMat.ToEulerAnglesYZX(yaw,pitch,roll);
+	tMat.ToEulerAnglesXYZ(yaw,pitch,roll);
 	float lUlnaCurl=1.3*roll.valueRadians()/Ogre::Math::PI;
 	leftArm->setTimePosition(lUlnaCurl);
 	//Arm Testing
@@ -1212,21 +1220,21 @@ void InturlamDressingRoom::filtersAndAnimations()
 	q.w=rightHumerus.hierarchicalRotation.rotationQuaternion.w;
 	Ogre::Matrix3 rotM;
 	q.ToRotationMatrix(rotM);
-	rotM.ToEulerAnglesZYX(yaw,pitch,roll);
-	help->setParamValue("Right humerus yaw",StringConverter::toString(yaw));
-	help->setParamValue("Right humerus pitch",StringConverter::toString(pitch));
-	help->setParamValue("Right humerus roll",StringConverter::toString(roll));
-	NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_RIGHT];
-	q.x=leftHumerus.absoluteRotation.rotationQuaternion.x;
-	q.y=leftHumerus.absoluteRotation.rotationQuaternion.y;
-	q.z=leftHumerus.absoluteRotation.rotationQuaternion.z;
-	q.w=leftHumerus.absoluteRotation.rotationQuaternion.w;
+	rotM.ToEulerAnglesXYZ(yaw,pitch,roll);
+	help->setParamValue("Right knee yaw",StringConverter::toString(yaw));
+	help->setParamValue("Right knee pitch",StringConverter::toString(pitch));
+	help->setParamValue("Right knee roll",StringConverter::toString(roll));
+	NUI_SKELETON_BONE_ORIENTATION leftHumerus=mNui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_LEFT];
+	q.x=leftHumerus.hierarchicalRotation.rotationQuaternion.x;
+	q.y=leftHumerus.hierarchicalRotation.rotationQuaternion.y;
+	q.z=leftHumerus.hierarchicalRotation.rotationQuaternion.z;
+	q.w=leftHumerus.hierarchicalRotation.rotationQuaternion.w;
 	q=q.Inverse();
 	q.ToRotationMatrix(rotM);
 	rotM.ToEulerAnglesZXY(yaw,pitch,roll);
-	help->setParamValue("Left humerus yaw",StringConverter::toString(yaw));
-	help->setParamValue("Left humerus pitch",StringConverter::toString(pitch));
-	help->setParamValue("Left humerus roll",StringConverter::toString(roll));
+	help->setParamValue("Left knee yaw",StringConverter::toString(yaw));
+	help->setParamValue("Left knee pitch",StringConverter::toString(pitch));
+	help->setParamValue("Left knee roll",StringConverter::toString(roll));
 }
 
 bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
