@@ -229,8 +229,10 @@ public:
 
 	bool checkFootConstraints(NUI_Controller* nui);
 	void filterForFootSkating(NUI_Controller* nui);
-
-
+	void testIkan(Vector3 Modifier);
+	void setIkanTarget(Vector3 Modifier);
+	void setLeftIkanTarget(Vector3 Modifier);
+	void setRightIkanTarget(Vector3 Modifier);
 	ikan::SRS *leftFootKinematicSolver,
 			  *rightFootKinematicSolver;
 

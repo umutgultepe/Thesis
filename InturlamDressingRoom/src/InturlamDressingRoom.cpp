@@ -878,6 +878,7 @@ void InturlamDressingRoom::createScene(void)
 	items.push_back("Right Y");
 	items.push_back("Ikan solved");
 	items.push_back("Angle");
+	items.push_back("Foot Y");
 	mTrayMgr->hideLogo();
 	help = mTrayMgr->createParamsPanel(TL_NONE, "HelpMessage", 350, items);
 	help->setParamValue("Target Spheres",boneStrings[targetRadii]);	
@@ -996,12 +997,6 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 {
 	if (arg.key==OIS::KC_SPACE)
 		simulating=!simulating;
-	else if (arg.key==OIS::KC_L)
-	{
-		Ogre::Vector3 vp=mCamera->getPosition();
-		Ogre::Quaternion vq=mCamera->getOrientation();
-		vq=vq;
-	}
 	else if (arg.key==OIS::KC_H)
 		femaleNode->flipVisibility();
 	else if (arg.key==OIS::KC_C)
@@ -1016,26 +1011,64 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		if (lowerCloth)
 			lowerCloth->flipVisibility();
 	}
+	else if (arg.key==OIS::KC_7)
+	{
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+		
+		//upperCloth->pitchManually("Calf.L",30);
+		
+		upperCloth->setIkanTarget(Vector3(5.0,5.0,5.0));
+	}
+	else if (arg.key==OIS::KC_8)
+	{
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+		
+		//upperCloth->pitchManually("Calf.L",30);
+		
+		upperCloth->setIkanTarget(Vector3(2.5,10.0,2.5));
+	}
+	else if (arg.key==OIS::KC_9)
+	{
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+		
+		//upperCloth->pitchManually("Calf.L",30);
+		
+		upperCloth->setIkanTarget(Vector3(0,15.0,0));
+	}
 	else if (arg.key==OIS::KC_P)
 	{
-		help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+		
+		//upperCloth->pitchManually("Calf.L",30);
+		
+		upperCloth->testIkan(Vector3(0,1.0,0));
 	}
 	else if (arg.key==OIS::KC_O)
 	{	
-		
-		help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",-5)));
+		upperCloth->testIkan(Vector3(0,-1.0,0));
+		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",-5)));
 	}
 	else if (arg.key==OIS::KC_M)
 	{
-		help->setParamValue("Right humerus pitch",StringConverter::toString(femaleBody->pitchManually("Ulna.R",5)));
+		upperCloth->testIkan(Vector3(1.0,0,0));
+		//help->setParamValue("Right humerus pitch",StringConverter::toString(femaleBody->pitchManually("Ulna.R",5)));
 		//mPlaneNode->translate(0,1,0);
 		//help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
 	}
 	else if (arg.key==OIS::KC_N)
 	{	
+		upperCloth->testIkan(Vector3(-1.0,0,0));
 		//mPlaneNode->translate(0,-1,0);
 		//help->setParamValue("Right humerus roll",StringConverter::toString(mPlaneNode->getPosition().y));
-		help->setParamValue("Right humerus pitch",StringConverter::toString(femaleBody->pitchManually("Ulna.R",-5)));
+		//help->setParamValue("Right humerus pitch",StringConverter::toString(femaleBody->pitchManually("Ulna.R",-5)));
+	}
+	else if (arg.key==OIS::KC_K)
+	{
+		upperCloth->testIkan(Vector3(0,0,-1.0));
+	}
+	else if (arg.key==OIS::KC_L)
+	{
+		upperCloth->testIkan(Vector3(0,0,1.0));
 	}
 	else if (arg.key==OIS::KC_ADD)
 	{

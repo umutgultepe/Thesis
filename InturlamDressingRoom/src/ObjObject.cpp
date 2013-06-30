@@ -857,6 +857,7 @@ void ObjObject::updateWithPhysics(PxScene* gScene,PxReal timeStep)
 					{
 						int vIndice=faceIndices.at(k)[0+l*3];
 
+
 						*pVertex++ = verticeCoordinates.at(vIndice)[0];
 						*pVertex++ = verticeCoordinates.at(vIndice)[1];
 						*pVertex++ = verticeCoordinates.at(vIndice)[2];

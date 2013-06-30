@@ -79,6 +79,21 @@ void SkeletalMesh::resetBonesToInitialState()
 		
 }
 
+Ogre::Matrix3 copyIkanToOgreRotatinMatrix(ikan::Matrix  v)
+{
+	Ogre::Matrix4 mm;
+	Ogre::Matrix3 m;
+	for (int i=0;i<4;i++)
+	{
+		for (int j=0;j<4;j++)
+		{
+			mm[i][j]=v[i][j];
+		}
+	}
+	mm.extract3x3Matrix(m);
+	return m;
+}
+
 void copyMatrix(ikan::Matrix u,ikan::Matrix  v)
 {
 	memcpy(u,v,sizeof(ikan::Matrix));
@@ -225,11 +240,12 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				Vector3 hipToKneeVector = tBone->getParent()->getPosition()*Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale);
 				ikan::set_translation(rightKneeToFoot,kneeToFootVector.z,kneeToFootVector.x,kneeToFootVector.y);
 				ikan::set_translation(rightHipToKnee,hipToKneeVector.z,hipToKneeVector.x,hipToKneeVector.y);
+				rightLegLength= kneeToFootVector.length() + hipToKneeVector.length();
 				rightFootOldPosition.x=0;
 				rightFootOldPosition.y=0;
 				rightFootOldPosition.z=-1;
-				float a[3]={0,1,0};
-				float p[3]={-1,0,0};
+				float a[3]={0,0,1};
+				float p[3]={1,0,0};
 				rightFootKinematicSolver = new ikan::SRS(rightHipToKnee,rightKneeToFoot, a , p);
 				//rightFootKinematicSolver->ProjectOn();
 				continue;
@@ -252,8 +268,11 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				Vector3 hipToKneeVector = tBone->getParent()->getPosition()*Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale);
 				ikan::set_translation(leftKneeToFoot,kneeToFootVector.z,kneeToFootVector.x,kneeToFootVector.y);
 				ikan::set_translation(leftHipToKnee,hipToKneeVector.z,hipToKneeVector.x,hipToKneeVector.y);
-				float a[3]={0,-1,0};
-				float p[3]={-1,0,0};
+				leftLegLength= kneeToFootVector.length() + hipToKneeVector.length();
+				/*float a[3]={0,-1,0};
+				float p[3]={-1,0,0};*/
+				float a[3]={0,0,1};
+				float p[3]={1,0,0};
 				leftFootKinematicSolver = new ikan::SRS(leftHipToKnee,leftKneeToFoot, a , p);
 				//leftFootKinematicSolver->ProjectOn();
 
@@ -313,6 +332,283 @@ Real SkeletalMesh::yawManually(const Ogre::String& modelBoneName, Real modifier)
 	q.FromRotationMatrix(rotM);
 	bone->setOrientation(q);
 	return yaw.valueDegrees();
+}
+
+extern Ogre::SceneNode* fNode;
+
+extern OgreBites::ParamsPanel* help;
+
+
+inline Vector3 wp(SceneNode* node, Bone* bone)
+{
+return node->_getDerivedPosition() + node->_getDerivedOrientation() * node->_getDerivedScale() * bone->_getDerivedPosition();
+}
+
+void SkeletalMesh::setRightIkanTarget(Vector3 Modifier)
+{
+	Ogre::Bone* hip,*calf,*foot;
+	hip = Skeleton->getBone("Thigh.R");
+	calf = Skeleton->getBone("Calf.R");
+	foot = Skeleton->getBone("Foot.R");		
+	Vector3 newHipToFoot = Modifier;
+
+	float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,newHipToFoot.y};
+	float targetAngle;
+	ikan::Matrix gMatrix;
+	copyMatrix(gMatrix,ikan::idmat);
+	ikan::set_translation(gMatrix,targetPos);
+	int solved = rightFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+	if (solved)
+	{
+		hip->setInheritOrientation(true);
+		calf->setInheritOrientation(true);
+		Ogre::Matrix3 leftOrientationMatrix,rMat;
+		ikan::Matrix hipRotation;
+		ikan::Quaternion hipQ;
+		Quaternion xRot;
+
+
+		leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+		calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+				
+		
+		copyMatrix(hipRotation,ikan::idmat);
+		rightFootKinematicSolver->SolveR1((float)0,hipRotation);
+		ikan::matrixtoq(hipQ,hipRotation);
+		Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+
+		xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+
+		hipQQ.ToRotationMatrix(rMat);
+		Ogre::Radian x,y,z;
+		rMat.ToEulerAnglesXYZ(x,y,z);
+		rMat.FromEulerAnglesXYZ(y,z,-x);
+		hipQQ.FromRotationMatrix(rMat);
+
+		hip->setOrientation(xRot);
+		Ogre::Quaternion fixedRotation = hipQQ;
+		hip->rotate(fixedRotation);
+
+	}
+}
+
+//Left leg ikan test
+void SkeletalMesh::setLeftIkanTarget(Vector3 Modifier)
+{
+	Ogre::Bone* hip,*calf,*foot;
+	hip = Skeleton->getBone("Thigh.L");
+	calf = Skeleton->getBone("Calf.L");
+	foot = Skeleton->getBone("Foot.L");		
+	Vector3 newHipToFoot = Modifier;
+
+	float targetPos[3]={newHipToFoot.z,newHipToFoot.x,newHipToFoot.y};
+	float targetAngle;
+	ikan::Matrix gMatrix;
+	copyMatrix(gMatrix,ikan::idmat);
+	ikan::set_translation(gMatrix,targetPos);
+	int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+	if (solved)
+	{
+		hip->setInheritOrientation(true);
+		calf->setInheritOrientation(true);
+		Ogre::Matrix3 leftOrientationMatrix,rMat;
+		ikan::Matrix hipRotation;
+		ikan::Quaternion hipQ;
+		Quaternion xRot;
+
+
+		leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+		calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+				
+		
+		copyMatrix(hipRotation,ikan::idmat);
+		leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+		ikan::matrixtoq(hipQ,hipRotation);
+		Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+
+		xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+
+		hipQQ.ToRotationMatrix(rMat);
+		Ogre::Radian x,y,z;
+		rMat.ToEulerAnglesXYZ(x,y,z);
+		rMat.FromEulerAnglesXYZ(y,z,-x);
+		hipQQ.FromRotationMatrix(rMat);
+
+		hip->setOrientation(xRot);
+		Ogre::Quaternion fixedRotation = hipQQ;
+		hip->rotate(fixedRotation);
+
+	}
+}
+
+void SkeletalMesh::setIkanTarget(Vector3 Modifier)
+{
+	Ogre::Bone* hip,*calf,*foot;
+	hip = Skeleton->getBone("Thigh.L");
+	calf = Skeleton->getBone("Calf.L");
+	foot = Skeleton->getBone("Foot.L");		
+	Vector3 newHipToFoot = Modifier;
+
+	float targetPos[3]={newHipToFoot.z,newHipToFoot.x,newHipToFoot.y};
+	float targetAngle;
+	ikan::Matrix gMatrix;
+	copyMatrix(gMatrix,ikan::idmat);
+	ikan::set_translation(gMatrix,targetPos);
+	int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+	if (solved)
+	{
+		hip->setInheritOrientation(true);
+		calf->setInheritOrientation(true);
+		Ogre::Matrix3 leftOrientationMatrix,rMat;
+		ikan::Matrix hipRotation;
+		ikan::Quaternion hipQ;
+		Quaternion xRot;
+
+
+		leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+		calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+				
+		
+		copyMatrix(hipRotation,ikan::idmat);
+		leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+		ikan::matrixtoq(hipQ,hipRotation);
+		Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+
+		xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+
+		hipQQ.ToRotationMatrix(rMat);
+		Ogre::Radian x,y,z;
+		rMat.ToEulerAnglesXYZ(x,y,z);
+		rMat.FromEulerAnglesXYZ(y,z,-x);
+		hipQQ.FromRotationMatrix(rMat);
+
+		hip->setOrientation(xRot);
+		Ogre::Quaternion fixedRotation = hipQQ;
+		hip->rotate(fixedRotation);
+
+	}
+}
+
+void SkeletalMesh::testIkan(Vector3 Modifier)
+{
+	Ogre::Bone* hip,*calf,*foot;
+	hip = Skeleton->getBone("Thigh.L");
+	calf = Skeleton->getBone("Calf.L");
+	foot = Skeleton->getBone("Foot.L");		
+	Ogre::Vector3 hipP,footP;
+	hipP = wp(fNode,hip);
+	footP= wp(fNode,foot) +Modifier;
+	Vector3 newHipToFoot = footP-hipP;
+	if (abs(newHipToFoot.z)< 0.0001)
+		newHipToFoot.z=0;
+	if (abs(newHipToFoot.x)< 0.0001)
+		newHipToFoot.x=0;
+	if (abs(newHipToFoot.y)< 0.0001)
+		newHipToFoot.y=0;
+
+	float targetPos[3]={-newHipToFoot.z,newHipToFoot.x,-newHipToFoot.y};
+	//float targetPos[3]={0,0,-newHipToFoot.y};
+	float targetAngle;
+	ikan::Matrix gMatrix;
+	copyMatrix(gMatrix,ikan::idmat);
+	ikan::set_translation(gMatrix,targetPos);
+	int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+	help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
+	help->setParamValue("Foot Y", Ogre::StringConverter::toString(footP.y));
+	if (solved)
+	{
+		hip->setInheritOrientation(true);
+		calf->setInheritOrientation(true);
+		Ogre::Matrix3 leftOrientationMatrix,rMat;
+		ikan::Matrix hipRotation;
+		ikan::Quaternion hipQ;
+		Quaternion xRot;
+
+
+		leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+		calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+				
+		
+		copyMatrix(hipRotation,ikan::idmat);
+		leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+		ikan::matrixtoq(hipQ,hipRotation);
+		Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+
+		xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+
+		hipQQ.ToRotationMatrix(rMat);
+		Ogre::Radian x,y,z;
+		rMat.ToEulerAnglesXYZ(x,y,z);
+		rMat.FromEulerAnglesXYZ(y,z,-x);
+		hipQQ.FromRotationMatrix(rMat);
+
+		hip->setOrientation(xRot);
+		Ogre::Quaternion fixedRotation = hipQQ;
+		hip->rotate(fixedRotation);
+//		calf->setInheritOrientation(true);
+//		Ogre::Matrix3 leftOrientationMatrix;
+//		leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+//		calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+//				
+//		ikan::Matrix hipRotation;
+//		ikan::Quaternion hipQ;
+//		copyMatrix(hipRotation,ikan::idmat);
+//		leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+//		ikan::matrixtoq(hipQ,hipRotation);
+//		Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+//		/*Ogre::Vector3 ikX,ikY,ikZ;
+//		ikX = hipQQ.xAxis();
+//		ikY = hipQQ.yAxis();
+//		ikZ = hipQQ.zAxis();
+//		
+//		hipQQ.FromAxes(-ikY,ikZ,-ikX);
+//*/
+//		
+//		//Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
+//
+//		//Ogre::Quaternion hipQQ;
+//		//Ogre::Matrix3 m =copyIkanToOgreRotatinMatrix(hipRotation);
+//		//hipQQ.FromRotationMatrix(m);		
+//		
+//		Quaternion xRot,yRot,zRot;
+//		xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+//		zRot.FromAngleAxis(-Radian(Math::PI/2),Vector3(0,0,1));
+//		yRot.FromAngleAxis(-Radian(Math::PI/2),Vector3(0,1,0));
+//
+//		//Quaternion zRotated = zRot*hipQQ;
+//		//Quaternion yRotated = yRot*zRotated;
+//
+//		Ogre::Matrix3 rMat;
+//		hipQQ.ToRotationMatrix(rMat);
+//		Ogre::Radian x,y,z;
+//		//rMat.ToEulerAnglesXYZ(x,y,z);
+//		//rMat.FromEulerAnglesXYZ(y,z,x);
+//		//rMat.FromEulerAnglesXZY(x,y,z);
+//		//rMat.ToEulerAnglesXYZ(x,y,z);
+//		//rMat.FromEulerAnglesXYZ(y,z,x);
+//		hipQQ.FromRotationMatrix(rMat);
+//
+//		hip->setInheritOrientation(true);
+//
+//		hip->setOrientation(xRot);
+//		Ogre::Quaternion fixedRotation = hipQQ;
+//		hip->rotate(fixedRotation);
+//		//Radian hYaw = hipQQ.getYaw();
+//		//Radian hPitch = hipQQ.getPitch();
+//		//Radian hRoll = hipQQ.getRoll();
+//
+//		//hip->yaw(hRoll);
+//		//hip->pitch(hYaw);
+//		//hip->roll(hPitch);
+//		//
+//		
+//		//hip->setOrientation(hipQQ);
+//
+//		hip->_update(true,false);
+//		Vector3 diff = footP - (wp(fNode,foot)); 
+//		diff=diff;
+	}
+	
 }
 
 
@@ -773,15 +1069,8 @@ void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewP
 }
 
 
-extern OgreBites::ParamsPanel* help;
 
 
-
-inline Vector3 wp(SceneNode* node, Bone* bone)
-{
-return node->_getDerivedPosition() + node->_getDerivedOrientation() * node->_getDerivedScale() * bone->_getDerivedPosition();
-}
-extern Ogre::SceneNode* fNode;
 
 bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 {
@@ -900,6 +1189,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 	return false;
 }
 
+
 void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 {
 	if (checkFootConstraints(nui))
@@ -913,123 +1203,365 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 		root= Skeleton->getBone("Root");
 		if (leftFootConstrained)
 		{
-
-			//Left foot should stay at its old place
-			//Torso can move freely, except wandering too off
-			//Right foot can move frely
-			//Solve for IK
 			hip = Skeleton->getBone("Thigh.L");
-			calf = Skeleton->getBone("Calf.L");
-			foot = Skeleton->getBone("Foot.L");		
-			Ogre::Vector3 newHip = 	wp(fNode,hip);
-			Ogre::Vector3 newHipToFoot = (leftFootOldRenderPosition-newHip);
-			float targetAngle;
-			/*ikan::Matrix gMatrix;
-			copyMatrix(gMatrix,ikan::idmat);
-			ikan::set_translation(gMatrix,newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y);
-			int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);*/
-			float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y};
-			int solved = leftFootKinematicSolver->SetGoalPos(targetPos,ikan::idmat,targetAngle);
-			help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
-			help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
-			if (solved)
+			Ogre::Vector3 hipP = wp(fNode,hip);
+
+			Vector3 newHipToFoot = leftFootOldRenderPosition-hipP;
+			newHipToFoot.y = -newHipToFoot.y;
+			newHipToFoot.x = -newHipToFoot.x;
+
+			Vector3 RootDisplacer = Ogre::Vector3::ZERO;
+			float xStep = newHipToFoot.x;
+			float zStep = newHipToFoot.z;
+
+			if (leftLegLength < newHipToFoot.length())
 			{
-				Ogre::Bone* leftCalf = Skeleton->getBone("Calf.L");
-				leftCalf->setInheritOrientation(true);
-				Ogre::Matrix3 leftOrientationMatrix;
-				leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
-				leftCalf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
-				
-				ikan::Matrix hipRotation;
-				ikan::Quaternion hipQ;
-				copyMatrix(hipRotation,ikan::idmat);
-				leftFootKinematicSolver->SolveR1((float)0,hipRotation);
-				ikan::matrixtoq(hipQ,hipRotation);
-				Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
-				Quaternion xRot,yRot;
-				xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
-				yRot.FromAngleAxis(Radian(Math::PI/2),Vector3(0,1,0));
-				//yRot.FromAngleAxis(Radian(Math::PI/2),Vector3(0,0,0));
-				Ogre::Bone* leftHip = Skeleton->getBone("Thigh.L");
-				
-				Ogre::Matrix3 rMat;
-				hipQQ.ToRotationMatrix(rMat);
-				Ogre::Radian x,y,z;
-				rMat.ToEulerAnglesXYZ(x,y,z);
-				rMat.FromEulerAnglesXYZ(z,x,y);
-				hipQQ.FromRotationMatrix(rMat);
-
-				leftHip->setInheritOrientation(true);
-				leftHip->setOrientation(hipQQ*xRot*yRot);
-				Skeleton->getBone("Calf.R")->setInheritOrientation(false);
-				Skeleton->getBone("Thigh.R")->setInheritOrientation(false);;
-
-				foot->resetToInitialState();
-				pitchManually("Foot.L",z.valueDegrees());
+				if (abs(newHipToFoot.y) < leftLegLength - 1)
+				{
+					RootDisplacer.y = -(-( leftLegLength - 1) - newHipToFoot.y);
+					newHipToFoot.y = -( leftLegLength - 1);
+					
+				}
+				while (leftLegLength < newHipToFoot.length())
+				{
+					RootDisplacer.x -= xStep;
+					newHipToFoot.x -= xStep;
+					RootDisplacer.z +=zStep;
+					newHipToFoot.z -= zStep;
+				}
 			}
-			foot->_update(true,true);
-			Vector3 diff= leftFootOldRenderPosition-wp(fNode,foot);
-			root->translate(diff/Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale));
+
+			setLeftIkanTarget(newHipToFoot);
+
+			Skeleton->getBone("Thigh.R")->setInheritOrientation(false);
+			Skeleton->getBone("Calf.R")->setInheritOrientation(false);
+
+			root->translate(RootDisplacer);
 		}
 		else
 		{
 			hip = Skeleton->getBone("Thigh.R");
-			calf = Skeleton->getBone("Calf.R");
-			foot = Skeleton->getBone("Foot.R");		
-			Ogre::Vector3 newHip = 	wp(fNode,hip);
-			Ogre::Vector3 newHipToFoot = (rightFootOldRenderPosition-newHip);
-			float targetAngle;
-			//ikan::Matrix gMatrix;
-			//copyMatrix(gMatrix,ikan::idmat);
-			//ikan::set_translation(gMatrix,newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y);
-			//int solved = rightFootKinematicSolver->SetGoal(gMatrix,targetAngle);
-			float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y};
-			int solved = rightFootKinematicSolver->SetGoalPos(targetPos,ikan::idmat,targetAngle);
-			help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
-			help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
-			if (solved)
+			Ogre::Vector3 hipP = wp(fNode,hip);
+			Vector3 newHipToFoot = rightFootOldRenderPosition-hipP;
+			newHipToFoot.y = -newHipToFoot.y;
+			newHipToFoot.x = -newHipToFoot.x;
+
+			Vector3 RootDisplacer = Ogre::Vector3::ZERO;
+			float xStep = newHipToFoot.x;
+			float zStep = newHipToFoot.z;
+
+			if (rightLegLength < newHipToFoot.length())
 			{
-				Ogre::Bone* rightCalf = Skeleton->getBone("Calf.R");
-				rightCalf->setInheritOrientation(true);
-				Ogre::Matrix3 rightOrientationMatrix;
-				rightOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
-				rightCalf->setOrientation(Ogre::Quaternion(rightOrientationMatrix));
-
-				ikan::Matrix hipRotation;
-				ikan::Quaternion hipQ;
-				copyMatrix(hipRotation,ikan::idmat);
-				rightFootKinematicSolver->SolveR1((float)0,hipRotation);
-				ikan::matrixtoq(hipQ,hipRotation);
-				Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
-				Quaternion xRot,yRot;
-				xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
-				yRot.FromAngleAxis(-Radian(Math::PI/2),Vector3(0,1,0));
-				Ogre::Bone* rightHip = Skeleton->getBone("Thigh.R");
-				
-				Ogre::Matrix3 rMat;
-				hipQQ.ToRotationMatrix(rMat);
-				Ogre::Radian x,y,z;
-				rMat.ToEulerAnglesXYZ(x,y,z);
-				rMat.FromEulerAnglesXYZ(-z,x,y);
-				hipQQ.FromRotationMatrix(rMat);
-				rightHip->setInheritOrientation(true);
-				rightHip->setOrientation(hipQQ*xRot*yRot);
-				Skeleton->getBone("Calf.L")->setInheritOrientation(false);
-				Skeleton->getBone("Thigh.L")->setInheritOrientation(false);;
-
-				foot->resetToInitialState();
-				pitchManually("Foot.R",-z.valueDegrees());
-
+				if (abs(newHipToFoot.y) < rightLegLength - 1)
+				{
+					RootDisplacer.y = -(-( rightLegLength - 1) - newHipToFoot.y);
+					newHipToFoot.y = -( rightLegLength - 1);
+				}
+				while (rightLegLength < newHipToFoot.length())
+				{
+					RootDisplacer.x -= xStep;
+					newHipToFoot.x -= xStep;
+					RootDisplacer.z +=zStep;
+					newHipToFoot.z -= zStep;
+				}
 			}
 
-			foot->_update(true,true);
-			Vector3 diff= rightFootOldRenderPosition-wp(fNode,foot);
-			root->translate(diff/Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale));
+			setRightIkanTarget(newHipToFoot);
 
+			Skeleton->getBone("Thigh.L")->setInheritOrientation(false);
+			Skeleton->getBone("Calf.L")->setInheritOrientation(false);
+			root->translate(RootDisplacer);
 		}
 	}
 
 }
+
+
+
+//void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
+//{
+//	if (checkFootConstraints(nui))
+//	{
+//
+//		help->setParamValue("Left Constrained",Ogre::StringConverter::toString(leftFootConstrained));
+//		help->setParamValue("Right Constrained",Ogre::StringConverter::toString(rightFootConstrained));
+//		help->setParamValue("V_Threshold",Ogre::StringConverter::toString(v_threshold));
+//		help->setParamValue("Y_Threshold",Ogre::StringConverter::toString(y_threshold));
+//		Ogre::Bone* hip,*calf,*foot,*root;
+//		root= Skeleton->getBone("Root");
+//		if (leftFootConstrained)
+//		{
+//
+//			//Left foot should stay at its old place
+//			//Torso can move freely, except wandering too off
+//			//Right foot can move frely
+//			//Solve for IK
+//			hip = Skeleton->getBone("Thigh.L");
+//			calf = Skeleton->getBone("Calf.L");
+//			foot = Skeleton->getBone("Foot.L");		
+//			//Ogre::Vector3 newHip = 	wp(fNode,hip);
+//			//Ogre::Vector3 newHipToFoot = (leftFootOldRenderPosition-newHip);
+//			//float targetAngle;
+//			///*ikan::Matrix gMatrix;
+//			//copyMatrix(gMatrix,ikan::idmat);
+//			//ikan::set_translation(gMatrix,newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y);
+//			//int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);*/
+//			//float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y};
+//			//int solved = leftFootKinematicSolver->SetGoalPos(targetPos,ikan::idmat,targetAngle);
+//			//help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
+//			//help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
+//
+//
+//			Ogre::Vector3 hipP = wp(fNode,hip);
+//			Vector3 newHipToFoot = leftFootOldRenderPosition-hipP;
+//			if (abs(newHipToFoot.z)< 0.0001)
+//				newHipToFoot.z=0;
+//			if (abs(newHipToFoot.x)< 0.0001)
+//				newHipToFoot.x=0;
+//			if (abs(newHipToFoot.y)< 0.0001)
+//				newHipToFoot.y=0;
+//
+//			float targetPos[3]={-newHipToFoot.z,newHipToFoot.x,-newHipToFoot.y};
+//			//float targetPos[3]={0,0,-newHipToFoot.y};
+//			float targetAngle;
+//			ikan::Matrix gMatrix;
+//			copyMatrix(gMatrix,ikan::idmat);
+//			ikan::set_translation(gMatrix,targetPos);
+//			int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+//			help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
+//			help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
+//
+//			if (solved)
+//			{
+//				hip->setInheritOrientation(true);
+//				calf->setInheritOrientation(true);
+//				Ogre::Matrix3 leftOrientationMatrix,rMat;
+//				ikan::Matrix hipRotation;
+//				ikan::Quaternion hipQ;
+//				Quaternion xRot;
+//
+//
+//				leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+//				calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+//				
+//		
+//				copyMatrix(hipRotation,ikan::idmat);
+//				leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+//				ikan::matrixtoq(hipQ,hipRotation);
+//				Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+//
+//				xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+//
+//				hipQQ.ToRotationMatrix(rMat);
+//				Ogre::Radian x,y,z;
+//				rMat.ToEulerAnglesXYZ(x,y,z);
+//				rMat.FromEulerAnglesXYZ(y,z,-x);
+//				hipQQ.FromRotationMatrix(rMat);
+//
+//				hip->setOrientation(xRot);
+//				Ogre::Quaternion fixedRotation = hipQQ;
+//				hip->rotate(fixedRotation);
+//				
+//				foot->resetToInitialState();
+//				pitchManually("Foot.L",y.valueDegrees());
+//
+//				
+//				//Ogre::Bone* leftCalf = Skeleton->getBone("Calf.L");
+//				//leftCalf->setInheritOrientation(true);
+//				//Ogre::Matrix3 leftOrientationMatrix;
+//				//leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+//				//leftCalf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+//				//
+//				//ikan::Matrix hipRotation;
+//				//ikan::Quaternion hipQ;
+//				//copyMatrix(hipRotation,ikan::idmat);
+//				//leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+//				//ikan::matrixtoq(hipQ,hipRotation);
+//				//Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
+//				//Quaternion xRot,zRot;
+//				//xRot.FromAngleAxis(Radian(Math::PI/2),Vector3(1,0,0));
+//				//zRot.FromAngleAxis(-Radian(Math::PI/2),Vector3(0,0,1));
+//				////yRot.FromAngleAxis(Radian(Math::PI/2),Vector3(0,0,0));
+//				//Ogre::Bone* leftHip = Skeleton->getBone("Thigh.L");
+//				//
+//				//Ogre::Matrix3 rMat;
+//				//hipQQ.ToRotationMatrix(rMat);
+//				//Ogre::Radian x,y,z;
+//				//rMat.ToEulerAnglesXYZ(x,y,z);
+//				//rMat.FromEulerAnglesXYZ(x,y,z);
+//				//hipQQ.FromRotationMatrix(rMat);
+//
+//				//leftHip->setInheritOrientation(true);
+//				//leftHip->setOrientation(zRot*xRot*hipQQ);
+//				//Skeleton->getBone("Calf.R")->setInheritOrientation(false);
+//				//Skeleton->getBone("Thigh.R")->setInheritOrientation(false);;
+//			}
+//			foot->_update(true,true);
+//			Vector3 diff= leftFootOldRenderPosition-wp(fNode,foot);
+//			//root->translate(diff/Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale));
+//		}
+//		else
+//		{
+//
+//			//Left foot should stay at its old place
+//			//Torso can move freely, except wandering too off
+//			//Right foot can move frely
+//			//Solve for IK
+//			hip = Skeleton->getBone("Thigh.R");
+//			calf = Skeleton->getBone("Calf.R");
+//			foot = Skeleton->getBone("Foot.R");		
+//			//Ogre::Vector3 newHip = 	wp(fNode,hip);
+//			//Ogre::Vector3 newHipToFoot = (leftFootOldRenderPosition-newHip);
+//			//float targetAngle;
+//			///*ikan::Matrix gMatrix;
+//			//copyMatrix(gMatrix,ikan::idmat);
+//			//ikan::set_translation(gMatrix,newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y);
+//			//int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);*/
+//			//float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y};
+//			//int solved = leftFootKinematicSolver->SetGoalPos(targetPos,ikan::idmat,targetAngle);
+//			//help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
+//			//help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
+//
+//
+//			Ogre::Vector3 hipP = wp(fNode,hip);
+//			Vector3 newHipToFoot = leftFootOldRenderPosition-hipP;
+//			if (abs(newHipToFoot.z)< 0.0001)
+//				newHipToFoot.z=0;
+//			if (abs(newHipToFoot.x)< 0.0001)
+//				newHipToFoot.x=0;
+//			if (abs(newHipToFoot.y)< 0.0001)
+//				newHipToFoot.y=0;
+//
+//			float targetPos[3]={-newHipToFoot.z,newHipToFoot.x,-newHipToFoot.y};
+//			//float targetPos[3]={0,0,-newHipToFoot.y};
+//			float targetAngle;
+//			ikan::Matrix gMatrix;
+//			copyMatrix(gMatrix,ikan::idmat);
+//			ikan::set_translation(gMatrix,targetPos);
+//			int solved = leftFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+//			help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
+//			help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
+//
+//			if (solved)
+//			{
+//				hip->setInheritOrientation(true);
+//				calf->setInheritOrientation(true);
+//				Ogre::Matrix3 leftOrientationMatrix,rMat;
+//				ikan::Matrix hipRotation;
+//				ikan::Quaternion hipQ;
+//				Quaternion xRot;
+//
+//
+//				leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+//				calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+//				
+//		
+//				copyMatrix(hipRotation,ikan::idmat);
+//				leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+//				ikan::matrixtoq(hipQ,hipRotation);
+//				Ogre::Quaternion hipQQ(hipQ[0], hipQ[1], hipQ[2], hipQ[3]);
+//
+//				xRot.FromAngleAxis(Radian(Math::PI),Vector3(1,0,0));
+//
+//				hipQQ.ToRotationMatrix(rMat);
+//				Ogre::Radian x,y,z;
+//				rMat.ToEulerAnglesXYZ(x,y,z);
+//				rMat.FromEulerAnglesXYZ(y,z,-x);
+//				hipQQ.FromRotationMatrix(rMat);
+//
+//				hip->setOrientation(xRot);
+//				Ogre::Quaternion fixedRotation = hipQQ;
+//				hip->rotate(fixedRotation);
+//				
+//				foot->resetToInitialState();
+//				pitchManually("Foot.R",y.valueDegrees());
+//
+//				
+//				//Ogre::Bone* leftCalf = Skeleton->getBone("Calf.L");
+//				//leftCalf->setInheritOrientation(true);
+//				//Ogre::Matrix3 leftOrientationMatrix;
+//				//leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+//				//leftCalf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+//				//
+//				//ikan::Matrix hipRotation;
+//				//ikan::Quaternion hipQ;
+//				//copyMatrix(hipRotation,ikan::idmat);
+//				//leftFootKinematicSolver->SolveR1((float)0,hipRotation);
+//				//ikan::matrixtoq(hipQ,hipRotation);
+//				//Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
+//				//Quaternion xRot,zRot;
+//				//xRot.FromAngleAxis(Radian(Math::PI/2),Vector3(1,0,0));
+//				//zRot.FromAngleAxis(-Radian(Math::PI/2),Vector3(0,0,1));
+//				////yRot.FromAngleAxis(Radian(Math::PI/2),Vector3(0,0,0));
+//				//Ogre::Bone* leftHip = Skeleton->getBone("Thigh.L");
+//				//
+//				//Ogre::Matrix3 rMat;
+//				//hipQQ.ToRotationMatrix(rMat);
+//				//Ogre::Radian x,y,z;
+//				//rMat.ToEulerAnglesXYZ(x,y,z);
+//				//rMat.FromEulerAnglesXYZ(x,y,z);
+//				//hipQQ.FromRotationMatrix(rMat);
+//
+//				//leftHip->setInheritOrientation(true);
+//				//leftHip->setOrientation(zRot*xRot*hipQQ);
+//				//Skeleton->getBone("Calf.R")->setInheritOrientation(false);
+//				//Skeleton->getBone("Thigh.R")->setInheritOrientation(false);;
+//			}
+//			foot->_update(true,true);
+//			Vector3 diff= leftFootOldRenderPosition-wp(fNode,foot);
+//			//root->translate(diff/Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale));
+//			//hip = Skeleton->getBone("Thigh.R");
+//			//calf = Skeleton->getBone("Calf.R");
+//			//foot = Skeleton->getBone("Foot.R");		
+//			//Ogre::Vector3 newHip = 	wp(fNode,hip);
+//			//Ogre::Vector3 newHipToFoot = (rightFootOldRenderPosition-newHip);
+//			//float targetAngle;
+//			////ikan::Matrix gMatrix;
+//			////copyMatrix(gMatrix,ikan::idmat);
+//			////ikan::set_translation(gMatrix,newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y);
+//			////int solved = rightFootKinematicSolver->SetGoal(gMatrix,targetAngle);
+//			//float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,-newHipToFoot.y};
+//			//int solved = rightFootKinematicSolver->SetGoalPos(targetPos,ikan::idmat,targetAngle);
+//			//help->setParamValue("Ikan solved",Ogre::StringConverter::toString(solved));
+//			//help->setParamValue("Angle", Ogre::StringConverter::toString(targetAngle));
+//			//if (solved)
+//			//{
+//			//	Ogre::Bone* rightCalf = Skeleton->getBone("Calf.R");
+//			//	rightCalf->setInheritOrientation(true);
+//			//	Ogre::Matrix3 rightOrientationMatrix;
+//			//	rightOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+//			//	rightCalf->setOrientation(Ogre::Quaternion(rightOrientationMatrix));
+//
+//			//	ikan::Matrix hipRotation;
+//			//	ikan::Quaternion hipQ;
+//			//	copyMatrix(hipRotation,ikan::idmat);
+//			//	rightFootKinematicSolver->SolveR1((float)0,hipRotation);
+//			//	ikan::matrixtoq(hipQ,hipRotation);
+//			//	Ogre::Quaternion hipQQ(hipQ[3], hipQ[0], hipQ[1], hipQ[2]);
+//			//	Quaternion xRot,yRot;
+//			//	xRot.FromAngleAxis(-Radian(Math::PI),Vector3(1,0,0));
+//			//	yRot.FromAngleAxis(-Radian(Math::PI/2),Vector3(0,1,0));
+//			//	Ogre::Bone* rightHip = Skeleton->getBone("Thigh.R");
+//			//	
+//			//	Ogre::Matrix3 rMat;
+//			//	hipQQ.ToRotationMatrix(rMat);
+//			//	Ogre::Radian x,y,z;
+//			//	rMat.ToEulerAnglesXYZ(x,y,z);
+//			//	rMat.FromEulerAnglesXYZ(x,Radian(0),Radian(0));
+//			//	hipQQ.FromRotationMatrix(rMat);
+//			//	rightHip->setInheritOrientation(true);
+//			//	rightHip->setOrientation(hipQQ);
+//			//	Skeleton->getBone("Calf.L")->setInheritOrientation(false);
+//			//	Skeleton->getBone("Thigh.L")->setInheritOrientation(false);;
+//
+//			//	foot->resetToInitialState();
+//			//	pitchManually("Foot.R",-z.valueDegrees());
+//			//root->translate(diff/Ogre::Vector3(userWidthScale,userHeightScale,userDepthScale));
+//
+//		}
+//	}
+//
+//}
 
 void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip,Ogre::Quaternion factor)
 {
