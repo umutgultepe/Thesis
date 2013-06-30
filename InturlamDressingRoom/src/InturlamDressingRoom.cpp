@@ -1134,7 +1134,7 @@ void InturlamDressingRoom::createFloor()
 	Ogre::Entity* mPlaneEnt = mSceneMgr->createEntity("PlaneEntity", "PlaneMesh");
 	mPlaneEnt->setMaterialName("floor");
  
-	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-24.5,0));
+	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-24.0,0));
 	mPlaneNode->attachObject(mPlaneEnt);
 }
 Ogre::SceneNode* fNode;
