@@ -243,6 +243,8 @@ public:
 				  rightHipOldRenderPosition,
 				  oldTorsoPosition;
 
+	float leftLegLength,rightLegLength;
+
 	Ogre::Quaternion leftFootOldOrientation,
 				  rightFootOldOrientation;
 
