@@ -1251,6 +1251,50 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 	return false;
 }
 
+void SkeletalMesh::rotateUnconstrained(NUI_Controller* nui)
+{
+	if (leftFootConstrained)
+	{
+		//Rotate other feet with hieararchical rotations
+		Ogre::Bone* rightThigh,*rightCalf;
+		rightThigh  = Skeleton->getBone("Thigh.R");
+		rightCalf  =Skeleton->getBone("Calf.R");
+			
+		//Right Thigh
+		rightThigh->setInheritOrientation(true);
+		Ogre::Quaternion q;
+		NUI_SKELETON_BONE_ORIENTATION sj = nui->m_Orientations[NUI_SKELETON_POSITION_KNEE_RIGHT];
+		q.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		q.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		q.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		q.w=sj.hierarchicalRotation.rotationQuaternion.w;
+
+		Ogre::Matrix3 rHip;
+		Ogre::Radian x,y,z;
+		q.ToRotationMatrix(rHip);
+		rHip.ToEulerAnglesXYZ(x,y,z);
+		rHip.FromEulerAnglesXYZ(-y,-z,x);
+		q.FromRotationMatrix(rHip);
+		rightThigh->resetToInitialState();
+		rightThigh->rotate(q);
+
+		//Right Calf
+		rightCalf->setInheritOrientation(true);
+		sj = nui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_RIGHT];
+		q.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		q.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		q.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		q.w=sj.hierarchicalRotation.rotationQuaternion.w;
+		q.ToRotationMatrix(rHip);
+		rHip.ToEulerAnglesXYZ(x,y,z);
+		rHip.FromEulerAnglesXYZ(x,y,z);
+		q.FromRotationMatrix(rHip);
+		rightCalf->setOrientation(q);
+	//	rightCalf->resetToInitialState();
+	//	rightCalf->rotate(q*Quaternion(Radian(Math::PI),Vector3(1,0,0)));
+	}
+
+}
 
 void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 {
@@ -1282,10 +1326,9 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			//}
 
 			setLeftIkanTarget(newHipToFoot);
-
+			
 			Skeleton->getBone("Thigh.R")->setInheritOrientation(false);
 			Skeleton->getBone("Calf.R")->setInheritOrientation(false);
-
 //			root->translate(RootDisplacer);
 		}
 		else
@@ -1312,6 +1355,7 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			Skeleton->getBone("Calf.L")->setInheritOrientation(false);
 			//root->translate(RootDisplacer);
 		}
+		//rotateUnconstrained(nui);
 	}
 
 }
@@ -1756,6 +1800,10 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
 			else if (i!=BONE_ROOT && i!= BONE_LEFT_FOOT &&  i!= BONE_RIGHT_FOOT )
 			{	
+				//if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
+				//{
+				//		transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+				//}
 				if (leftFootConstrained)
 				{
 					if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH  )
@@ -1766,6 +1814,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 					if (i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH  )
 						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 				}
+
 			}
 			
 		}

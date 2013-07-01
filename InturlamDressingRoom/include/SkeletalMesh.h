@@ -233,6 +233,8 @@ public:
 	void setIkanTarget(Vector3 Modifier);
 	void setLeftIkanTarget(Vector3 Modifier);
 	void setRightIkanTarget(Vector3 Modifier);
+	void rotateUnconstrained(NUI_Controller* nui);
+	
 	ikan::SRS *leftFootKinematicSolver,
 			  *rightFootKinematicSolver;
 
