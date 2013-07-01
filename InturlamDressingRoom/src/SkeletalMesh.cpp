@@ -1257,41 +1257,51 @@ void SkeletalMesh::rotateUnconstrained(NUI_Controller* nui)
 	{
 		//Rotate other feet with hieararchical rotations
 		Ogre::Bone* rightThigh,*rightCalf;
-		rightThigh  = Skeleton->getBone("Thigh.R");
-		rightCalf  =Skeleton->getBone("Calf.R");
-			
-		//Right Thigh
-		rightThigh->setInheritOrientation(true);
-		Ogre::Quaternion q;
-		NUI_SKELETON_BONE_ORIENTATION sj = nui->m_Orientations[NUI_SKELETON_POSITION_KNEE_RIGHT];
-		q.x=sj.hierarchicalRotation.rotationQuaternion.x;
-		q.y=sj.hierarchicalRotation.rotationQuaternion.y;
-		q.z=sj.hierarchicalRotation.rotationQuaternion.z;
-		q.w=sj.hierarchicalRotation.rotationQuaternion.w;
-
 		Ogre::Matrix3 rHip;
 		Ogre::Radian x,y,z;
-		q.ToRotationMatrix(rHip);
-		rHip.ToEulerAnglesXYZ(x,y,z);
-		rHip.FromEulerAnglesXYZ(-y,-z,x);
-		q.FromRotationMatrix(rHip);
-		rightThigh->resetToInitialState();
-		rightThigh->rotate(q);
+		Ogre::Quaternion q;
+		NUI_SKELETON_BONE_ORIENTATION sj;
+		//rightThigh  = Skeleton->getBone("Thigh.R");
+		rightCalf  =Skeleton->getBone("Calf.R");
+		//	
+		////Right Thigh
+		//rightThigh->setInheritOrientation(true);
+		//sj = nui->m_Orientations[NUI_SKELETON_POSITION_KNEE_RIGHT];
+		//q.x=sj.hierarchicalRotation.rotationQuaternion.x;
+		//q.y=sj.hierarchicalRotation.rotationQuaternion.y;
+		//q.z=sj.hierarchicalRotation.rotationQuaternion.z;
+		//q.w=sj.hierarchicalRotation.rotationQuaternion.w;
+
+
+		//q.ToRotationMatrix(rHip);
+		//rHip.ToEulerAnglesXYZ(x,y,z);
+		//rHip.FromEulerAnglesXYZ(-x,Radian(0),Radian(0));
+		//q.FromRotationMatrix(rHip);
+		//rightThigh->resetToInitialState();
+		//rightThigh->rotate(q*Quaternion(Radian(-Math::PI/2),Vector3(1,0,0)));
 
 		//Right Calf
 		rightCalf->setInheritOrientation(true);
+		rightCalf->resetToInitialState();
+		rightCalf->rotate(Quaternion(Radian(Math::PI),Vector3(1,0,0)));
+		rightCalf->_update(true,true);
+
+
 		sj = nui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_RIGHT];
-		q.x=sj.hierarchicalRotation.rotationQuaternion.x;
-		q.y=sj.hierarchicalRotation.rotationQuaternion.y;
-		q.z=sj.hierarchicalRotation.rotationQuaternion.z;
-		q.w=sj.hierarchicalRotation.rotationQuaternion.w;
+		q.x=sj.absoluteRotation.rotationQuaternion.x;
+		q.y=sj.absoluteRotation.rotationQuaternion.y;
+		q.z=sj.absoluteRotation.rotationQuaternion.z;
+		q.w=sj.absoluteRotation.rotationQuaternion.w;
+
+		q = rightCalf->convertWorldToLocalOrientation(q);
+
 		q.ToRotationMatrix(rHip);
 		rHip.ToEulerAnglesXYZ(x,y,z);
-		rHip.FromEulerAnglesXYZ(x,y,z);
+		rHip.FromEulerAnglesXYZ(x,Radian(0),Radian(0));
 		q.FromRotationMatrix(rHip);
 		rightCalf->setOrientation(q);
 	//	rightCalf->resetToInitialState();
-	//	rightCalf->rotate(q*Quaternion(Radian(Math::PI),Vector3(1,0,0)));
+		//rightCalf->rotate(q*Quaternion(Radian(Math::PI),Vector3(1,0,0)));
 	}
 
 }
@@ -1806,7 +1816,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 				//}
 				if (leftFootConstrained)
 				{
-					if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH  )
+					if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH   )
 						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 				}
 				else if (rightFootConstrained)
