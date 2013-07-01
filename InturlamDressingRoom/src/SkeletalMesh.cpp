@@ -1158,39 +1158,54 @@ void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewP
 
 void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 {
+	Ogre::Bone* root =  Skeleton->getBone("Root");
+	root->_update(true,false);
+	Vector3 newTorsoPosition = root->getPosition();
+	if ((newTorsoPosition-oldTorsoPosition).length() > 0.1)
+	{
+		Vector3 difference = 9 * (oldTorsoPosition-newTorsoPosition)/10;
+		root->translate(difference);
+		root->_update(true,false);
 
-		Ogre::Bone* leftHip,*rightHip,*leftCalf,*rightCalf;
-		Ogre::Quaternion newOrientation,rotator;
-		Vector3 axis;
-		Radian angle;
+	}
+	oldTorsoPosition=root->getPosition();
+
+
+
+
+
+	Ogre::Bone* leftHip,*rightHip,*leftCalf,*rightCalf;
+	Ogre::Quaternion newOrientation,rotator;
+	Vector3 axis;
+	Radian angle;
 		
-		leftCalf = Skeleton->getBone("Calf.L");
-		leftHip =(Bone*) leftCalf->getParent();
-		rightCalf = Skeleton->getBone("Calf.R");
-		rightHip =(Bone*) rightCalf->getParent();
+	leftCalf = Skeleton->getBone("Calf.L");
+	leftHip =(Bone*) leftCalf->getParent();
+	rightCalf = Skeleton->getBone("Calf.R");
+	rightHip =(Bone*) rightCalf->getParent();
 
-		Ogre::Bone* bones[4] = {leftHip,rightHip,leftCalf,rightCalf};
-		Ogre::Quaternion* oldOrientations[4] = {&leftHipOldOrientation,&rightHipOldOrientation,&leftCalfOldOrientation,&rightCalfOldOrientation};
+	Ogre::Bone* bones[4] = {leftHip,rightHip,leftCalf,rightCalf};
+	Ogre::Quaternion* oldOrientations[4] = {&leftHipOldOrientation,&rightHipOldOrientation,&leftCalfOldOrientation,&rightCalfOldOrientation};
 
-		//Smooth joint angles
-		for (int i=0;i<4;i++)
+	//Smooth joint angles
+	for (int i=0;i<4;i++)
+	{
+		bones[i]->_update(true,true);
+		newOrientation = bones[i]->_getDerivedOrientation();
+		rotator = newOrientation* oldOrientations[i]->Inverse();
+		rotator.ToAngleAxis(angle,axis);
+		if (angle.valueRadians() > Math::PI)
 		{
-			bones[i]->_update(true,true);
-			newOrientation = bones[i]->_getDerivedOrientation();
-			rotator = newOrientation* oldOrientations[i]->Inverse();
-			rotator.ToAngleAxis(angle,axis);
-			if (angle.valueRadians() > Math::PI)
-			{
-				angle = angle - 2*Radian(Math::PI);
-			}
-			if (abs(angle.valueRadians()) >  Math::PI/18)
-			{
-				rotator.FromAngleAxis(angle/30,axis);
-			}
-			newOrientation = rotator * (*oldOrientations[i]);
-			bones[i]->_setDerivedOrientation(newOrientation);
-			*oldOrientations[i] = newOrientation;
+			angle = angle - 2*Radian(Math::PI);
 		}
+		if (abs(angle.valueRadians()) >  Math::PI/36)
+		{
+			rotator.FromAngleAxis(angle/10,axis);
+		}
+		newOrientation = rotator * (*oldOrientations[i]);
+		bones[i]->_setDerivedOrientation(newOrientation);
+		*oldOrientations[i] = newOrientation;
+	}
 }
 
 bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
@@ -1213,7 +1228,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 			if (rightFootOldPosition.y < y_threshold)
 				y_threshold = rightFootOldPosition.y;
 		}
-		oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
+		//oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
 		return false;
 	}
 
@@ -1261,7 +1276,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 			{
 				leftFootConstrained = false;
 				rightFootConstrained = true;
-				oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
+				//oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
 				rightFootOldRenderPosition=wp(fNode,Skeleton->getBone("Foot.R"));
 				return true;
 			}
@@ -1293,7 +1308,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 			{
 				rightFootConstrained = false;
 				leftFootConstrained = true;
-				oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
+				//oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
 				leftFootOldRenderPosition = wp(fNode,Skeleton->getBone("Foot.L"));
 				return true;
 			}
@@ -1379,13 +1394,12 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 		if (leftFootConstrained)
 		{
 			hip = Skeleton->getBone("Thigh.L");
+			foot = Skeleton->getBone("Foot.L");
 			Ogre::Vector3 hipP = wp(fNode,hip);
 
 			Vector3 newHipToFoot = /*root->getOrientation().Inverse() **/ ( leftFootOldRenderPosition-hipP);
 			newHipToFoot.y = -newHipToFoot.y;
 			newHipToFoot.x = newHipToFoot.x;
-
-			Vector3 RootDisplacer = Ogre::Vector3::ZERO;
 
 			//if (leftLegLength < newHipToFoot.length())
 			//{
@@ -1398,17 +1412,20 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			
 			Skeleton->getBone("Thigh.R")->setInheritOrientation(false);
 			Skeleton->getBone("Calf.R")->setInheritOrientation(false);
-//			root->translate(RootDisplacer);
+
+			root->_update(true,true);
+			Vector3 RootDisplacer = wp(fNode,foot) - leftFootOldRenderPosition;
+
+			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		else
 		{
 			hip = Skeleton->getBone("Thigh.R");
+			foot = Skeleton->getBone("Foot.R");
 			Ogre::Vector3 hipP = wp(fNode,hip);
 			Vector3 newHipToFoot = /*root->getOrientation().Inverse() * */( rightFootOldRenderPosition-hipP );
 			newHipToFoot.y = -newHipToFoot.y;
 			newHipToFoot.x = -newHipToFoot.x;
-
-			Vector3 RootDisplacer = Ogre::Vector3::ZERO;
 
 
 			//if (rightLegLength < newHipToFoot.length())
@@ -1423,6 +1440,10 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			Skeleton->getBone("Thigh.L")->setInheritOrientation(false);
 			Skeleton->getBone("Calf.L")->setInheritOrientation(false);
 			//root->translate(RootDisplacer);
+			
+			root->_update(true,true);
+			Vector3 RootDisplacer = wp(fNode,foot) - rightFootOldRenderPosition; 
+			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		//rotateUnconstrained(nui);
 	}
