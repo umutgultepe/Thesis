@@ -1191,20 +1191,29 @@ void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewP
 }
 
 
-
+#define CONSTRAINT_SWITCH_TIMEOUT 10
 void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 {
-	//Ogre::Bone* root =  Skeleton->getBone("Root");
-	//root->_update(true,false);
-	//Vector3 newTorsoPosition = root->getPosition();
-	//if ((newTorsoPosition-oldTorsoPosition).length() > 0.1)
-	//{
-	//	Vector3 difference = 15 * (oldTorsoPosition-newTorsoPosition)/16;
-	//	root->translate(difference);
-	//	root->_update(true,false);
+	Ogre::Bone* root =  Skeleton->getBone("Root");
+	root->_update(true,false);
+	Vector3 newTorsoPosition = root->getPosition();
+	if ((newTorsoPosition-oldTorsoPosition).length() > 0.1)
+	{
+		Vector3 difference;
+		if (constraintSwitched > 0)
+		{
+			difference = (CONSTRAINT_SWITCH_TIMEOUT-1) * (oldTorsoPosition-newTorsoPosition)/CONSTRAINT_SWITCH_TIMEOUT;
+			
+		}
+		else
+		{
+			difference = oldTorsoPosition-newTorsoPosition;
+		}
+		root->translate(difference);
+		root->_update(true,false);
 
-	//}
-	//oldTorsoPosition=root->getPosition();
+	}
+	oldTorsoPosition=root->getPosition();
 
 
 
@@ -1236,20 +1245,26 @@ void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 		}
 		if (constraintSwitched > 0)
 		{
-			rotator.FromAngleAxis(angle/5,axis);
-			constraintSwitched --;
+			rotator.FromAngleAxis(angle/CONSTRAINT_SWITCH_TIMEOUT,axis);
+		}
+		else
+		{
+			rotator.FromAngleAxis(angle/3,axis);
 		}
 		
 		//if (abs(angle.valueRadians()) >  Math::PI/18)
 		//{
-			rotator.FromAngleAxis(angle/6,axis);
+			//
 		//}
 		newOrientation = rotator * (*oldOrientations[i]);
 		bones[i]->_setDerivedOrientation(newOrientation);
 		*oldOrientations[i] = newOrientation;
 	}
+	if (constraintSwitched >0)
+		constraintSwitched --;
+
 }
-#define CONSTRAINT_SWITCH_TIMEOUT 5
+
 
 bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 {
@@ -1498,7 +1513,8 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - leftFootOldRenderPosition;
-			//root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
+			RootDisplacer.y = 0;
+			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		else
 		{
@@ -1525,7 +1541,8 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - rightFootOldRenderPosition; 
-			//root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
+			RootDisplacer.y = 0;
+			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		rotateUnconstrained(nui);
 	}
