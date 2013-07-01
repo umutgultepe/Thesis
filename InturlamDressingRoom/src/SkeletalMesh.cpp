@@ -1745,8 +1745,8 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	q.y=hip.hierarchicalRotation.rotationQuaternion.y;
 	q.z=hip.hierarchicalRotation.rotationQuaternion.z;
 	q.w=hip.hierarchicalRotation.rotationQuaternion.w;*/
-	rootBone->setOrientation(Ogre::Quaternion::IDENTITY);
-	//rootBone->setOrientation(rootOrientation);
+	//rootBone->setOrientation(Ogre::Quaternion::IDENTITY);
+	rootBone->setOrientation(rootOrientation);
 	rootBone->_update(true,false);
 
 	filterForFootSkating(nui);
