@@ -1017,7 +1017,7 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		
 		//upperCloth->pitchManually("Calf.L",30);
 		
-		upperCloth->setIkanTarget(Vector3(5.0,5.0,5.0));
+		upperCloth->setLeftIkanTarget(Vector3(0.0,5.0,-5.0));
 	}
 	else if (arg.key==OIS::KC_8)
 	{
@@ -1025,7 +1025,7 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		
 		//upperCloth->pitchManually("Calf.L",30);
 		
-		upperCloth->setIkanTarget(Vector3(2.5,10.0,2.5));
+		upperCloth->setLeftIkanTarget(Vector3(5.000,20.294769,-0.5359765));
 	}
 	else if (arg.key==OIS::KC_9)
 	{
@@ -1033,7 +1033,7 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		
 		//upperCloth->pitchManually("Calf.L",30);
 		
-		upperCloth->setIkanTarget(Vector3(0,15.0,0));
+		upperCloth->setLeftIkanTarget(Vector3(5.0103092,20.294769,-5.0349765));
 	}
 	else if (arg.key==OIS::KC_P)
 	{

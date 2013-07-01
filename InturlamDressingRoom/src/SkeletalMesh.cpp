@@ -245,7 +245,9 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				rightFootOldPosition.y=0;
 				rightFootOldPosition.z=-1;
 				float a[3]={0,0,1};
-				float p[3]={1,0,0};
+				float p[3]={-1,0,0};
+				/*float a[3]={0,0,1};
+				float p[3]={-1,0,0};*/
 				rightFootKinematicSolver = new ikan::SRS(rightHipToKnee,rightKneeToFoot, a , p);
 				//rightFootKinematicSolver->ProjectOn();
 				continue;
@@ -352,6 +354,26 @@ void SkeletalMesh::setRightIkanTarget(Vector3 Modifier)
 	foot = Skeleton->getBone("Foot.R");		
 	Vector3 newHipToFoot = Modifier;
 
+	if (abs(newHipToFoot.x) < 0.5)
+	{
+		newHipToFoot.x = 0;
+	}
+	else if (abs(newHipToFoot.x) < 1.0)
+	{
+		if(newHipToFoot.x > 0)
+			newHipToFoot.x = 1;
+		else
+			newHipToFoot.x = -1;
+	}
+
+
+	if (rightLegLength < newHipToFoot.length())
+	{
+		float scale = 0.9 * rightLegLength / newHipToFoot.length();
+		//RootDisplacer = newHipToFoot * scale - newHipToFoot;
+		newHipToFoot=newHipToFoot * scale;
+	}
+
 	float targetPos[3]={newHipToFoot.z,-newHipToFoot.x,newHipToFoot.y};
 	float targetAngle;
 	ikan::Matrix gMatrix;
@@ -362,14 +384,14 @@ void SkeletalMesh::setRightIkanTarget(Vector3 Modifier)
 	{
 		hip->setInheritOrientation(true);
 		calf->setInheritOrientation(true);
-		Ogre::Matrix3 leftOrientationMatrix,rMat;
+		Ogre::Matrix3 rightOrientationMatrix,rMat;
 		ikan::Matrix hipRotation;
 		ikan::Quaternion hipQ;
 		Quaternion xRot;
 
 
-		leftOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
-		calf->setOrientation(Ogre::Quaternion(leftOrientationMatrix));
+		rightOrientationMatrix.FromEulerAnglesXYZ(Radian(targetAngle),Radian(0),Radian(0));
+		calf->setOrientation(Ogre::Quaternion(rightOrientationMatrix));
 				
 		
 		copyMatrix(hipRotation,ikan::idmat);
@@ -389,6 +411,16 @@ void SkeletalMesh::setRightIkanTarget(Vector3 Modifier)
 		Ogre::Quaternion fixedRotation = hipQQ;
 		hip->rotate(fixedRotation);
 
+
+		if (abs(z.valueRadians())>Math::PI/2)
+		{
+			hip->_update(true,false);
+			Vector3 updatedHipToFoot = hip->convertWorldToLocalPosition( wp(fNode,foot) -wp(fNode,hip));
+			Quaternion HipFlip(Radian(Math::PI),updatedHipToFoot.normalisedCopy());
+			hip->rotate(HipFlip);
+
+		}
+
 	}
 }
 
@@ -400,6 +432,27 @@ void SkeletalMesh::setLeftIkanTarget(Vector3 Modifier)
 	calf = Skeleton->getBone("Calf.L");
 	foot = Skeleton->getBone("Foot.L");		
 	Vector3 newHipToFoot = Modifier;
+
+	if (abs(newHipToFoot.x) < 0.5)
+	{
+		newHipToFoot.x = 0;
+	}
+	else if (abs(newHipToFoot.x) < 1.0)
+	{
+		if(newHipToFoot.x > 0)
+			newHipToFoot.x = 1;
+		else
+			newHipToFoot.x = -1;
+	}
+
+	
+
+	if (leftLegLength < newHipToFoot.length()*0.95)
+	{
+		float scale = 0.95 * leftLegLength / newHipToFoot.length();
+		//RootDisplacer = newHipToFoot * scale - newHipToFoot;
+		newHipToFoot=newHipToFoot * scale;
+	}
 
 	float targetPos[3]={newHipToFoot.z,newHipToFoot.x,newHipToFoot.y};
 	float targetAngle;
@@ -438,6 +491,15 @@ void SkeletalMesh::setLeftIkanTarget(Vector3 Modifier)
 		Ogre::Quaternion fixedRotation = hipQQ;
 		hip->rotate(fixedRotation);
 
+
+		if (abs(z.valueRadians())>Math::PI/2)
+		{
+			hip->_update(true,false);
+			Vector3 updatedHipToFoot = hip->convertWorldToLocalPosition( wp(fNode,foot) -wp(fNode,hip));
+			Quaternion HipFlip(Radian(Math::PI),updatedHipToFoot.normalisedCopy());
+			hip->rotate(HipFlip);
+
+		}
 	}
 }
 
@@ -1208,35 +1270,23 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 
 			Vector3 newHipToFoot = leftFootOldRenderPosition-hipP;
 			newHipToFoot.y = -newHipToFoot.y;
-			newHipToFoot.x = -newHipToFoot.x;
+			newHipToFoot.x = newHipToFoot.x;
 
 			Vector3 RootDisplacer = Ogre::Vector3::ZERO;
-			float xStep = newHipToFoot.x;
-			float zStep = newHipToFoot.z;
 
-			if (leftLegLength < newHipToFoot.length())
-			{
-				if (abs(newHipToFoot.y) < leftLegLength - 1)
-				{
-					RootDisplacer.y = -(-( leftLegLength - 1) - newHipToFoot.y);
-					newHipToFoot.y = -( leftLegLength - 1);
-					
-				}
-				while (leftLegLength < newHipToFoot.length())
-				{
-					RootDisplacer.x -= xStep;
-					newHipToFoot.x -= xStep;
-					RootDisplacer.z +=zStep;
-					newHipToFoot.z -= zStep;
-				}
-			}
+			//if (leftLegLength < newHipToFoot.length())
+			//{
+			//	float scale = 0.9 * leftLegLength / newHipToFoot.length();
+			//	RootDisplacer = newHipToFoot * scale - newHipToFoot;
+			//	newHipToFoot=newHipToFoot * scale;
+			//}
 
 			setLeftIkanTarget(newHipToFoot);
 
 			Skeleton->getBone("Thigh.R")->setInheritOrientation(false);
 			Skeleton->getBone("Calf.R")->setInheritOrientation(false);
 
-			root->translate(RootDisplacer);
+//			root->translate(RootDisplacer);
 		}
 		else
 		{
@@ -1247,30 +1297,20 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			newHipToFoot.x = -newHipToFoot.x;
 
 			Vector3 RootDisplacer = Ogre::Vector3::ZERO;
-			float xStep = newHipToFoot.x;
-			float zStep = newHipToFoot.z;
 
-			if (rightLegLength < newHipToFoot.length())
-			{
-				if (abs(newHipToFoot.y) < rightLegLength - 1)
-				{
-					RootDisplacer.y = -(-( rightLegLength - 1) - newHipToFoot.y);
-					newHipToFoot.y = -( rightLegLength - 1);
-				}
-				while (rightLegLength < newHipToFoot.length())
-				{
-					RootDisplacer.x -= xStep;
-					newHipToFoot.x -= xStep;
-					RootDisplacer.z +=zStep;
-					newHipToFoot.z -= zStep;
-				}
-			}
+
+			//if (rightLegLength < newHipToFoot.length())
+			//{
+			//	float scale = 0.9 * rightLegLength / newHipToFoot.length();
+			//	RootDisplacer = newHipToFoot * scale - newHipToFoot;
+			//	newHipToFoot=newHipToFoot * scale;
+			//}
 
 			setRightIkanTarget(newHipToFoot);
 
 			Skeleton->getBone("Thigh.L")->setInheritOrientation(false);
 			Skeleton->getBone("Calf.L")->setInheritOrientation(false);
-			root->translate(RootDisplacer);
+			//root->translate(RootDisplacer);
 		}
 	}
 
