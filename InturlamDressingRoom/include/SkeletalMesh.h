@@ -234,9 +234,15 @@ public:
 	void setLeftIkanTarget(Vector3 Modifier);
 	void setRightIkanTarget(Vector3 Modifier);
 	void rotateUnconstrained(NUI_Controller* nui);
-	
+	void SmoothJointOrientations(NUI_Controller* nui);
 	ikan::SRS *leftFootKinematicSolver,
 			  *rightFootKinematicSolver;
+
+
+	Ogre::Quaternion leftHipOldOrientation,
+					 leftCalfOldOrientation,
+					 rightHipOldOrientation,
+					 rightCalfOldOrientation;
 
 
 	NUI_Vector4 leftFootOldPosition, rightFootOldPosition;

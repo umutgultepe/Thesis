@@ -249,6 +249,9 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				/*float a[3]={0,0,1};
 				float p[3]={-1,0,0};*/
 				rightFootKinematicSolver = new ikan::SRS(rightHipToKnee,rightKneeToFoot, a , p);
+
+				rightHipOldOrientation = Ogre::Quaternion(Ogre::Degree(180),Vector3(1,0,0));
+				rightCalfOldOrientation = Ogre::Quaternion(Ogre::Degree(180),Vector3(1,0,0));
 				//rightFootKinematicSolver->ProjectOn();
 				continue;
 			}
@@ -277,6 +280,8 @@ Ogre::Entity* SkeletalMesh::loadMesh(Ogre::SceneManager* g_SceneManager,Ogre::Sc
 				float p[3]={1,0,0};
 				leftFootKinematicSolver = new ikan::SRS(leftHipToKnee,leftKneeToFoot, a , p);
 				//leftFootKinematicSolver->ProjectOn();
+				leftHipOldOrientation = Ogre::Quaternion(Ogre::Degree(180),Vector3(1,0,0));
+				leftCalfOldOrientation = Ogre::Quaternion(Ogre::Degree(180),Vector3(1,0,0));
 
 				continue;
 				//boneExists.at(BONE_LEFT_FOOT)=true;
@@ -500,6 +505,25 @@ void SkeletalMesh::setLeftIkanTarget(Vector3 Modifier)
 			hip->rotate(HipFlip);
 
 		}
+
+
+		//		Ogre::Quaternion newOrientation,rotator;
+		//Vector3 axis;
+		//Radian angle;
+		//hip->_update(true,false);
+		//newOrientation = hip->_getDerivedOrientation();
+		//rotator = newOrientation* leftHipOldOrientation.Inverse();
+		//rotator.ToAngleAxis(angle,axis);
+		////if (abs(angle.valueRadians()) > Math::PI/6)
+		////{
+		////	angle = angle/2;
+		////}
+		//rotator.FromAngleAxis(angle/2,axis);
+		//newOrientation = rotator * leftHipOldOrientation;
+		////bones[i]->setInheritOrientation(false);
+		//hip->_setDerivedOrientation(newOrientation);
+		//leftHipOldOrientation = newOrientation;
+
 	}
 }
 
@@ -1132,7 +1156,42 @@ void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewP
 
 
 
+void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
+{
 
+		Ogre::Bone* leftHip,*rightHip,*leftCalf,*rightCalf;
+		Ogre::Quaternion newOrientation,rotator;
+		Vector3 axis;
+		Radian angle;
+		
+		leftCalf = Skeleton->getBone("Calf.L");
+		leftHip =(Bone*) leftCalf->getParent();
+		rightCalf = Skeleton->getBone("Calf.R");
+		rightHip =(Bone*) rightCalf->getParent();
+
+		Ogre::Bone* bones[4] = {leftHip,rightHip,leftCalf,rightCalf};
+		Ogre::Quaternion* oldOrientations[4] = {&leftHipOldOrientation,&rightHipOldOrientation,&leftCalfOldOrientation,&rightCalfOldOrientation};
+
+		//Smooth joint angles
+		for (int i=0;i<4;i++)
+		{
+			bones[i]->_update(true,true);
+			newOrientation = bones[i]->_getDerivedOrientation();
+			rotator = newOrientation* oldOrientations[i]->Inverse();
+			rotator.ToAngleAxis(angle,axis);
+			if (angle.valueRadians() > Math::PI)
+			{
+				angle = angle - 2*Radian(Math::PI);
+			}
+			if (abs(angle.valueRadians()) >  Math::PI/18)
+			{
+				rotator.FromAngleAxis(angle/30,axis);
+			}
+			newOrientation = rotator * (*oldOrientations[i]);
+			bones[i]->_setDerivedOrientation(newOrientation);
+			*oldOrientations[i] = newOrientation;
+		}
+}
 
 bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 {
@@ -1322,7 +1381,7 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			hip = Skeleton->getBone("Thigh.L");
 			Ogre::Vector3 hipP = wp(fNode,hip);
 
-			Vector3 newHipToFoot = leftFootOldRenderPosition-hipP;
+			Vector3 newHipToFoot = /*root->getOrientation().Inverse() **/ ( leftFootOldRenderPosition-hipP);
 			newHipToFoot.y = -newHipToFoot.y;
 			newHipToFoot.x = newHipToFoot.x;
 
@@ -1345,7 +1404,7 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 		{
 			hip = Skeleton->getBone("Thigh.R");
 			Ogre::Vector3 hipP = wp(fNode,hip);
-			Vector3 newHipToFoot = rightFootOldRenderPosition-hipP;
+			Vector3 newHipToFoot = /*root->getOrientation().Inverse() * */( rightFootOldRenderPosition-hipP );
 			newHipToFoot.y = -newHipToFoot.y;
 			newHipToFoot.x = -newHipToFoot.x;
 
@@ -1367,9 +1426,282 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 		}
 		//rotateUnconstrained(nui);
 	}
-
+	SmoothJointOrientations(nui);
 }
 
+
+
+void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip,Ogre::Quaternion factor)
+{
+	// Get the model skeleton bone info
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* bone = skel->getBone(modelBoneName);
+	oldQ=bone->getOrientation();
+	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint,flip);
+	bone->setOrientation(newQ*factor);			
+}
+
+
+Ogre::Quaternion SkeletalMesh::getBoneOrientation(boneID bone)
+{
+
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* targetBone = skel->getBone(boneStrings[bone]);
+	return targetBone->getOrientation();
+}
+
+Ogre::Vector3 SkeletalMesh::updateMesh()
+{
+		mGoalDirection = Vector3::ZERO;   // we will calculate this
+		xn::SkeletonCapability pUserSkel =gKinect->m_UserGenerator.GetSkeletonCap();
+
+		//set smoothing according to the players request.
+		if(m_SmoothingDelta!=0)
+		{
+			m_SmoothingFactor += 0.01 * m_SmoothingDelta;
+			if(m_SmoothingFactor >= 1)
+				m_SmoothingFactor = 0.99;
+			if(m_SmoothingFactor <= 0)
+				m_SmoothingFactor = 0.00;
+			pUserSkel.SetSmoothing(m_SmoothingFactor);
+			Ogre::DisplayString blah = "H/N ";
+			blah.append(Ogre::StringConverter::toString((Real)m_SmoothingFactor));
+			//m_help->setParamValue("Smoothing", blah);
+		}
+		
+		Ogre::Skeleton* skel = Mesh->getSkeleton();
+		Ogre::Bone* rootBone = skel->getBone("Root");
+
+		XnSkeletonJointPosition torsoPos;
+		Vector3 newPos2=Vector3(0,0,0);
+
+		if(bNewUser)
+		{			
+			pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_TORSO, torsoPos);
+			if(torsoPos.fConfidence > 0.5)
+			{
+				origTorsoPos.x = -torsoPos.position.X;
+				origTorsoPos.y = torsoPos.position.Y;
+				origTorsoPos.z = -torsoPos.position.Z;
+				bNewUser = false;
+			}
+		}
+
+
+		Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
+		int i=0;
+
+		for (int i=0;i<ACTIVE_BONE_COUNT;i++)
+		{
+			if (boneExists.at(i))
+			{
+				if (i==BONE_CHEST || i==BONE_STOMACH)
+					transformBone(boneStrings[i],jointIDs[i],true);
+				else
+					transformBone(boneStrings[i],jointIDs[i]);
+			}
+		}
+
+
+
+		if(!bNewUser)
+		{			 
+			pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_TORSO, torsoPos);
+			Vector3 newPos;
+			newPos.x = -torsoPos.position.X;
+			newPos.y = torsoPos.position.Y;
+			newPos.z = -torsoPos.position.Z;
+
+			newPos2 = (newPos - origTorsoPos)/100;
+
+			newPos2.y -= 0.3;
+
+			if (newPos2.y < 0)
+			{
+				newPos2.y /= 2.5;
+
+				if (newPos2.y < -1.5)
+				{
+					newPos2.y = -1.5;
+				}
+			}
+
+
+			if(torsoPos.fConfidence > 0.5)
+			{
+				rootBone->setPosition(newPos2);
+			}
+
+		}
+
+
+		Ogre::Vector3 leftHip=gKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
+		Ogre::Vector3 rightHip=gKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
+		Ogre::Vector3 hipVector=(rightHip-leftHip);
+		Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
+		hipVector.y=0;
+		//Ogre::Quaternion bodyRotation=hipVector.getRotationTo(initialVector);
+		Ogre::Quaternion bodyRotation=initialVector.getRotationTo(hipVector);
+		
+		Ogre::Quaternion qI=rootBone->getInitialOrientation();
+		rootBone->setOrientation(bodyRotation*qI);
+
+	
+		return newPos2;
+	
+}
+
+Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
+{
+	mGoalDirection = Vector3::ZERO;   // we will calculate this
+
+	Ogre::Skeleton* skel = Mesh->getSkeleton();
+	Ogre::Bone* rootBone = skel->getBone("Root");
+
+	NUI_Vector4 torsoPos;
+	Vector3 newPos2=Vector3(0,0,0);
+
+	if(bNewUser)
+	{			
+		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
+		origTorsoPos.x = -torsoPos.x*1000;
+		origTorsoPos.y = torsoPos.y*1000;
+		origTorsoPos.z = -torsoPos.z*1000;
+		bNewUser = false;
+	}
+
+
+	Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
+	int i=0;
+
+	if(!bNewUser)
+	{
+		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
+		Vector3 newPos;
+		newPos.x = -torsoPos.x*1000;
+		newPos.y = torsoPos.y*1000;
+		newPos.z = -torsoPos.z*1000;
+		newPos2 = (newPos - origTorsoPos)/250;
+
+		newPos2.y -= 0.3;
+
+		if (newPos2.y < 0)
+		{
+			newPos2.y /= 2.5;
+
+			if (newPos2.y < -1.5)
+			{
+				newPos2.y = -1.5;
+			}
+		}
+
+		rootBone->setPosition(newPos2);
+	}
+
+
+	//Ogre::Vector3 leftHip=gKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
+	//Ogre::Vector3 rightHip=gKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
+	//Ogre::Vector3 hipVector=(rightHip-leftHip);
+	//Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
+	//hipVector.y=0;
+
+	////Ogre::Quaternion bodyRotation=hipVector.getRotationTo(initialVector);
+	//Ogre::Quaternion qI=rootBone->getInitialOrientation();
+	
+	
+	NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[NUI_SKELETON_POSITION_HIP_CENTER];
+	Ogre::Quaternion q=convertNUItoOgre(hip);
+	Ogre::Quaternion q2(Ogre::Degree(180),Ogre::Vector3(0,1,0));
+	Ogre::Quaternion rootOrientation=q*q2;
+	Ogre::Matrix3 tMat;
+	Radian yaw,pitch,roll;
+	rootOrientation.ToRotationMatrix(tMat);
+	tMat.ToEulerAnglesZXY(yaw,pitch,roll);
+	tMat.FromEulerAnglesZXY(Radian(0),Radian(0),roll);
+	rootOrientation.FromRotationMatrix(tMat);
+
+	/*Quaternion q;
+	q.x=hip.hierarchicalRotation.rotationQuaternion.x;
+	q.y=hip.hierarchicalRotation.rotationQuaternion.y;
+	q.z=hip.hierarchicalRotation.rotationQuaternion.z;
+	q.w=hip.hierarchicalRotation.rotationQuaternion.w;*/
+	rootBone->setOrientation(Ogre::Quaternion::IDENTITY);
+	//rootBone->setOrientation(rootOrientation);
+	rootBone->_update(true,false);
+
+	filterForFootSkating(nui);
+
+	////Arm Fixes
+	//if (boneExists[BONE_LEFT_HUMERUS])
+	//{
+	//	Ogre::Bone* lHumerus=skel->getBone("Humerus.L");
+	//	//Ogre::Radian yq=lHumerus->getOrientation().getYaw();
+	//	
+	//	NUI_SKELETON_BONE_ORIENTATION lElbow=nui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
+	//	Ogre::Quaternion q=convertNUItoOgre(lElbow);
+	//	//Ogre::Quaternion q2(Ogre::Degree(180),Ogre::Vector3(0,1,0));
+	//	Ogre::Quaternion lOrientation=q;
+	//	Ogre::Matrix3 tMat;
+	//	Radian yaw,pitch,roll;
+	//	lOrientation.ToRotationMatrix(tMat);
+	//	tMat.ToEulerAnglesZXY(yaw,pitch,roll);
+	//	tMat.FromEulerAnglesZXY(yaw,pitch,Radian(0));
+	//	lOrientation.FromRotationMatrix(tMat);
+	//	lHumerus->setOrientation(lOrientation);
+	//	//while (yq.valueDegrees()>-135 && yq.valueDegrees()<135)
+	//	//{
+	//	//	lHumerus->yaw(-Degree(90));
+	//	//	yq=lHumerus->getOrientation().getYaw();
+	//	//}
+	//}
+
+	//if (boneExists[BONE_RIGHT_HUMERUS])
+	//{
+	//	Ogre::Bone* rHumerus=skel->getBone("Humerus.R");
+	//	Ogre::Radian yq=rHumerus->getOrientation().getYaw();
+	//	//rHumerus->yaw(-yq);
+	//	//while (yq.valueDegrees()>-45 || yq.valueDegrees()<-135)
+	//	//{
+	//		//rHumerus->yaw(-Degree(90));
+	//		//yq=rHumerus->getOrientation().getYaw();
+	//	//}
+	//}
+
+	rootBone->_update(true,false);
+	
+	for (int i=0;i<ACTIVE_BONE_COUNT;i++)
+	{
+		if (boneExists.at(i))
+		{
+			if (i==BONE_CHEST || i==BONE_NECK)
+				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(180),Ogre::Vector3(0,1,0)));
+			else if (i==BONE_STOMACH)
+				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
+			else if (i!=BONE_ROOT && i!= BONE_LEFT_FOOT &&  i!= BONE_RIGHT_FOOT )
+			{	
+				//if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
+				//{
+				//		transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+				//}
+				if (leftFootConstrained)
+				{
+					if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH   )
+						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+				}
+				else if (rightFootConstrained)
+				{
+					if (i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH  )
+						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+				}
+
+			}
+			
+		}
+	}
+
+
+	return rootBone->getPosition();
+}
 
 
 //void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
@@ -1656,275 +1988,3 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 //	}
 //
 //}
-
-void SkeletalMesh::transformBone(const Ogre::String& modelBoneName, NUI_SKELETON_BONE_ORIENTATION skelJoint, bool flip,Ogre::Quaternion factor)
-{
-	// Get the model skeleton bone info
-	Ogre::Skeleton* skel = Mesh->getSkeleton();
-	Ogre::Bone* bone = skel->getBone(modelBoneName);
-	oldQ=bone->getOrientation();
-	Ogre::Quaternion newQ=convertNUItoOgre(skelJoint,flip);
-	bone->setOrientation(newQ*factor);			
-}
-
-
-Ogre::Quaternion SkeletalMesh::getBoneOrientation(boneID bone)
-{
-
-	Ogre::Skeleton* skel = Mesh->getSkeleton();
-	Ogre::Bone* targetBone = skel->getBone(boneStrings[bone]);
-	return targetBone->getOrientation();
-}
-
-Ogre::Vector3 SkeletalMesh::updateMesh()
-{
-		mGoalDirection = Vector3::ZERO;   // we will calculate this
-		xn::SkeletonCapability pUserSkel =gKinect->m_UserGenerator.GetSkeletonCap();
-
-		//set smoothing according to the players request.
-		if(m_SmoothingDelta!=0)
-		{
-			m_SmoothingFactor += 0.01 * m_SmoothingDelta;
-			if(m_SmoothingFactor >= 1)
-				m_SmoothingFactor = 0.99;
-			if(m_SmoothingFactor <= 0)
-				m_SmoothingFactor = 0.00;
-			pUserSkel.SetSmoothing(m_SmoothingFactor);
-			Ogre::DisplayString blah = "H/N ";
-			blah.append(Ogre::StringConverter::toString((Real)m_SmoothingFactor));
-			//m_help->setParamValue("Smoothing", blah);
-		}
-		
-		Ogre::Skeleton* skel = Mesh->getSkeleton();
-		Ogre::Bone* rootBone = skel->getBone("Root");
-
-		XnSkeletonJointPosition torsoPos;
-		Vector3 newPos2=Vector3(0,0,0);
-
-		if(bNewUser)
-		{			
-			pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_TORSO, torsoPos);
-			if(torsoPos.fConfidence > 0.5)
-			{
-				origTorsoPos.x = -torsoPos.position.X;
-				origTorsoPos.y = torsoPos.position.Y;
-				origTorsoPos.z = -torsoPos.position.Z;
-				bNewUser = false;
-			}
-		}
-
-
-		Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
-		int i=0;
-
-		for (int i=0;i<ACTIVE_BONE_COUNT;i++)
-		{
-			if (boneExists.at(i))
-			{
-				if (i==BONE_CHEST || i==BONE_STOMACH)
-					transformBone(boneStrings[i],jointIDs[i],true);
-				else
-					transformBone(boneStrings[i],jointIDs[i]);
-			}
-		}
-
-
-
-		if(!bNewUser)
-		{			 
-			pUserSkel.GetSkeletonJointPosition(userID, XN_SKEL_TORSO, torsoPos);
-			Vector3 newPos;
-			newPos.x = -torsoPos.position.X;
-			newPos.y = torsoPos.position.Y;
-			newPos.z = -torsoPos.position.Z;
-
-			newPos2 = (newPos - origTorsoPos)/100;
-
-			newPos2.y -= 0.3;
-
-			if (newPos2.y < 0)
-			{
-				newPos2.y /= 2.5;
-
-				if (newPos2.y < -1.5)
-				{
-					newPos2.y = -1.5;
-				}
-			}
-
-
-			if(torsoPos.fConfidence > 0.5)
-			{
-				rootBone->setPosition(newPos2);
-			}
-
-		}
-
-
-		Ogre::Vector3 leftHip=gKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
-		Ogre::Vector3 rightHip=gKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
-		Ogre::Vector3 hipVector=(rightHip-leftHip);
-		Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
-		hipVector.y=0;
-		//Ogre::Quaternion bodyRotation=hipVector.getRotationTo(initialVector);
-		Ogre::Quaternion bodyRotation=initialVector.getRotationTo(hipVector);
-		
-		Ogre::Quaternion qI=rootBone->getInitialOrientation();
-		rootBone->setOrientation(bodyRotation*qI);
-
-	
-		return newPos2;
-	
-}
-
-Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
-{
-	mGoalDirection = Vector3::ZERO;   // we will calculate this
-
-	Ogre::Skeleton* skel = Mesh->getSkeleton();
-	Ogre::Bone* rootBone = skel->getBone("Root");
-
-	NUI_Vector4 torsoPos;
-	Vector3 newPos2=Vector3(0,0,0);
-
-	if(bNewUser)
-	{			
-		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
-		origTorsoPos.x = -torsoPos.x*1000;
-		origTorsoPos.y = torsoPos.y*1000;
-		origTorsoPos.z = -torsoPos.z*1000;
-		bNewUser = false;
-	}
-
-
-	Ogre::Skeleton::BoneIterator bIter=Skeleton->getBoneIterator();
-	int i=0;
-
-	for (int i=0;i<ACTIVE_BONE_COUNT;i++)
-	{
-		if (boneExists.at(i))
-		{
-			if (i==BONE_CHEST || i==BONE_NECK)
-				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(180),Ogre::Vector3(0,1,0)));
-			else if (i==BONE_STOMACH)
-				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
-			else if (i!=BONE_ROOT && i!= BONE_LEFT_FOOT &&  i!= BONE_RIGHT_FOOT )
-			{	
-				//if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
-				//{
-				//		transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
-				//}
-				if (leftFootConstrained)
-				{
-					if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH   )
-						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
-				}
-				else if (rightFootConstrained)
-				{
-					if (i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH  )
-						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
-				}
-
-			}
-			
-		}
-	}
-
-
-
-	if(!bNewUser)
-	{
-		torsoPos=nui->m_Points[NUI_SKELETON_POSITION_HIP_CENTER];
-		Vector3 newPos;
-		newPos.x = -torsoPos.x*1000;
-		newPos.y = torsoPos.y*1000;
-		newPos.z = -torsoPos.z*1000;
-		newPos2 = (newPos - origTorsoPos)/250;
-
-		newPos2.y -= 0.3;
-
-		if (newPos2.y < 0)
-		{
-			newPos2.y /= 2.5;
-
-			if (newPos2.y < -1.5)
-			{
-				newPos2.y = -1.5;
-			}
-		}
-
-		rootBone->setPosition(newPos2);
-	}
-
-
-	//Ogre::Vector3 leftHip=gKinect->getRealCoordinate(XN_SKEL_LEFT_HIP);
-	//Ogre::Vector3 rightHip=gKinect->getRealCoordinate(XN_SKEL_RIGHT_HIP);
-	//Ogre::Vector3 hipVector=(rightHip-leftHip);
-	//Ogre::Vector3 initialVector=Ogre::Vector3(1,0,0);
-	//hipVector.y=0;
-
-	////Ogre::Quaternion bodyRotation=hipVector.getRotationTo(initialVector);
-	//Ogre::Quaternion qI=rootBone->getInitialOrientation();
-	
-	
-	NUI_SKELETON_BONE_ORIENTATION hip=nui->m_Orientations[NUI_SKELETON_POSITION_HIP_CENTER];
-	Ogre::Quaternion q=convertNUItoOgre(hip);
-	Ogre::Quaternion q2(Ogre::Degree(180),Ogre::Vector3(0,1,0));
-	Ogre::Quaternion rootOrientation=q*q2;
-	Ogre::Matrix3 tMat;
-	Radian yaw,pitch,roll;
-	rootOrientation.ToRotationMatrix(tMat);
-	tMat.ToEulerAnglesZXY(yaw,pitch,roll);
-	tMat.FromEulerAnglesZXY(Radian(0),Radian(0),roll);
-	rootOrientation.FromRotationMatrix(tMat);
-
-	/*Quaternion q;
-	q.x=hip.hierarchicalRotation.rotationQuaternion.x;
-	q.y=hip.hierarchicalRotation.rotationQuaternion.y;
-	q.z=hip.hierarchicalRotation.rotationQuaternion.z;
-	q.w=hip.hierarchicalRotation.rotationQuaternion.w;*/
-	rootBone->setOrientation(Ogre::Quaternion::IDENTITY);
-	rootBone->_update(true,false);
-
-	filterForFootSkating(nui);
-
-	////Arm Fixes
-	//if (boneExists[BONE_LEFT_HUMERUS])
-	//{
-	//	Ogre::Bone* lHumerus=skel->getBone("Humerus.L");
-	//	//Ogre::Radian yq=lHumerus->getOrientation().getYaw();
-	//	
-	//	NUI_SKELETON_BONE_ORIENTATION lElbow=nui->m_Orientations[NUI_SKELETON_POSITION_ELBOW_LEFT];
-	//	Ogre::Quaternion q=convertNUItoOgre(lElbow);
-	//	//Ogre::Quaternion q2(Ogre::Degree(180),Ogre::Vector3(0,1,0));
-	//	Ogre::Quaternion lOrientation=q;
-	//	Ogre::Matrix3 tMat;
-	//	Radian yaw,pitch,roll;
-	//	lOrientation.ToRotationMatrix(tMat);
-	//	tMat.ToEulerAnglesZXY(yaw,pitch,roll);
-	//	tMat.FromEulerAnglesZXY(yaw,pitch,Radian(0));
-	//	lOrientation.FromRotationMatrix(tMat);
-	//	lHumerus->setOrientation(lOrientation);
-	//	//while (yq.valueDegrees()>-135 && yq.valueDegrees()<135)
-	//	//{
-	//	//	lHumerus->yaw(-Degree(90));
-	//	//	yq=lHumerus->getOrientation().getYaw();
-	//	//}
-	//}
-
-	//if (boneExists[BONE_RIGHT_HUMERUS])
-	//{
-	//	Ogre::Bone* rHumerus=skel->getBone("Humerus.R");
-	//	Ogre::Radian yq=rHumerus->getOrientation().getYaw();
-	//	//rHumerus->yaw(-yq);
-	//	//while (yq.valueDegrees()>-45 || yq.valueDegrees()<-135)
-	//	//{
-	//		//rHumerus->yaw(-Degree(90));
-	//		//yq=rHumerus->getOrientation().getYaw();
-	//	//}
-	//}
-
-	rootBone->_update(true,false);
-	
-	return rootBone->getPosition();
-}
