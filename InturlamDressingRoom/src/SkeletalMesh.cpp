@@ -426,6 +426,18 @@ void SkeletalMesh::setRightIkanTarget(Vector3 Modifier)
 
 		}
 
+		hip->_update(true,false);
+		Quaternion hipGlobal = hip->_getDerivedOrientation();
+		//Quaternion calfGlobal = calf->_getDerivedOrientation();
+
+		hip->setInheritOrientation(false);
+		//calf->setInheritOrientation(false);
+
+		hip->_update(true,false);
+
+		hip->setOrientation(hipGlobal);
+		//calf->setOrientation(calfGlobal);
+
 	}
 }
 
@@ -506,7 +518,17 @@ void SkeletalMesh::setLeftIkanTarget(Vector3 Modifier)
 
 		}
 
+		hip->_update(true,false);
+		Quaternion hipGlobal = hip->_getDerivedOrientation();
+		//Quaternion calfGlobal = calf->_getDerivedOrientation();
 
+		hip->setInheritOrientation(false);
+		//calf->setInheritOrientation(false);
+
+		hip->_update(true,false);
+
+		hip->setOrientation(hipGlobal);
+		//calf->setOrientation(calfGlobal);
 		//		Ogre::Quaternion newOrientation,rotator;
 		//Vector3 axis;
 		//Radian angle;
@@ -1163,7 +1185,7 @@ void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 	Vector3 newTorsoPosition = root->getPosition();
 	if ((newTorsoPosition-oldTorsoPosition).length() > 0.1)
 	{
-		Vector3 difference = 9 * (oldTorsoPosition-newTorsoPosition)/10;
+		Vector3 difference = 15 * (oldTorsoPosition-newTorsoPosition)/16;
 		root->translate(difference);
 		root->_update(true,false);
 
@@ -1198,10 +1220,10 @@ void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 		{
 			angle = angle - 2*Radian(Math::PI);
 		}
-		if (abs(angle.valueRadians()) >  Math::PI/36)
-		{
-			rotator.FromAngleAxis(angle/10,axis);
-		}
+		//if (abs(angle.valueRadians()) >  Math::PI/18)
+		//{
+			rotator.FromAngleAxis(angle/20,axis);
+		//}
 		newOrientation = rotator * (*oldOrientations[i]);
 		bones[i]->_setDerivedOrientation(newOrientation);
 		*oldOrientations[i] = newOrientation;
@@ -1335,29 +1357,27 @@ void SkeletalMesh::rotateUnconstrained(NUI_Controller* nui)
 		Ogre::Radian x,y,z;
 		Ogre::Quaternion q;
 		NUI_SKELETON_BONE_ORIENTATION sj;
-		//rightThigh  = Skeleton->getBone("Thigh.R");
+		rightThigh  = Skeleton->getBone("Thigh.R");
 		rightCalf  =Skeleton->getBone("Calf.R");
 		//	
-		////Right Thigh
-		//rightThigh->setInheritOrientation(true);
-		//sj = nui->m_Orientations[NUI_SKELETON_POSITION_KNEE_RIGHT];
-		//q.x=sj.hierarchicalRotation.rotationQuaternion.x;
-		//q.y=sj.hierarchicalRotation.rotationQuaternion.y;
-		//q.z=sj.hierarchicalRotation.rotationQuaternion.z;
-		//q.w=sj.hierarchicalRotation.rotationQuaternion.w;
+		//Right Thigh
+		rightThigh->setInheritOrientation(true);
+		sj = nui->m_Orientations[NUI_SKELETON_POSITION_KNEE_RIGHT];
+		q.x=sj.absoluteRotation.rotationQuaternion.x;
+		q.y=sj.absoluteRotation.rotationQuaternion.y;
+		q.z=sj.absoluteRotation.rotationQuaternion.z;
+		q.w=sj.absoluteRotation.rotationQuaternion.w;
 
+		Matrix3 rMat;
+		q.ToRotationMatrix(rMat);
+		rMat.ToEulerAnglesXYZ(x,y,z);
+		rMat.FromEulerAnglesXYZ(-x,y,-z);
+		q.FromRotationMatrix(rMat);
 
-		//q.ToRotationMatrix(rHip);
-		//rHip.ToEulerAnglesXYZ(x,y,z);
-		//rHip.FromEulerAnglesXYZ(-x,Radian(0),Radian(0));
-		//q.FromRotationMatrix(rHip);
-		//rightThigh->resetToInitialState();
-		//rightThigh->rotate(q*Quaternion(Radian(-Math::PI/2),Vector3(1,0,0)));
+		rightThigh->_setDerivedOrientation(q);
 
 		//Right Calf
 		rightCalf->setInheritOrientation(true);
-		rightCalf->resetToInitialState();
-		rightCalf->rotate(Quaternion(Radian(Math::PI),Vector3(1,0,0)));
 		rightCalf->_update(true,true);
 
 
@@ -1366,16 +1386,53 @@ void SkeletalMesh::rotateUnconstrained(NUI_Controller* nui)
 		q.y=sj.absoluteRotation.rotationQuaternion.y;
 		q.z=sj.absoluteRotation.rotationQuaternion.z;
 		q.w=sj.absoluteRotation.rotationQuaternion.w;
+		
 
-		q = rightCalf->convertWorldToLocalOrientation(q);
 
-		q.ToRotationMatrix(rHip);
-		rHip.ToEulerAnglesXYZ(x,y,z);
-		rHip.FromEulerAnglesXYZ(x,Radian(0),Radian(0));
-		q.FromRotationMatrix(rHip);
-		rightCalf->setOrientation(q);
+		rightCalf->_setDerivedOrientation(q);
+		
 	//	rightCalf->resetToInitialState();
 		//rightCalf->rotate(q*Quaternion(Radian(Math::PI),Vector3(1,0,0)));
+	}
+	else
+	{	
+		Ogre::Bone* leftThigh,*leftCalf;
+		Ogre::Matrix3 rHip;
+		Ogre::Radian x,y,z;
+		Ogre::Quaternion q;
+		NUI_SKELETON_BONE_ORIENTATION sj;
+		leftThigh  = Skeleton->getBone("Thigh.L");
+		leftCalf  =Skeleton->getBone("Calf.L");
+		//	
+		//Right Thigh
+		leftThigh->setInheritOrientation(true);
+		sj = nui->m_Orientations[NUI_SKELETON_POSITION_KNEE_LEFT];
+		q.x=sj.absoluteRotation.rotationQuaternion.x;
+		q.y=sj.absoluteRotation.rotationQuaternion.y;
+		q.z=sj.absoluteRotation.rotationQuaternion.z;
+		q.w=sj.absoluteRotation.rotationQuaternion.w;
+
+		Matrix3 rMat;
+		q.ToRotationMatrix(rMat);
+		rMat.ToEulerAnglesXYZ(x,y,z);
+		rMat.FromEulerAnglesXYZ(-x,y,-z);
+		q.FromRotationMatrix(rMat);
+
+		leftThigh->_setDerivedOrientation(q);
+
+		//Right Calf
+		leftCalf->setInheritOrientation(true);
+		leftCalf->_update(true,true);
+
+
+		sj = nui->m_Orientations[NUI_SKELETON_POSITION_ANKLE_LEFT];
+		q.x=sj.absoluteRotation.rotationQuaternion.x;
+		q.y=sj.absoluteRotation.rotationQuaternion.y;
+		q.z=sj.absoluteRotation.rotationQuaternion.z;
+		q.w=sj.absoluteRotation.rotationQuaternion.w;
+
+		leftCalf->_setDerivedOrientation(q);
+
 	}
 
 }
@@ -1410,12 +1467,11 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 
 			setLeftIkanTarget(newHipToFoot);
 			
-			Skeleton->getBone("Thigh.R")->setInheritOrientation(false);
-			Skeleton->getBone("Calf.R")->setInheritOrientation(false);
+			//Skeleton->getBone("Thigh.R")->setInheritOrientation(false);
+			//Skeleton->getBone("Calf.R")->setInheritOrientation(false);
 
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - leftFootOldRenderPosition;
-
 			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		else
@@ -1437,17 +1493,17 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 
 			setRightIkanTarget(newHipToFoot);
 
-			Skeleton->getBone("Thigh.L")->setInheritOrientation(false);
-			Skeleton->getBone("Calf.L")->setInheritOrientation(false);
+			//Skeleton->getBone("Thigh.L")->setInheritOrientation(false);
+			//Skeleton->getBone("Calf.L")->setInheritOrientation(false);
 			//root->translate(RootDisplacer);
 			
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - rightFootOldRenderPosition; 
 			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
-		//rotateUnconstrained(nui);
+		rotateUnconstrained(nui);
 	}
-	SmoothJointOrientations(nui);
+	//SmoothJointOrientations(nui);
 }
 
 
@@ -1700,20 +1756,20 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
 			else if (i!=BONE_ROOT && i!= BONE_LEFT_FOOT &&  i!= BONE_RIGHT_FOOT )
 			{	
-				//if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
+				if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
+				{
+						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+				}
+				//if (leftFootConstrained)
 				//{
+				//	if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
 				//		transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 				//}
-				if (leftFootConstrained)
-				{
-					if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH   )
-						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
-				}
-				else if (rightFootConstrained)
-				{
-					if (i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH  )
-						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
-				}
+				//else if (rightFootConstrained)
+				//{
+				//	if (i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH  )
+				//		transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
+				//}
 
 			}
 			
