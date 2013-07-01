@@ -1234,6 +1234,12 @@ void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 		{
 			angle = angle - 2*Radian(Math::PI);
 		}
+		if (constraintSwitched > 0)
+		{
+			rotator.FromAngleAxis(angle/5,axis);
+			constraintSwitched --;
+		}
+		
 		//if (abs(angle.valueRadians()) >  Math::PI/18)
 		//{
 			rotator.FromAngleAxis(angle/6,axis);
@@ -1243,6 +1249,7 @@ void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 		*oldOrientations[i] = newOrientation;
 	}
 }
+#define CONSTRAINT_SWITCH_TIMEOUT 5
 
 bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 {
@@ -1265,6 +1272,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 				y_threshold = rightFootOldPosition.y;
 		}
 		//oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
+		constraintSwitched = CONSTRAINT_SWITCH_TIMEOUT;
 		return false;
 	}
 
@@ -1296,6 +1304,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 		{
 			leftFootConstrained = false;
 			rightFootConstrained = true;
+			constraintSwitched = CONSTRAINT_SWITCH_TIMEOUT;
 			y_threshold -=epsilon;
 			rightFootOldRenderPosition=wp(fNode,Skeleton->getBone("Foot.R"));
 			return true;
@@ -1314,6 +1323,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 				rightFootConstrained = true;
 				//oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
 				rightFootOldRenderPosition=wp(fNode,Skeleton->getBone("Foot.R"));
+				constraintSwitched = CONSTRAINT_SWITCH_TIMEOUT;
 				return true;
 			}
 		}
@@ -1328,6 +1338,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 		{
 			rightFootConstrained = false;
 			leftFootConstrained = true;
+			constraintSwitched = CONSTRAINT_SWITCH_TIMEOUT;
 			y_threshold -=epsilon;
 			leftFootOldRenderPosition=wp(fNode,Skeleton->getBone("Foot.L"));
 			return true;
@@ -1346,6 +1357,7 @@ bool SkeletalMesh::checkFootConstraints(NUI_Controller* nui)
 				leftFootConstrained = true;
 				//oldTorsoPosition = Skeleton->getBone("Root")->getPosition();
 				leftFootOldRenderPosition = wp(fNode,Skeleton->getBone("Foot.L"));
+				constraintSwitched = CONSTRAINT_SWITCH_TIMEOUT;
 				return true;
 			}
 		}

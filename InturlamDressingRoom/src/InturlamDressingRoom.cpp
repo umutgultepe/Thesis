@@ -935,16 +935,17 @@ void InturlamDressingRoom::updateJoints(Ogre::Bone* bone,int level)
 	if (bone->numChildren()>0 && level<7)
 	{
 		Ogre::String boneName=bone->getName();
-		if (!bone->getInheritOrientation())
-		{
+		//if (!bone->getInheritOrientation())
+		//{
 			Ogre::SceneNode* jointNode=mSceneMgr->getSceneNode(boneName + "Node");
 			#if USE_KINECT
 			Ogre::Quaternion qI = boneNode->getInitialOrientation();
 			#else
 			Ogre::Quaternion qI = Ogre::Quaternion::IDENTITY;
 			#endif
+			jointNode->setInheritOrientation(bone->getInheritOrientation());
 			jointNode->setOrientation(bone->getOrientation()*qI);
-		}
+		//}
 		Ogre::Bone::ChildNodeIterator childIterator=bone->getChildIterator();
 		while(childIterator.hasMoreElements())
 			updateJoints((Ogre::Bone*)childIterator.getNext(),level+1);
@@ -962,6 +963,7 @@ void InturlamDressingRoom::updateVisualHuman()
 	bodyRotation=hipVector.getRotationTo(initialVector);
 #endif
 	Ogre::Bone* rootBone=femaleBody->getSkeleton()->getBone("Root");
+	rootBone->_update(true,false);
 	//Ogre::SceneNode* coreBone=mSceneMgr->getSceneNode("Root to Waist Node");
 	//coreBone->setOrientation(rootBone->getOrientation());
 	updateJoints(rootBone);

@@ -259,7 +259,7 @@ public:
 				  rightFootOldOrientation;
 
 	bool leftFootConstrained, rightFootConstrained;
-
+	int constraintSwitched ;
 
 };
 
