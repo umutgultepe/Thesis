@@ -1348,9 +1348,11 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	updateDepthTexture();
 	if (mNui->mSkeletonUpdated)
 	{
+		Ogre::Vector3 targetPos;
+		targetPos=femaleBody->updateMesh(mNui);
 		if (upperCloth)
-			upperCloth->updateMesh(mNui);
-		Ogre::Vector3 targetPos=femaleBody->updateMesh(mNui);
+			targetPos=upperCloth->updateMesh(mNui);
+		
 		
 		updateVisualHuman();
 		if (lowerCloth)
