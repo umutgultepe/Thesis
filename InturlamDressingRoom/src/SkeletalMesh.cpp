@@ -359,19 +359,26 @@ void SkeletalMesh::setRightIkanTarget(Vector3 Modifier)
 	foot = Skeleton->getBone("Foot.R");		
 	Vector3 newHipToFoot = Modifier;
 
-	if (abs(newHipToFoot.x) < 0.5)
-	{
-		newHipToFoot.x = 0;
-	}
-	else if (abs(newHipToFoot.x) < 1.0)
-	{
-		if(newHipToFoot.x > 0)
-			newHipToFoot.x = 1;
-		else
-			newHipToFoot.x = -1;
-	}
+	//if (abs(newHipToFoot.x) < 0.5)
+	//{
+	//	newHipToFoot.x = 0;
+	//}
+	//else if (abs(newHipToFoot.x) < 1.0)
+	//{
+	//	if(newHipToFoot.x > 0)
+	//		newHipToFoot.x = 1;
+	//	else
+	//		newHipToFoot.x = -1;
+	//}
 
-
+		if (newHipToFoot.z > 0)
+	{
+		newHipToFoot.z = -newHipToFoot.z;
+	}
+	if (newHipToFoot.x < 0.5)
+	{
+		newHipToFoot.x = 0.5;
+	}
 	if (rightLegLength < newHipToFoot.length())
 	{
 		float scale = 0.9 * rightLegLength / newHipToFoot.length();
@@ -450,20 +457,27 @@ void SkeletalMesh::setLeftIkanTarget(Vector3 Modifier)
 	foot = Skeleton->getBone("Foot.L");		
 	Vector3 newHipToFoot = Modifier;
 
-	if (abs(newHipToFoot.x) < 0.5)
-	{
-		newHipToFoot.x = 0;
-	}
-	else if (abs(newHipToFoot.x) < 1.0)
-	{
-		if(newHipToFoot.x > 0)
-			newHipToFoot.x = 1;
-		else
-			newHipToFoot.x = -1;
-	}
+	//if (abs(newHipToFoot.x) < 0.5)
+	//{
+	//	newHipToFoot.x = 0;
+	//}
+	//else if (abs(newHipToFoot.x) < 1.0)
+	//{
+	//	if(newHipToFoot.x > 0)
+	//		newHipToFoot.x = 1;
+	//	else
+	//		newHipToFoot.x = -1;
+	//}
 
 	
-
+		if (newHipToFoot.z > 0)
+	{
+		newHipToFoot.z = -newHipToFoot.z;
+	}
+	if (newHipToFoot.x < 0.5)
+	{
+		newHipToFoot.x = 0.5;
+	}
 	if (leftLegLength < newHipToFoot.length()*0.95)
 	{
 		float scale = 0.95 * leftLegLength / newHipToFoot.length();
@@ -1180,17 +1194,17 @@ void updateThresholds(NUI_Vector4 leftFootNewPosition, NUI_Vector4 rightFootNewP
 
 void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 {
-	Ogre::Bone* root =  Skeleton->getBone("Root");
-	root->_update(true,false);
-	Vector3 newTorsoPosition = root->getPosition();
-	if ((newTorsoPosition-oldTorsoPosition).length() > 0.1)
-	{
-		Vector3 difference = 15 * (oldTorsoPosition-newTorsoPosition)/16;
-		root->translate(difference);
-		root->_update(true,false);
+	//Ogre::Bone* root =  Skeleton->getBone("Root");
+	//root->_update(true,false);
+	//Vector3 newTorsoPosition = root->getPosition();
+	//if ((newTorsoPosition-oldTorsoPosition).length() > 0.1)
+	//{
+	//	Vector3 difference = 15 * (oldTorsoPosition-newTorsoPosition)/16;
+	//	root->translate(difference);
+	//	root->_update(true,false);
 
-	}
-	oldTorsoPosition=root->getPosition();
+	//}
+	//oldTorsoPosition=root->getPosition();
 
 
 
@@ -1222,7 +1236,7 @@ void SkeletalMesh::SmoothJointOrientations(NUI_Controller* nui)
 		}
 		//if (abs(angle.valueRadians()) >  Math::PI/18)
 		//{
-			rotator.FromAngleAxis(angle/20,axis);
+			rotator.FromAngleAxis(angle/6,axis);
 		//}
 		newOrientation = rotator * (*oldOrientations[i]);
 		bones[i]->_setDerivedOrientation(newOrientation);
@@ -1472,7 +1486,7 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - leftFootOldRenderPosition;
-			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
+			//root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		else
 		{
@@ -1499,11 +1513,11 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - rightFootOldRenderPosition; 
-			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
+			//root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		rotateUnconstrained(nui);
 	}
-	//SmoothJointOrientations(nui);
+	SmoothJointOrientations(nui);
 }
 
 

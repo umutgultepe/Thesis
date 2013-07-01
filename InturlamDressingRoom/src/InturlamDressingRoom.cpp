@@ -1025,7 +1025,7 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		
 		//upperCloth->pitchManually("Calf.L",30);
 		
-		upperCloth->setLeftIkanTarget(Vector3(5.000,20.294769,-0.5359765));
+		upperCloth->setLeftIkanTarget(Vector3(0.000,20.294769,-0.5359765));
 	}
 	else if (arg.key==OIS::KC_9)
 	{
@@ -1033,7 +1033,7 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		
 		//upperCloth->pitchManually("Calf.L",30);
 		
-		upperCloth->setLeftIkanTarget(Vector3(5.0103092,20.294769,-5.0349765));
+		upperCloth->setLeftIkanTarget(Vector3(0.5103092,20.294769,-5.0349765));
 	}
 	else if (arg.key==OIS::KC_P)
 	{
@@ -1166,8 +1166,8 @@ void InturlamDressingRoom::createFloor()
 	Ogre::MeshManager::getSingleton().createPlane("PlaneMesh", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, *mPlane, 120, 120, 1, 1, true, 1, 1, 1, Ogre::Vector3::UNIT_Z);
 	Ogre::Entity* mPlaneEnt = mSceneMgr->createEntity("PlaneEntity", "PlaneMesh");
 	mPlaneEnt->setMaterialName("floor");
- 
-	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-24.0,0));
+	mPlaneEnt->setRenderQueueGroup(Ogre::RenderQueueGroupID::RENDER_QUEUE_BACKGROUND);
+	mPlaneNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("flooar node",Ogre::Vector3(0,-22.0,0));
 	mPlaneNode->attachObject(mPlaneEnt);
 }
 Ogre::SceneNode* fNode;
