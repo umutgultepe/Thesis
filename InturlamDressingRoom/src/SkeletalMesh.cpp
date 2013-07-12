@@ -2,6 +2,7 @@
 #include "ClothResizer.h"
 #include "SkeletalMesh.h"
 
+#define FILTER_FOOT_SKATE 0
 
 
 SkeletalMesh::SkeletalMesh(void)
@@ -1671,6 +1672,7 @@ Ogre::Vector3 SkeletalMesh::updateMesh()
 	
 }
 
+
 Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 {
 	mGoalDirection = Vector3::ZERO;   // we will calculate this
@@ -1749,8 +1751,9 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 	rootBone->setOrientation(rootOrientation);
 	rootBone->_update(true,false);
 
+#if FILTER_FOOT_SKATE
 	filterForFootSkating(nui);
-
+#endif 
 	////Arm Fixes
 	//if (boneExists[BONE_LEFT_HUMERUS])
 	//{
@@ -1799,10 +1802,10 @@ Ogre::Vector3 SkeletalMesh::updateMesh(NUI_Controller* nui)
 				transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]],true,Ogre::Quaternion(Ogre::Degree(-180),Ogre::Vector3(0,1,0)));
 			else if (i!=BONE_ROOT && i!= BONE_LEFT_FOOT &&  i!= BONE_RIGHT_FOOT )
 			{	
+				#if FILTER_FOOT_SKATE
 				if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )
-				{
-						transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
-				}
+				#endif	
+					transformBone(boneStrings[i],nui->m_Orientations[nuiIDs[i]]);
 				//if (leftFootConstrained)
 				//{
 				//	if (i!=BONE_LEFT_CALF && i!= BONE_LEFT_THIGH && i!=BONE_RIGHT_CALF && i!= BONE_RIGHT_THIGH )

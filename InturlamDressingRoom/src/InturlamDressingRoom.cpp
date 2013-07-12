@@ -47,6 +47,21 @@ physx::PxClothCollisionSphere* box_collider;
 std::vector<float> radii;
 std::vector<Ogre::SceneNode*> ListedNodes;
 
+
+void InturlamDressingRoom::Recorder()
+{
+	if (outputFile->is_open())
+	{
+		float newFPS= mWindow->getLastFPS();
+		if (lastFPS	!= newFPS)
+		{
+			*outputFile<< Ogre::StringConverter::toString(newFPS)+"\n";
+			lastFPS = newFPS;
+		}
+
+	}
+}
+
 //extern std::vector<float> raw_roll;
 //extern std::vector<float> filtered_roll;
 //void outputToCSV()
@@ -70,6 +85,7 @@ std::vector<Ogre::SceneNode*> ListedNodes;
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::InturlamDressingRoom(void)
 {
+	lastFPS= -1;
 	simulating=true;
 	firstStep=true;
 	simulationCreated=false;
@@ -84,11 +100,24 @@ InturlamDressingRoom::InturlamDressingRoom(void)
 	mNui=0;
 	bodyRotation=Ogre::Quaternion::IDENTITY;
 	targetRadii=20;
+
+	outputFile =new std::ofstream("..\\measurements.csv");
+
+	if (outputFile->is_open())
+	{
+			*outputFile<<"sep=\t\n";
+			*outputFile<<"FPS\n";
+	}
 }
 //-------------------------------------------------------------------------------------
 InturlamDressingRoom::~InturlamDressingRoom(void)
 {
 	//outputToCSV();
+
+	if (outputFile->is_open())
+	{
+			outputFile->close();
+	}
 	if (mNui)
 		delete mNui;
 	if (box_collider)
@@ -1345,6 +1374,9 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	}
 	#endif
 	#if USE_NUI
+	//if (textureUpdated)
+	Recorder();
+
 	updateDepthTexture();
 	if (mNui->mSkeletonUpdated)
 	{

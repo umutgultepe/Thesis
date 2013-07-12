@@ -163,8 +163,11 @@ protected:
 	guyDirection guyMoves;
 	SkeletalMesh* femaleBody;
 	SkeletalMesh* upperCloth;
+	std::ofstream* outputFile;
+	float lastFPS;
 	
-	
+	void Recorder();
+
 	int targetRadii;
 	int currentClothIndex;
 	bool usingGPU;
