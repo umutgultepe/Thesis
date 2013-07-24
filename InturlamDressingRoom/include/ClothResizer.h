@@ -2,6 +2,8 @@
 #include "StdAfx.h"
 #include "SkeletalMesh.h"
 
+
+
 #ifndef USE_KINECT
 #define USE_KINECT 0
 #define USE_NUI 1

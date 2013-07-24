@@ -52,11 +52,11 @@ void InturlamDressingRoom::Recorder()
 {
 	if (outputFile->is_open())
 	{
-		float newFPS= mWindow->getLastFPS();
-		if (lastFPS	!= newFPS)
+		Vector3 newOffset= femaleBody->latestOffset;
+		if (lastFPS	!= newOffset)
 		{
-			*outputFile<< Ogre::StringConverter::toString(newFPS)+"\n";
-			lastFPS = newFPS;
+			*outputFile<< Ogre::StringConverter::toString(newOffset.length()/userWidthScale)+"\n";
+			lastFPS = newOffset;
 		}
 
 	}
@@ -1042,30 +1042,30 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		if (lowerCloth)
 			lowerCloth->flipVisibility();
 	}
-	else if (arg.key==OIS::KC_7)
-	{
-		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
-		
-		//upperCloth->pitchManually("Calf.L",30);
-		
-		upperCloth->setLeftIkanTarget(Vector3(0.0,5.0,-5.0));
-	}
-	else if (arg.key==OIS::KC_8)
-	{
-		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
-		
-		//upperCloth->pitchManually("Calf.L",30);
-		
-		upperCloth->setLeftIkanTarget(Vector3(0.000,20.294769,-0.5359765));
-	}
-	else if (arg.key==OIS::KC_9)
-	{
-		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
-		
-		//upperCloth->pitchManually("Calf.L",30);
-		
-		upperCloth->setLeftIkanTarget(Vector3(0.5103092,20.294769,-5.0349765));
-	}
+	//else if (arg.key==OIS::KC_7)
+	//{
+	//	//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+	//	
+	//	//upperCloth->pitchManually("Calf.L",30);
+	//	
+	//	upperCloth->setLeftIkanTarget(Vector3(0.0,5.0,-5.0));
+	//}
+	//else if (arg.key==OIS::KC_8)
+	//{
+	//	//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+	//	
+	//	//upperCloth->pitchManually("Calf.L",30);
+	//	
+	//	upperCloth->setLeftIkanTarget(Vector3(0.000,20.294769,-0.5359765));
+	//}
+	//else if (arg.key==OIS::KC_9)
+	//{
+	//	//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
+	//	
+	//	//upperCloth->pitchManually("Calf.L",30);
+	//	
+	//	upperCloth->setLeftIkanTarget(Vector3(0.5103092,20.294769,-5.0349765));
+	//}
 	else if (arg.key==OIS::KC_P)
 	{
 		//help->setParamValue("Right humerus roll",StringConverter::toString(femaleBody->rollManually("Humerus.R",5)));
@@ -1161,6 +1161,10 @@ bool InturlamDressingRoom::keyPressed( const OIS::KeyEvent &arg )
 		changeCloth(4);
 	else if (arg.key==OIS::KC_6)
 		changeCloth(5);
+	else if (arg.key==OIS::KC_7)
+		changeCloth(6);
+	else if (arg.key==OIS::KC_8)
+		changeCloth(7);
 	return BaseApplication::keyPressed(arg);
 }
 
@@ -1221,8 +1225,12 @@ void InturlamDressingRoom::createSimulation()
 	lowerClothHandle=clothHandle->createChildSceneNode("lowerClothHandle",Vector3(0,-Y_OFFSET,0));
 
 	femaleBody=new SkeletalMesh(mKinect);
-	//femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+	#if USE_MALE
 	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","MALEY.mesh");
+	#else
+	femaleBody->loadMesh(mSceneMgr,femaleNode,"FemaleModel","FemaleBody.mesh");
+	#endif
+	//
 
 	//femaleBody->Mesh->setCastShadows(true);
 	//Animation
@@ -1375,12 +1383,14 @@ bool InturlamDressingRoom::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	#endif
 	#if USE_NUI
 	//if (textureUpdated)
-	Recorder();
+
 
 	updateDepthTexture();
 	if (mNui->mSkeletonUpdated)
 	{
+		//Recorder();
 		Ogre::Vector3 targetPos;
+
 		targetPos=femaleBody->updateMesh(mNui);
 		if (upperCloth)
 			targetPos=upperCloth->updateMesh(mNui);

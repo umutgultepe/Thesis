@@ -32,7 +32,7 @@ using namespace physx;
 
 
 #define CLOTH_COUNT 8
-#define INITIAL_CLOTH_INDEX 7
+#define INITIAL_CLOTH_INDEX 6
 
 enum clothIndex
 {
@@ -164,7 +164,7 @@ protected:
 	SkeletalMesh* femaleBody;
 	SkeletalMesh* upperCloth;
 	std::ofstream* outputFile;
-	float lastFPS;
+	Vector3 lastFPS;
 	
 	void Recorder();
 

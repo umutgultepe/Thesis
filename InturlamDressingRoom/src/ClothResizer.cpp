@@ -6,10 +6,14 @@ float* bodySizeBuffer[29];
 int gaussian_m=5,
 	gaussian_n=5,
 	gaussian_e=0.95;
+
+
 #if USE_USER_SCALING
 float sphereRadii[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0//Additional
 						,0,0,0,0,0,0};
 #else
+//working male sizes
+#if USE_MALE
 float sphereRadii[] = 
 	{1.3525,//BONE_STOMACH
 	1.7325,//BONE_WAIST
@@ -41,40 +45,40 @@ float sphereRadii[] =
 	4.025,//Groins
 	0.01
 };
-
+#else
 //Working female sizes
-//float sphereRadii[] = 
-//	{1.3525,//BONE_STOMACH
-//	1.7325,//BONE_WAIST
-//	1,//BONE_ROOT
-//	1.5775,//BONE_CHEST
-//	0.9875,//BONE_LEFT_HUMERUS
-//	0.9875,//BONE_RIGHT_HUMERUS
-//	0.6125,//BONE_LEFT_ULNA
-//	0.6125,//BONE_RIGHT_ULNA
-//	1.4525,//BONE_LEFT_THIGH
-//	1.4525,//BONE_RIGHT_THIGH
-//	1.815,//BONE_LEFT_CALF
-//	1.815,//BONE_RIGHT_CAL3F
-//	0.01,//BONE_LEFT_HAND
-//	0.01,//BONE_RIGHT_HAND
-//	0.6,//BONE_LEFT_FOOT
-//	0.6,//BONE_RIGHT_FOOT
-//	0.6,//BONE_NECK
-//	2.225,//BONE_LE1.L
-//	2.225,//BONE_LE1.R
-//	2.4275,//BONE_LE2.L
-//	2.4275,//BONE_LE2.R
-//	2.4,//BONE_LEH.L
-//	2.4,//BONE_LEH.R
-//	2.2,//BONE_LEH2.L
-//	2.2,//BONE_LEH2.R
-//	2.3,//BONE_WaistExtent.L
-//	2.3,//BONE_WaistExtent.R
-//	2.125,//Groins
-//	0.01
-//};
-	
+float sphereRadii[] = 
+	{1.3525,//BONE_STOMACH
+	1.7325,//BONE_WAIST
+	1,//BONE_ROOT
+	1.5775,//BONE_CHEST
+	0.9875,//BONE_LEFT_HUMERUS
+	0.9875,//BONE_RIGHT_HUMERUS
+	0.6125,//BONE_LEFT_ULNA
+	0.6125,//BONE_RIGHT_ULNA
+	1.4525,//BONE_LEFT_THIGH
+	1.4525,//BONE_RIGHT_THIGH
+	1.815,//BONE_LEFT_CALF
+	1.815,//BONE_RIGHT_CAL3F
+	0.01,//BONE_LEFT_HAND
+	0.01,//BONE_RIGHT_HAND
+	1.6,//BONE_LEFT_FOOT
+	1.6,//BONE_RIGHT_FOOT
+	0.6,//BONE_NECK
+	1.825,//BONE_LE1.L
+	1.825,//BONE_LE1.R
+	2.0275,//BONE_LE2.L
+	2.0275,//BONE_LE2.R
+	2.2,//BONE_LEH.L
+	2.2,//BONE_LEH.R
+	2.2,//BONE_LEH2.L
+	2.2,//BONE_LEH2.R
+	2.3,//BONE_WaistExtent.L
+	2.3,//BONE_WaistExtent.R
+	2.125,//Groins
+	0.01
+};
+#endif
 //float sphereRadii[] = 
 //	{1.3525,//BONE_STOMACH
 //	1.7325,//BONE_WAIST

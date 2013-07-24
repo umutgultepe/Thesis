@@ -3,7 +3,7 @@
 #include "SkeletalMesh.h"
 
 #define FILTER_FOOT_SKATE 0
-
+#define FILTER_ARMS 1
 
 SkeletalMesh::SkeletalMesh(void)
 {
@@ -803,6 +803,7 @@ Ogre::Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj
 		rotM.FromEulerAnglesZXY(-yaw,-pitch,roll);
 		q.FromRotationMatrix(rotM);
 	}
+	#if FILTER_ARMS
 	//Right Arm Filters
 	if ( sj.endJoint==NUI_SKELETON_POSITION_ELBOW_RIGHT)
 	{
@@ -1168,6 +1169,7 @@ Ogre::Quaternion SkeletalMesh::convertNUItoOgre(NUI_SKELETON_BONE_ORIENTATION sj
 		q=q*modifier;
 
 	}
+	#endif
 	return q;
 
 }
@@ -1515,6 +1517,7 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - leftFootOldRenderPosition;
 			RootDisplacer.y = 0;
+			latestOffset = RootDisplacer;
 			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		else
@@ -1543,6 +1546,7 @@ void SkeletalMesh::filterForFootSkating(NUI_Controller* nui)
 			root->_update(true,true);
 			Vector3 RootDisplacer = wp(fNode,foot) - rightFootOldRenderPosition; 
 			RootDisplacer.y = 0;
+			latestOffset = RootDisplacer;
 			root->translate(-RootDisplacer/(userWidthScale,userHeightScale,userDepthScale));
 		}
 		rotateUnconstrained(nui);

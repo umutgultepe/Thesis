@@ -617,7 +617,8 @@ void NUI_Controller::Nui_GotSkeletonAlert( )
     }
 
     // smooth out the skeleton data
-    m_pNuiInstance->NuiTransformSmooth(&SkeletonFrame,&VerySmoothParams );
+	
+	m_pNuiInstance->NuiTransformSmooth(&SkeletonFrame,&VerySmoothParams );
 
 
 	for (  int j = 0; j < NUI_SKELETON_POSITION_COUNT; j++)

@@ -7,6 +7,8 @@
 #ifndef __SkeletalMesh_h_
 #define __SkeletalMesh_h_
 
+#define USE_MALE 1
+
 #define TOTAL_BONE_COUNT 28
 #define ACTIVE_BONE_COUNT 17
 class KinectController;
@@ -243,6 +245,8 @@ public:
 					 leftCalfOldOrientation,
 					 rightHipOldOrientation,
 					 rightCalfOldOrientation;
+
+	Ogre::Vector3 latestOffset;
 
 
 	NUI_Vector4 leftFootOldPosition, rightFootOldPosition;
